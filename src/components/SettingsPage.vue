@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 
 type SettingsTab = "general" | "advanced" | "about";
+type Theme = "light" | "dark" | "system";
 
 const emit = defineEmits<{
   (e: "close"): void;
@@ -12,7 +13,7 @@ const { t, locale } = useI18n();
 
 const activeTab = ref<SettingsTab>("general");
 const language = ref(locale.value);
-const theme = ref("system");
+const theme = ref<Theme>((localStorage.getItem("theme") as Theme) || "system");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -22,10 +23,35 @@ const languages = [
 ];
 
 const themes = [
-  { value: "light", labelKey: "settings.theme.light" },
-  { value: "dark", labelKey: "settings.theme.dark" },
-  { value: "system", labelKey: "settings.theme.system" },
+  { value: "light" as Theme, labelKey: "settings.theme.light" },
+  { value: "dark" as Theme, labelKey: "settings.theme.dark" },
+  { value: "system" as Theme, labelKey: "settings.theme.system" },
 ];
+
+function applyTheme(newTheme: Theme) {
+  const root = document.documentElement;
+  
+  if (newTheme === "system") {
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    root.classList.toggle("dark", prefersDark);
+    root.classList.toggle("light", !prefersDark);
+  } else if (newTheme === "dark") {
+    root.classList.add("dark");
+    root.classList.remove("light");
+  } else {
+    root.classList.add("light");
+    root.classList.remove("dark");
+  }
+}
+
+onMounted(() => {
+  applyTheme(theme.value);
+});
+
+watch(theme, (newTheme) => {
+  applyTheme(newTheme);
+  localStorage.setItem("theme", newTheme);
+});
 
 watch(language, (newLang) => {
   locale.value = newLang;
