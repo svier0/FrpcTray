@@ -30,6 +30,8 @@
     "title": "Settings",
     "tabs": {
       "general": "General",
+      "server": "Server",
+      "kernel": "Kernel",
       "advanced": "Advanced",
       "about": "About"
     },

@@ -2,7 +2,7 @@
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-type SettingsTab = "general" | "advanced" | "about";
+type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
 
 const emit = defineEmits<{
@@ -80,6 +80,20 @@ watch(language, (newLang) => {
       </button>
       <button
         class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'server' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+        @click="activeTab = 'server'"
+      >
+        {{ t('settings.tabs.server') }}
+      </button>
+      <button
+        class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'kernel' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+        @click="activeTab = 'kernel'"
+      >
+        {{ t('settings.tabs.kernel') }}
+      </button>
+      <button
+        class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
         :class="activeTab === 'advanced' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'advanced'"
       >
@@ -149,6 +163,24 @@ watch(language, (newLang) => {
               {{ t(th.labelKey) }}
             </button>
           </div>
+        </section>
+      </div>
+
+      <div v-else-if="activeTab === 'server'" class="space-y-6">
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.tabs.server') }}</h3>
+            <p class="text-xs text-muted-foreground">Server settings coming soon.</p>
+          </header>
+        </section>
+      </div>
+
+      <div v-else-if="activeTab === 'kernel'" class="space-y-6">
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.tabs.kernel') }}</h3>
+            <p class="text-xs text-muted-foreground">Kernel settings coming soon.</p>
+          </header>
         </section>
       </div>
 

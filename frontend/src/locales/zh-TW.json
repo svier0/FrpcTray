@@ -30,6 +30,8 @@
     "title": "設定",
     "tabs": {
       "general": "通用",
+      "server": "伺服器",
+      "kernel": "核心",
       "advanced": "進階",
       "about": "關於"
     },
