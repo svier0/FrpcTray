@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SwitchRoot, SwitchThumb } from "radix-vue";
+import { useI18n } from "vue-i18n";
 
 export interface ProxyItem {
   id: string;
@@ -21,8 +22,9 @@ const emit = defineEmits<{
   (e: "duplicate", id: string): void;
   (e: "delete", id: string): void;
   (e: "viewLogs", id: string): void;
-  (e: "dragStart", id: string): void;
 }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -41,7 +43,7 @@ const emit = defineEmits<{
       <div class="flex min-w-0 flex-1 items-center gap-3">
         <button
           class="drag-handle -ml-1.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
-          title="拖拽排序"
+          :title="t('proxy.dragHandle')"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -101,7 +103,7 @@ const emit = defineEmits<{
         <div class="flex items-center gap-1 opacity-0 pointer-events-none group-hover:opacity-100 group-focus-within:opacity-100 group-hover:pointer-events-auto group-focus-within:pointer-events-auto transition-opacity duration-200">
           <button
             class="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="查看日志"
+            :title="t('proxy.viewLogs')"
             @click="emit('viewLogs', props.item.id)"
           >
             <svg
@@ -125,7 +127,7 @@ const emit = defineEmits<{
 
           <button
             class="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="编辑"
+            :title="t('common.edit')"
             @click="emit('edit', props.item.id)"
           >
             <svg
@@ -146,7 +148,7 @@ const emit = defineEmits<{
 
           <button
             class="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-            title="复制"
+            :title="t('common.duplicate')"
             @click="emit('duplicate', props.item.id)"
           >
             <svg
@@ -167,7 +169,7 @@ const emit = defineEmits<{
 
           <button
             class="inline-flex items-center justify-center h-7 w-7 rounded-lg text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-            title="删除"
+            :title="t('common.delete')"
             @click="emit('delete', props.item.id)"
           >
             <svg

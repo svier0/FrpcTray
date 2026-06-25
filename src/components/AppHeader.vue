@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SwitchRoot, SwitchThumb } from "radix-vue";
+import { useI18n } from "vue-i18n";
 
 export type ViewTab = "proxy" | "terminal";
 
@@ -14,6 +15,8 @@ const emit = defineEmits<{
   (e: "openSettings"): void;
   (e: "addProxy"): void;
 }>();
+
+const { t } = useI18n();
 
 function setActiveTab(tab: ViewTab) {
   emit("update:activeTab", tab);
@@ -33,7 +36,7 @@ function setActiveTab(tab: ViewTab) {
 
       <button
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        title="设置"
+        :title="t('header.settings')"
         @click="emit('openSettings')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -61,7 +64,7 @@ function setActiveTab(tab: ViewTab) {
         <button
           class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
           :class="props.activeTab === 'proxy' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="代理"
+          :title="t('header.proxy')"
           @click="setActiveTab('proxy')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -73,7 +76,7 @@ function setActiveTab(tab: ViewTab) {
         <button
           class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
           :class="props.activeTab === 'terminal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="终端"
+          :title="t('header.terminal')"
           @click="setActiveTab('terminal')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -85,7 +88,7 @@ function setActiveTab(tab: ViewTab) {
 
       <button
         class="inline-flex items-center justify-center h-8 w-8 rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition-colors"
-        title="添加代理"
+        :title="t('header.addProxy')"
         @click="emit('addProxy')"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

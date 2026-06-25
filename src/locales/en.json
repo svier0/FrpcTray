@@ -1,0 +1,51 @@
+{
+  "common": {
+    "settings": "Settings",
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "duplicate": "Duplicate",
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "close": "Close",
+    "back": "Back"
+  },
+  "header": {
+    "proxy": "Proxy",
+    "terminal": "Terminal",
+    "settings": "Settings",
+    "addProxy": "Add Proxy"
+  },
+  "proxy": {
+    "title": "Proxy List",
+    "empty": "No proxy configurations",
+    "emptyHint": "Click + button to add",
+    "dragHandle": "Drag to reorder",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "viewLogs": "View Logs"
+  },
+  "settings": {
+    "title": "Settings",
+    "tabs": {
+      "general": "General",
+      "advanced": "Advanced",
+      "about": "About"
+    },
+    "language": {
+      "title": "Interface Language",
+      "description": "Preview language changes immediately, saved permanently after saving."
+    },
+    "theme": {
+      "title": "Appearance Theme",
+      "description": "Select the application appearance theme, takes effect immediately.",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "about": {
+      "version": "Version"
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "common": {
+    "settings": "设置",
+    "add": "添加",
+    "edit": "编辑",
+    "delete": "删除",
+    "duplicate": "复制",
+    "save": "保存",
+    "cancel": "取消",
+    "confirm": "确认",
+    "close": "关闭",
+    "back": "返回"
+  },
+  "header": {
+    "proxy": "代理",
+    "terminal": "终端",
+    "settings": "设置",
+    "addProxy": "添加代理"
+  },
+  "proxy": {
+    "title": "代理列表",
+    "empty": "暂无代理配置",
+    "emptyHint": "点击右上角 + 号添加",
+    "dragHandle": "拖拽排序",
+    "enabled": "已启用",
+    "disabled": "已禁用",
+    "viewLogs": "查看日志"
+  },
+  "settings": {
+    "title": "设置",
+    "tabs": {
+      "general": "通用",
+      "advanced": "高级",
+      "about": "关于"
+    },
+    "language": {
+      "title": "界面语言",
+      "description": "切换后立即预览界面语言，保存后永久生效。"
+    },
+    "theme": {
+      "title": "外观主题",
+      "description": "选择应用的外观主题，立即生效。",
+      "light": "浅色",
+      "dark": "深色",
+      "system": "跟随系统"
+    },
+    "about": {
+      "version": "版本"
+    }
+  }
+}

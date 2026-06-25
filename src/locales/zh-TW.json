@@ -1,0 +1,51 @@
+{
+  "common": {
+    "settings": "設定",
+    "add": "新增",
+    "edit": "編輯",
+    "delete": "刪除",
+    "duplicate": "複製",
+    "save": "儲存",
+    "cancel": "取消",
+    "confirm": "確認",
+    "close": "關閉",
+    "back": "返回"
+  },
+  "header": {
+    "proxy": "代理",
+    "terminal": "終端",
+    "settings": "設定",
+    "addProxy": "新增代理"
+  },
+  "proxy": {
+    "title": "代理列表",
+    "empty": "暫無代理設定",
+    "emptyHint": "點擊右上角 + 號新增",
+    "dragHandle": "拖曳排序",
+    "enabled": "已啟用",
+    "disabled": "已停用",
+    "viewLogs": "檢視日誌"
+  },
+  "settings": {
+    "title": "設定",
+    "tabs": {
+      "general": "通用",
+      "advanced": "進階",
+      "about": "關於"
+    },
+    "language": {
+      "title": "介面語言",
+      "description": "切換後立即預覽介面語言，儲存後永久生效。"
+    },
+    "theme": {
+      "title": "外觀主題",
+      "description": "選擇應用程式的外觀主題，立即生效。",
+      "light": "淺色",
+      "dark": "深色",
+      "system": "跟隨系統"
+    },
+    "about": {
+      "version": "版本"
+    }
+  }
+}

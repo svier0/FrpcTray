@@ -1,0 +1,51 @@
+{
+  "common": {
+    "settings": "設定",
+    "add": "追加",
+    "edit": "編集",
+    "delete": "削除",
+    "duplicate": "複製",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "confirm": "確認",
+    "close": "閉じる",
+    "back": "戻る"
+  },
+  "header": {
+    "proxy": "プロキシ",
+    "terminal": "ターミナル",
+    "settings": "設定",
+    "addProxy": "プロキシを追加"
+  },
+  "proxy": {
+    "title": "プロキシリスト",
+    "empty": "プロキシ設定がありません",
+    "emptyHint": "右上の + ボタンで追加",
+    "dragHandle": "ドラッグで並べ替え",
+    "enabled": "有効",
+    "disabled": "無効",
+    "viewLogs": "ログを表示"
+  },
+  "settings": {
+    "title": "設定",
+    "tabs": {
+      "general": "一般",
+      "advanced": "詳細",
+      "about": "バージョン"
+    },
+    "language": {
+      "title": "インターフェース言語",
+      "description": "切り替え後すぐにプレビュー、保存後は永続的に有効になります。"
+    },
+    "theme": {
+      "title": "外観テーマ",
+      "description": "アプリケーションの外観テーマを選択、すぐに有効になります。",
+      "light": "ライト",
+      "dark": "ダーク",
+      "system": "システムに従う"
+    },
+    "about": {
+      "version": "バージョン"
+    }
+  }
+}

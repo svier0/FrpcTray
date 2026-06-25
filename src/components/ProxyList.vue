@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useDraggable } from "vue-draggable-plus";
 import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import ProxyItem from "./ProxyItem.vue";
 import type { ProxyItem as ProxyItemType } from "./ProxyItem.vue";
 
@@ -17,6 +18,8 @@ const emit = defineEmits<{
   (e: "delete", id: string): void;
   (e: "viewLogs", id: string): void;
 }>();
+
+const { t } = useI18n();
 
 const dragList = ref<ProxyItemType[]>([...props.items]);
 
@@ -73,8 +76,8 @@ useDraggable(el, dragList, {
         <path d="M3 9h18" />
         <path d="M9 21V9" />
       </svg>
-      <p class="text-sm">暂无代理配置</p>
-      <p class="text-xs mt-1">点击右上角 + 号添加</p>
+      <p class="text-sm">{{ t('proxy.empty') }}</p>
+      <p class="text-xs mt-1">{{ t('proxy.emptyHint') }}</p>
     </div>
   </div>
 </template>

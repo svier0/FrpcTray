@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
+import { useI18n } from "vue-i18n";
 
 type SettingsTab = "general" | "advanced" | "about";
 
@@ -7,8 +8,10 @@ const emit = defineEmits<{
   (e: "close"): void;
 }>();
 
+const { t, locale } = useI18n();
+
 const activeTab = ref<SettingsTab>("general");
-const language = ref("zh-CN");
+const language = ref(locale.value);
 const theme = ref("system");
 
 const languages = [
@@ -19,10 +22,15 @@ const languages = [
 ];
 
 const themes = [
-  { value: "light", label: "浅色", icon: "☀️" },
-  { value: "dark", label: "深色", icon: "🌙" },
-  { value: "system", label: "跟随系统", icon: "💻" },
+  { value: "light", labelKey: "settings.theme.light" },
+  { value: "dark", labelKey: "settings.theme.dark" },
+  { value: "system", labelKey: "settings.theme.system" },
 ];
+
+watch(language, (newLang) => {
+  locale.value = newLang;
+  localStorage.setItem("language", newLang);
+});
 </script>
 
 <template>
@@ -37,7 +45,7 @@ const themes = [
           <path d="M19 12H5" />
         </svg>
       </button>
-      <h1 class="text-lg font-semibold">设置</h1>
+      <h1 class="text-lg font-semibold">{{ t('settings.title') }}</h1>
     </header>
 
     <div class="flex gap-1 p-2 border-b border-border">
@@ -46,29 +54,29 @@ const themes = [
         :class="activeTab === 'general' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
         @click="activeTab = 'general'"
       >
-        通用
+        {{ t('settings.tabs.general') }}
       </button>
       <button
         class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         :class="activeTab === 'advanced' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
         @click="activeTab = 'advanced'"
       >
-        高级
+        {{ t('settings.tabs.advanced') }}
       </button>
       <button
         class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         :class="activeTab === 'about' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
         @click="activeTab = 'about'"
       >
-        关于
+        {{ t('settings.tabs.about') }}
       </button>
     </div>
 
     <div class="flex-1 overflow-y-auto p-4">
       <div v-if="activeTab === 'general'" class="space-y-6">
         <div>
-          <h3 class="text-sm font-medium mb-2">界面语言</h3>
-          <p class="text-xs text-muted-foreground mb-3">切换后立即预览界面语言，保存后永久生效。</p>
+          <h3 class="text-sm font-medium mb-2">{{ t('settings.language.title') }}</h3>
+          <p class="text-xs text-muted-foreground mb-3">{{ t('settings.language.description') }}</p>
           <div class="flex gap-2">
             <button
               v-for="lang in languages"
@@ -83,17 +91,17 @@ const themes = [
         </div>
 
         <div>
-          <h3 class="text-sm font-medium mb-2">外观主题</h3>
-          <p class="text-xs text-muted-foreground mb-3">选择应用的外观主题，立即生效。</p>
+          <h3 class="text-sm font-medium mb-2">{{ t('settings.theme.title') }}</h3>
+          <p class="text-xs text-muted-foreground mb-3">{{ t('settings.theme.description') }}</p>
           <div class="flex gap-2">
             <button
-              v-for="t in themes"
-              :key="t.value"
+              v-for="th in themes"
+              :key="th.value"
               class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="theme === t.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
-              @click="theme = t.value"
+              :class="theme === th.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+              @click="theme = th.value"
             >
-              {{ t.label }}
+              {{ t(th.labelKey) }}
             </button>
           </div>
         </div>
@@ -101,14 +109,14 @@ const themes = [
 
       <div v-else-if="activeTab === 'advanced'" class="space-y-6">
         <div>
-          <h3 class="text-sm font-medium mb-2">高级设置</h3>
-          <p class="text-xs text-muted-foreground">高级设置内容待实现。</p>
+          <h3 class="text-sm font-medium mb-2">{{ t('settings.tabs.advanced') }}</h3>
+          <p class="text-xs text-muted-foreground">Advanced settings coming soon.</p>
         </div>
       </div>
 
       <div v-else-if="activeTab === 'about'" class="space-y-6">
         <div>
-          <h3 class="text-sm font-medium mb-2">关于</h3>
+          <h3 class="text-sm font-medium mb-2">{{ t('settings.tabs.about') }}</h3>
           <p class="text-xs text-muted-foreground">frpc tray v0.1.0</p>
         </div>
       </div>
