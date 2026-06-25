@@ -1,4 +1,4 @@
-# AI Agent 前后端跨堆栈协作协议 2.0 (AI_COLLABORATION_GUIDE)
+# AI Agent 前后端跨堆栈协作协议 (AI_COLLABORATION_GUIDE)
 
 ## 1. 核心职责与目录隔离 (Core Isolation)
 为了彻底避免 Git 代码冲突，两位 Agent 必须严格在自己的领地工作，严禁修改对方的代码目录和状态文件：
@@ -15,7 +15,7 @@
 
 ## 3. 看板格式规范 (Status File Format)
 
-### == BACKEND_STATUS.md (仅允许后端写入，控制在15行内) ==
+### == BACKEND_STATUS.md (仅允许后端写入，控制在30行内) ==
 # 后端联调看板
 VERSION: V1
 
@@ -23,7 +23,7 @@ VERSION: V1
 - [例如：我写好了登录和注册接口，接口详情已更新至 /backend/api_spec.json，请前端开始对接。]
 
 
-### == FRONTEND_STATUS.md (仅允许前端写入，控制在15行内) ==
+### == FRONTEND_STATUS.md (仅允许前端写入，控制在30行内) ==
 # 前端联调看板
 ACK_BACKEND_VERSION: V1
 

@@ -32,13 +32,15 @@ cd frontend && bun run tauri dev    # Start Tauri dev
 cd frontend && bun run tauri build  # Build Tauri app
 ```
 
-## 主要约定 (Key Conventions)
-- Language: Use Chinese (zh-CN) for UI text and comments
-- Styling: Follow CC Switch design patterns (dark theme, glass morphism)
-- State: Theme and language persisted in localStorage
-
 ## 协作 (Collaboration)
 - See `/AI_COLLABORATION_GUIDE.md` for frontend-backend collaboration protocol
 - Frontend writes to `FRONTEND_STATUS.md` only
 - Backend writes to `BACKEND_STATUS.md` only
 - API specs in `/backend/api_spec.json`
+
+## 会话开始 (on session start)
+- 不要一上来就扫描整个项目
+- 阅读`BUN_USAGE.md`
+- 后端阅读`backend/AGENT_CONTEXT.md`恢复上下文
+- 前端阅读`frontend/AGENT_CONTEXT.md`恢复上下文
+- 上下文恢复完成后再根据用户指示按需阅读代码
