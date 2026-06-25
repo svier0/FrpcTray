@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 type SettingsTab = "general" | "advanced" | "about";
@@ -43,10 +43,6 @@ function applyTheme(newTheme: Theme) {
     root.classList.remove("dark");
   }
 }
-
-onMounted(() => {
-  applyTheme(theme.value);
-});
 
 watch(theme, (newTheme) => {
   applyTheme(newTheme);
