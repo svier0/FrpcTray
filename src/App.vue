@@ -24,6 +24,10 @@ const proxies = ref<ProxyItem[]>([
   },
 ]);
 
+function handleUpdateItems(newItems: ProxyItem[]) {
+  proxies.value = newItems;
+}
+
 function handleUpdateEnabled(id: string, value: boolean) {
   const proxy = proxies.value.find((p) => p.id === id);
   if (proxy) {
@@ -56,10 +60,6 @@ function handleViewLogs(id: string) {
   console.log("viewLogs", id);
 }
 
-function handleDragStart(id: string) {
-  console.log("dragStart", id);
-}
-
 function handleAddProxy() {
   const newProxy: ProxyItem = {
     id: String(Date.now()),
@@ -89,12 +89,12 @@ function handleOpenSettings() {
         v-if="activeTab === 'proxy'"
         :items="proxies"
         :active-id="activeProxyId"
+        @update:items="handleUpdateItems"
         @update:enabled="handleUpdateEnabled"
         @edit="handleEdit"
         @duplicate="handleDuplicate"
         @delete="handleDelete"
         @view-logs="handleViewLogs"
-        @drag-start="handleDragStart"
       />
 
       <div v-else class="flex flex-col items-center justify-center h-full text-muted-foreground">

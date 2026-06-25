@@ -250,6 +250,71 @@ fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String> {
     Ok(config.proxies.unwrap_or_default())
 }
 
+// 创建新的 TOML 配置文件
+#[tauri::command]
+fn create_toml_file(filename: String, content: Option<String>) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    // 检查文件是否已存在
+    if file_path.exists() {
+        return Err("配置文件已存在".to_string());
+    }
+
+    // 如果没有提供内容，使用默认的 frpc 配置模板
+    let default_content = content.unwrap_or_else(|| {
+        r#"[server]
+addr = "127.0.0.1"
+port = 7000
+token = "your_token_here"
+
+[log]
+level = "info"
+file = "frpc.log"
+maxSize = 50
+maxBackups = 3
+maxAge = 7
+
+[[proxies]]
+name = "default_proxy"
+type = "http"
+localPort = 8080
+remotePort = 80
+
+[proxies.plugin]
+type = "http_proxy""#.to_string()
+    });
+
+    fs::write(&file_path, default_content)
+        .map_err(|e| format!("创建文件失败: {}", e))
+}
+
+// 复制 TOML 配置文件
+#[tauri::command]
+fn copy_toml_file(source_filename: String, target_filename: String) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let source_path = exec_dir.join(source_filename);
+    let target_path = exec_dir.join(target_filename);
+
+    // 检查源文件是否存在
+    if !source_path.exists() {
+        return Err("源配置文件不存在".to_string());
+    }
+
+    // 检查目标文件是否已存在
+    if target_path.exists() {
+        return Err("目标配置文件已存在".to_string());
+    }
+
+    // 读取源文件内容
+    let content = fs::read_to_string(&source_path)
+        .map_err(|e| format!("读取源文件失败: {}", e))?;
+
+    // 写入目标文件
+    fs::write(&target_path, content)
+        .map_err(|e| format!("创建目标文件失败: {}", e))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -309,6 +374,8 @@ pub fn run() {
             list_toml_files,
             read_toml_file,
             write_toml_file,
+            create_toml_file,
+            copy_toml_file,
             add_proxy_to_toml,
             update_proxy_in_toml,
             delete_proxy_from_toml,

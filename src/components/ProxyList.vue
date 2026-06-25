@@ -1,26 +1,48 @@
 <script setup lang="ts">
+import { useDraggable } from "vue-draggable-plus";
+import { ref, watch } from "vue";
 import ProxyItem from "./ProxyItem.vue";
 import type { ProxyItem as ProxyItemType } from "./ProxyItem.vue";
 
-defineProps<{
+const props = defineProps<{
   items: ProxyItemType[];
   activeId?: string;
 }>();
 
 const emit = defineEmits<{
+  (e: "update:items", value: ProxyItemType[]): void;
   (e: "update:enabled", id: string, value: boolean): void;
   (e: "edit", id: string): void;
   (e: "duplicate", id: string): void;
   (e: "delete", id: string): void;
   (e: "viewLogs", id: string): void;
-  (e: "dragStart", id: string): void;
 }>();
+
+const dragList = ref<ProxyItemType[]>([...props.items]);
+
+watch(
+  () => props.items,
+  (newItems) => {
+    dragList.value = [...newItems];
+  },
+  { deep: true }
+);
+
+const el = ref<HTMLElement | null>(null);
+
+useDraggable(el, dragList, {
+  animation: 150,
+  handle: ".drag-handle",
+  onEnd: () => {
+    emit("update:items", [...dragList.value]);
+  },
+});
 </script>
 
 <template>
-  <div class="space-y-3">
+  <div ref="el" class="space-y-3">
     <ProxyItem
-      v-for="item in items"
+      v-for="item in dragList"
       :key="item.id"
       :item="item"
       :is-active="item.id === activeId"
@@ -29,11 +51,10 @@ const emit = defineEmits<{
       @duplicate="(id) => emit('duplicate', id)"
       @delete="(id) => emit('delete', id)"
       @view-logs="(id) => emit('viewLogs', id)"
-      @drag-start="(id) => emit('dragStart', id)"
     />
 
     <div
-      v-if="items.length === 0"
+      v-if="dragList.length === 0"
       class="flex flex-col items-center justify-center py-12 text-muted-foreground"
     >
       <svg

@@ -40,9 +40,8 @@ const emit = defineEmits<{
     <div class="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div class="flex min-w-0 flex-1 items-center gap-3">
         <button
-          class="-ml-1.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+          class="drag-handle -ml-1.5 flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
           title="拖拽排序"
-          @mousedown="emit('dragStart', props.item.id)"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

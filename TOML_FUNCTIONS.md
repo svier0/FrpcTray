@@ -2,7 +2,7 @@
 
 ## 功能概述
 
-已为 frpc-tray 应用添加了 TOML 配置文件管理功能，可以在同级目录下读取和修改 TOML 配置文件。
+已为 frpc-tray 应用添加了完整的 TOML 配置文件管理功能，可以在同级目录下创建、读取、修改和管理 TOML 配置文件。
 
 ## 新增的 Rust 方法
 
@@ -34,7 +34,29 @@ fn write_toml_file(filename: String, content: String) -> Result<(), String>
 - content - 文件内容
 **返回**: 成功或错误信息
 
-### 4. 在指定 TOML 文件中添加代理配置
+### 4. 创建新的 TOML 配置文件
+```rust
+#[tauri::command]
+fn create_toml_file(filename: String, content: Option<String>) -> Result<(), String>
+```
+**功能**: 创建新的 TOML 配置文件
+**参数**:
+- filename - 文件名
+- content - 可选的文件内容（不提供则使用默认 frpc 配置模板）
+**返回**: 成功或错误信息
+
+### 5. 复制 TOML 配置文件
+```rust
+#[tauri::command]
+fn copy_toml_file(source_filename: String, target_filename: String) -> Result<(), String>
+```
+**功能**: 复制现有的 TOML 配置文件
+**参数**:
+- source_filename - 源文件名
+- target_filename - 目标文件名
+**返回**: 成功或错误信息
+
+### 6. 在指定 TOML 文件中添加代理配置
 ```rust
 #[tauri::command]
 fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String>
@@ -45,7 +67,7 @@ fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String>
 - proxy - 代理配置对象
 **返回**: 成功或错误信息
 
-### 5. 更新指定 TOML 文件中的代理配置
+### 7. 更新指定 TOML 文件中的代理配置
 ```rust
 #[tauri::command]
 fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig) -> Result<(), String>
@@ -57,7 +79,7 @@ fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig
 - updates - 更新的代理配置
 **返回**: 成功或错误信息
 
-### 6. 删除指定 TOML 文件中的代理配置
+### 8. 删除指定 TOML 文件中的代理配置
 ```rust
 #[tauri::command]
 fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), String>
@@ -68,7 +90,7 @@ fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), Stri
 - proxy_id - 要删除的代理 ID
 **返回**: 成功或错误信息
 
-### 7. 获取指定 TOML 文件中的所有代理配置
+### 9. 获取指定 TOML 文件中的所有代理配置
 ```rust
 #[tauri::command]
 fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String>
@@ -115,6 +137,29 @@ const tomlFiles = await invoke('list_toml_files')
 // 读取 TOML 文件
 const content = await invoke('read_toml_file', { filename: 'frpc.toml' })
 
+// 创建新的 TOML 文件（使用默认模板）
+await invoke('create_toml_file', { filename: 'new_config.toml' })
+
+// 创建新的 TOML 文件（自定义内容）
+const customContent = `[server]
+addr = "192.168.1.100"
+port = 7000
+token = "custom_token"
+
+[log]
+level = "debug"
+`
+await invoke('create_toml_file', { 
+  filename: 'custom_config.toml', 
+  content: customContent 
+})
+
+// 复制 TOML 文件
+await invoke('copy_toml_file', {
+  source_filename: 'frpc.toml',
+  target_filename: 'frpc_backup.toml'
+})
+
 // 添加代理配置
 const proxy = {
   id: 'proxy1',
@@ -152,6 +197,20 @@ await invoke('delete_proxy_from_toml', {
 - Windows: `C:\path\to\frpc\frpc.toml`
 - macOS: `/Applications/frpc/frpc.toml`
 - Linux: `/usr/local/bin/frpc/frpc.toml`
+
+## 功能列表总结
+
+| 方法 | 功能 | 参数 | 返回值 |
+|------|------|------|--------|
+| `list_toml_files` | 列出同级目录的 TOML 文件 | 无 | `Vec<String>` |
+| `read_toml_file` | 读取 TOML 文件内容 | `filename: String` | `String` |
+| `write_toml_file` | 写入内容到 TOML 文件 | `filename: String`, `content: String` | `()` |
+| `create_toml_file` | 创建新的 TOML 文件 | `filename: String`, `content: Option<String>` | `()` |
+| `copy_toml_file` | 复制 TOML 文件 | `source_filename: String`, `target_filename: String` | `()` |
+| `add_proxy_to_toml` | 添加代理配置 | `filename: String`, `proxy: ProxyConfig` | `()` |
+| `update_proxy_in_toml` | 更新代理配置 | `filename: String`, `proxy_id: String`, `updates: ProxyConfig` | `()` |
+| `delete_proxy_from_toml` | 删除代理配置 | `filename: String`, `proxy_id: String` | `()` |
+| `get_proxies_from_toml` | 获取所有代理配置 | `filename: String` | `Vec<ProxyConfig>` |
 
 ## 注意事项
 
