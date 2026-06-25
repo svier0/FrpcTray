@@ -1,0 +1,131 @@
+{
+  "version": "V1",
+  "lastUpdated": "2026-06-25",
+  "commands": [
+    {
+      "name": "list_toml_files",
+      "description": "获取可执行文件同级目录下的所有 TOML 配置文件列表",
+      "parameters": [],
+      "returns": {
+        "type": "Result<Vec<String>, String>",
+        "success": "文件名数组，如 [\"frpc.toml\", \"proxy.toml\"]",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "read_toml_file",
+      "description": "读取指定 TOML 配置文件的内容",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" }
+      ],
+      "returns": {
+        "type": "Result<String, String>",
+        "success": "文件内容字符串",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "write_toml_file",
+      "description": "写入内容到指定 TOML 文件（覆盖）",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" },
+        { "name": "content", "type": "String", "description": "文件内容" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "create_toml_file",
+      "description": "创建新的 TOML 配置文件，如不提供 content 则使用默认 frpc 模板",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" },
+        { "name": "content", "type": "Option<String>", "description": "可选的文件内容" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "copy_toml_file",
+      "description": "复制 TOML 配置文件",
+      "parameters": [
+        { "name": "source_filename", "type": "String", "description": "源文件名" },
+        { "name": "target_filename", "type": "String", "description": "目标文件名" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "add_proxy_to_toml",
+      "description": "在指定 TOML 文件中添加代理配置",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" },
+        { "name": "proxy", "type": "ProxyConfig", "description": "代理配置对象" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "update_proxy_in_toml",
+      "description": "更新指定 TOML 文件中的代理配置",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" },
+        { "name": "proxy_id", "type": "String", "description": "要更新的代理 ID" },
+        { "name": "updates", "type": "ProxyConfig", "description": "新的代理配置" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "delete_proxy_from_toml",
+      "description": "删除指定 TOML 文件中的代理配置",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" },
+        { "name": "proxy_id", "type": "String", "description": "要删除的代理 ID" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "get_proxies_from_toml",
+      "description": "获取指定 TOML 文件中的所有代理配置",
+      "parameters": [
+        { "name": "filename", "type": "String", "description": "TOML 文件名" }
+      ],
+      "returns": {
+        "type": "Result<Vec<ProxyConfig>, String>",
+        "success": "代理配置数组",
+        "error": "错误信息字符串"
+      }
+    }
+  ],
+  "dataStructures": {
+    "ProxyConfig": {
+      "fields": [
+        { "name": "id", "type": "String", "description": "代理唯一标识" },
+        { "name": "name", "type": "String", "description": "代理名称" },
+        { "name": "url", "type": "String", "description": "代理 URL" },
+        { "name": "enabled", "type": "bool", "description": "是否启用" },
+        { "name": "icon", "type": "Option<String>", "description": "图标（可选）" },
+        { "name": "color", "type": "Option<String>", "description": "颜色（可选）" }
+      ]
+    }
+  }
+}
