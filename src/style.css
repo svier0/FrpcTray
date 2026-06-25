@@ -1,6 +1,29 @@
 @import "tailwindcss";
 
 @theme {
+  --color-background: hsl(0, 0%, 100%);
+  --color-foreground: hsl(240, 10%, 3.9%);
+  --color-card: hsl(0, 0%, 100%);
+  --color-card-foreground: hsl(240, 10%, 3.9%);
+  --color-muted: hsl(240, 4.8%, 95.9%);
+  --color-muted-foreground: hsl(240, 3.8%, 46.1%);
+  --color-border: hsl(240, 5.9%, 90%);
+  --color-primary: hsl(210, 100%, 56%);
+  --color-primary-foreground: hsl(0, 0%, 100%);
+  --color-destructive: hsl(0, 84.2%, 60.2%);
+  --color-destructive-foreground: hsl(0, 0%, 98%);
+  --color-accent: hsl(240, 4.8%, 95.9%);
+  --color-accent-foreground: hsl(240, 5.9%, 10%);
+  --color-orange-500: hsl(24, 95%, 53%);
+  --color-orange-600: hsl(20, 91%, 47%);
+  --color-emerald-400: hsl(160, 84%, 39%);
+  --color-emerald-500: hsl(160, 84%, 39%);
+  --color-emerald-600: hsl(160, 84%, 34%);
+  --color-blue-400: hsl(217, 91%, 60%);
+  --color-blue-500: hsl(217, 91%, 60%);
+}
+
+.dark {
   --color-background: hsl(240, 5%, 12%);
   --color-foreground: hsl(0, 0%, 98%);
   --color-card: hsl(240, 5%, 16%);
@@ -14,13 +37,6 @@
   --color-destructive-foreground: hsl(0, 0%, 98%);
   --color-accent: hsl(240, 5%, 18%);
   --color-accent-foreground: hsl(0, 0%, 98%);
-  --color-orange-500: hsl(24, 95%, 53%);
-  --color-orange-600: hsl(20, 91%, 47%);
-  --color-emerald-400: hsl(160, 84%, 39%);
-  --color-emerald-500: hsl(160, 84%, 39%);
-  --color-emerald-600: hsl(160, 84%, 34%);
-  --color-blue-400: hsl(217, 91%, 60%);
-  --color-blue-500: hsl(217, 91%, 60%);
 }
 
 [data-tauri-drag-region] {
@@ -43,8 +59,15 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
-  color-scheme: dark;
   overscroll-behavior: none;
+}
+
+html.light {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
