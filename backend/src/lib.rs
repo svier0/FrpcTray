@@ -1,4 +1,4 @@
-// Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
+use std::sync::OnceLock;
 
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -6,9 +6,11 @@ use tauri::{
     Manager,
 };
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use toml;
+
+static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProxyConfig {
@@ -28,7 +30,7 @@ pub struct FrpcConfig {
     pub log: Option<LogConfig>,
     pub http_proxy: Option<HttpProxyConfig>,
     pub https_proxy: Option<HttpsProxyConfig>,
-    pub [toml::as_array()]: Option<Vec<ProxyConfig>>,
+    pub proxies: Option<Vec<ProxyConfig>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -53,11 +55,6 @@ pub struct HttpsProxyConfig {
     pub addr: Option<String>,
     pub port: Option<u16>,
 }
-use std::fs;
-use std::path::{Path, PathBuf};
-use serde::{Deserialize, Serialize};
-use toml;
-
 #[tauri::command]
 fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
@@ -71,10 +68,18 @@ fn get_executable_dir() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
+// 获取配置文件所在目录
+fn get_config_dir() -> &'static PathBuf {
+    CONFIG_DIR.get().expect("get_config_dir called before setup")
+}
+
 // 获取同级目录下的 TOML 配置文件列表
 #[tauri::command]
 fn list_toml_files() -> Result<Vec<String>, String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
+
+    // 确保目录存在
+    let _ = fs::create_dir_all(&exec_dir);
 
     let mut toml_files = Vec::new();
 
@@ -99,7 +104,7 @@ fn list_toml_files() -> Result<Vec<String>, String> {
 // 读取指定的 TOML 配置文件
 #[tauri::command]
 fn read_toml_file(filename: String) -> Result<String, String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     if !file_path.exists() {
@@ -117,7 +122,7 @@ fn read_toml_file(filename: String) -> Result<String, String> {
 // 写入 TOML 配置文件
 #[tauri::command]
 fn write_toml_file(filename: String, content: String) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     fs::write(&file_path, content)
@@ -127,7 +132,7 @@ fn write_toml_file(filename: String, content: String) -> Result<(), String> {
 // 在指定 TOML 文件中添加代理配置
 #[tauri::command]
 fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     if !file_path.exists() {
@@ -161,7 +166,7 @@ fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String>
 // 更新指定 TOML 文件中的代理配置
 #[tauri::command]
 fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     if !file_path.exists() {
@@ -199,7 +204,7 @@ fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig
 // 删除指定 TOML 文件中的代理配置
 #[tauri::command]
 fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     if !file_path.exists() {
@@ -232,7 +237,7 @@ fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), Stri
 // 获取指定 TOML 文件中的所有代理配置
 #[tauri::command]
 fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     if !file_path.exists() {
@@ -253,7 +258,7 @@ fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String> {
 // 创建新的 TOML 配置文件
 #[tauri::command]
 fn create_toml_file(filename: String, content: Option<String>) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let file_path = exec_dir.join(filename);
 
     // 检查文件是否已存在
@@ -292,7 +297,7 @@ type = "http_proxy""#.to_string()
 // 复制 TOML 配置文件
 #[tauri::command]
 fn copy_toml_file(source_filename: String, target_filename: String) -> Result<(), String> {
-    let exec_dir = get_executable_dir();
+    let exec_dir = get_config_dir();
     let source_path = exec_dir.join(source_filename);
     let target_path = exec_dir.join(target_filename);
 
@@ -320,6 +325,15 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
+            // 初始化配置文件目录
+            let config_dir: PathBuf = if cfg!(target_os = "windows") {
+                get_executable_dir().join("conf")
+            } else {
+                app.path().app_data_dir().unwrap_or_else(|_| get_executable_dir()).join("conf")
+            };
+            let _ = fs::create_dir_all(&config_dir);
+            let _ = CONFIG_DIR.set(config_dir);
+
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
             let light = MenuItemBuilder::with_id("light", "轻量模式").build(app)?;
             let quit = MenuItemBuilder::with_id("quit", "退出").build(app)?;
