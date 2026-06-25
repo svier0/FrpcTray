@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { SwitchRoot, SwitchThumb } from "radix-vue";
 
-export type ViewTab = "proxy" | "terminal" | "tools" | "mobile" | "history" | "validate";
+export type ViewTab = "proxy" | "terminal";
 
 const props = defineProps<{
   globalEnabled: boolean;
@@ -79,52 +79,6 @@ function setActiveTab(tab: ViewTab) {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 17 10 11 4 5" />
             <line x1="12" y1="19" x2="20" y2="19" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="flex items-center gap-0.5 p-1 bg-muted rounded-xl">
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'tools' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="工具"
-          @click="setActiveTab('tools')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
-          </svg>
-        </button>
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'mobile' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="移动设备"
-          @click="setActiveTab('mobile')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
-            <path d="M12 18h.01" />
-          </svg>
-        </button>
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'history' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="历史"
-          @click="setActiveTab('history')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-            <path d="M12 7v5l4 2" />
-          </svg>
-        </button>
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'validate' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          title="验证"
-          @click="setActiveTab('validate')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12" />
           </svg>
         </button>
       </div>

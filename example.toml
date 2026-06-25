@@ -1,0 +1,46 @@
+# frpc.toml - frpc 客户端配置文件
+# 将此文件放在 frpc 可执行文件的同级目录
+
+# 服务器配置
+serverAddr = "127.0.0.1"
+serverPort = 7000
+token = "your_token_here"
+
+# 日志配置
+[log]
+level = "info"
+file = "frpc.log"
+maxSize = 50
+maxBackups = 3
+maxAge = 7
+
+# HTTP 代理配置
+[httpProxy]
+enabled = true
+addr = "127.0.0.1"
+port = 8080
+
+# HTTPS 代理配置
+[httpsProxy]
+enabled = true
+addr = "127.0.0.1"
+port = 8080
+
+# 代理配置
+[[proxies]]
+name = "web1"
+type = "http"
+localPort = 8081
+remotePort = 80
+
+[proxies.plugin]
+type = "http_proxy"
+
+[[proxies]]
+name = "ssh"
+type = "tcp"
+localPort = 2222
+remotePort = 22
+
+[proxies.plugin]
+type = "tcp_proxy"

@@ -63,6 +63,193 @@ fn greet(name: &str) -> String {
     format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
+// 获取可执行文件所在目录
+fn get_executable_dir() -> PathBuf {
+    std::env::current_exe()
+        .ok()
+        .and_then(|path| path.parent().map(|p| p.to_path_buf()))
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+// 获取同级目录下的 TOML 配置文件列表
+#[tauri::command]
+fn list_toml_files() -> Result<Vec<String>, String> {
+    let exec_dir = get_executable_dir();
+
+    let mut toml_files = Vec::new();
+
+    if let Ok(entries) = fs::read_dir(&exec_dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_file() {
+                if let Some(ext) = path.extension() {
+                    if ext == "toml" {
+                        if let Some(file_name) = path.file_name() {
+                            toml_files.push(file_name.to_string_lossy().to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(toml_files)
+}
+
+// 读取指定的 TOML 配置文件
+#[tauri::command]
+fn read_toml_file(filename: String) -> Result<String, String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    if !file_path.exists() {
+        return Err("配置文件不存在".to_string());
+    }
+
+    if !file_path.is_file() {
+        return Err("路径不是文件".to_string());
+    }
+
+    fs::read_to_string(&file_path)
+        .map_err(|e| format!("读取文件失败: {}", e))
+}
+
+// 写入 TOML 配置文件
+#[tauri::command]
+fn write_toml_file(filename: String, content: String) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    fs::write(&file_path, content)
+        .map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// 在指定 TOML 文件中添加代理配置
+#[tauri::command]
+fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    if !file_path.exists() {
+        return Err("配置文件不存在".to_string());
+    }
+
+    // 读取现有配置
+    let content = fs::read_to_string(&file_path)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // 解析 TOML
+    let mut config: FrpcConfig = toml::from_str(&content)
+        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+
+    // 确保 proxies 数组存在
+    if config.proxies.is_none() {
+        config.proxies = Some(Vec::new());
+    }
+
+    // 添加代理配置
+    config.proxies.as_mut().unwrap().push(proxy);
+
+    // 写回文件
+    let new_content = toml::to_string(&config)
+        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
+
+    fs::write(&file_path, new_content)
+        .map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// 更新指定 TOML 文件中的代理配置
+#[tauri::command]
+fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    if !file_path.exists() {
+        return Err("配置文件不存在".to_string());
+    }
+
+    // 读取现有配置
+    let content = fs::read_to_string(&file_path)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // 解析 TOML
+    let mut config: FrpcConfig = toml::from_str(&content)
+        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+
+    // 更新代理配置
+    if let Some(proxies) = config.proxies.as_mut() {
+        for proxy in proxies {
+            if proxy.id == proxy_id {
+                *proxy = updates;
+                break;
+            }
+        }
+    } else {
+        return Err("配置文件中不存在代理配置".to_string());
+    }
+
+    // 写回文件
+    let new_content = toml::to_string(&config)
+        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
+
+    fs::write(&file_path, new_content)
+        .map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// 删除指定 TOML 文件中的代理配置
+#[tauri::command]
+fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    if !file_path.exists() {
+        return Err("配置文件不存在".to_string());
+    }
+
+    // 读取现有配置
+    let content = fs::read_to_string(&file_path)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // 解析 TOML
+    let mut config: FrpcConfig = toml::from_str(&content)
+        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+
+    // 删除代理配置
+    if let Some(proxies) = config.proxies.as_mut() {
+        proxies.retain(|proxy| proxy.id != proxy_id);
+    } else {
+        return Err("配置文件中不存在代理配置".to_string());
+    }
+
+    // 写回文件
+    let new_content = toml::to_string(&config)
+        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
+
+    fs::write(&file_path, new_content)
+        .map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// 获取指定 TOML 文件中的所有代理配置
+#[tauri::command]
+fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String> {
+    let exec_dir = get_executable_dir();
+    let file_path = exec_dir.join(filename);
+
+    if !file_path.exists() {
+        return Err("配置文件不存在".to_string());
+    }
+
+    // 读取现有配置
+    let content = fs::read_to_string(&file_path)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // 解析 TOML
+    let config: FrpcConfig = toml::from_str(&content)
+        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+
+    Ok(config.proxies.unwrap_or_default())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -117,7 +304,16 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![greet])
+        .invoke_handler(tauri::generate_handler![
+            greet,
+            list_toml_files,
+            read_toml_file,
+            write_toml_file,
+            add_proxy_to_toml,
+            update_proxy_in_toml,
+            delete_proxy_from_toml,
+            get_proxies_from_toml
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
