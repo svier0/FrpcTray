@@ -101,11 +101,11 @@ watch(language, (newLang) => {
             <h3 class="text-sm font-medium">{{ t('settings.language.title') }}</h3>
             <p class="text-xs text-muted-foreground">{{ t('settings.language.description') }}</p>
           </header>
-          <div class="inline-flex gap-1 rounded-lg border border-border bg-background p-1">
+          <div class="inline-flex gap-1 rounded-md border border-border bg-background p-1">
             <button
               v-for="lang in languages"
               :key="lang.value"
-              class="inline-flex items-center justify-center gap-1.5 min-w-[80px] px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              class="inline-flex items-center justify-center min-w-[96px] px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
               :class="language === lang.value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'"
               @click="language = lang.value"
             >
@@ -119,7 +119,7 @@ watch(language, (newLang) => {
             <h3 class="text-sm font-medium">{{ t('settings.theme.title') }}</h3>
             <p class="text-xs text-muted-foreground">{{ t('settings.theme.description') }}</p>
           </header>
-          <div class="inline-flex gap-1 rounded-lg border border-border bg-background p-1">
+          <div class="inline-flex gap-1 rounded-md border border-border bg-background p-1">
             <button
               v-for="th in themes"
               :key="th.value"
