@@ -19,14 +19,14 @@ bun install
 ```bash
 cd frontend
 bun run dev              # 启动前端开发服务器
-bun run tauri:dev       # 启动完整的 Tauri 开发服务器
+bun run tauri dev       # 启动完整的 Tauri 开发服务器
 ```
 
 ### 构建项目
 ```bash
 cd frontend
 bun run build           # 构建前端代码
-bun run tauri:build     # 构建完整的 Tauri 应用
+bun run tauri build     # 构建完整的 Tauri 应用
 ```
 
 ### 其他命令

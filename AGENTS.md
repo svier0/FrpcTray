@@ -1,14 +1,14 @@
 # AGENTS.md
 
-## Project Overview
+## 项目概述 (Project Overview)
 frpc tray - A system tray application for managing frpc proxy configurations, built with Tauri 2 + Vue 3.
 
-## Tech Stack
+## 技术栈 (Tech Stack)
 - **Frontend:** Vue 3, TypeScript, Tailwind CSS v4, Radix Vue, vue-i18n, vue-draggable-plus
 - **Backend:** Rust, Tauri 2
 - **Package Manager:** bun (not npm)
 
-## Directory Structure
+## 目录结构 (Directory Structure)
 ```
 /
 ├── frontend/          # Vue 3 frontend
@@ -23,7 +23,7 @@ frpc tray - A system tray application for managing frpc proxy configurations, bu
     └── Cargo.toml
 ```
 
-## Commands
+## 命令 (Commands)
 ```bash
 # Frontend
 cd frontend && bun run dev      # Start Vite dev server
@@ -32,12 +32,12 @@ cd frontend && bun run tauri dev    # Start Tauri dev
 cd frontend && bun run tauri build  # Build Tauri app
 ```
 
-## Key Conventions
+## 主要约定 (Key Conventions)
 - Language: Use Chinese (zh-CN) for UI text and comments
 - Styling: Follow CC Switch design patterns (dark theme, glass morphism)
 - State: Theme and language persisted in localStorage
 
-## Collaboration
+## 协作 (Collaboration)
 - See `/AI_COLLABORATION_GUIDE.md` for frontend-backend collaboration protocol
 - Frontend writes to `FRONTEND_STATUS.md` only
 - Backend writes to `BACKEND_STATUS.md` only
