@@ -4,10 +4,12 @@ import AppHeader from "./components/AppHeader.vue";
 import type { ViewTab } from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
+import SettingsPage from "./components/SettingsPage.vue";
 
 const globalEnabled = ref(true);
 const activeTab = ref<ViewTab>("proxy");
 const activeProxyId = ref<string | undefined>();
+const showSettings = ref(false);
 
 const proxies = ref<ProxyItem[]>([
   {
@@ -71,35 +73,46 @@ function handleAddProxy() {
 }
 
 function handleOpenSettings() {
-  console.log("openSettings");
+  showSettings.value = true;
+}
+
+function handleCloseSettings() {
+  showSettings.value = false;
 }
 </script>
 
 <template>
   <div class="flex flex-col h-screen overflow-hidden bg-background text-foreground">
-    <AppHeader
-      v-model:global-enabled="globalEnabled"
-      v-model:active-tab="activeTab"
-      @open-settings="handleOpenSettings"
-      @add-proxy="handleAddProxy"
-    />
-
-    <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
-      <ProxyList
-        v-if="activeTab === 'proxy'"
-        :items="proxies"
-        :active-id="activeProxyId"
-        @update:items="handleUpdateItems"
-        @update:enabled="handleUpdateEnabled"
-        @edit="handleEdit"
-        @duplicate="handleDuplicate"
-        @delete="handleDelete"
-        @view-logs="handleViewLogs"
+    <template v-if="!showSettings">
+      <AppHeader
+        v-model:global-enabled="globalEnabled"
+        v-model:active-tab="activeTab"
+        @open-settings="handleOpenSettings"
+        @add-proxy="handleAddProxy"
       />
 
-      <div v-else class="flex flex-col items-center justify-center h-full text-muted-foreground">
-        <p class="text-sm">{{ activeTab }} 视图</p>
-      </div>
-    </main>
+      <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
+        <ProxyList
+          v-if="activeTab === 'proxy'"
+          :items="proxies"
+          :active-id="activeProxyId"
+          @update:items="handleUpdateItems"
+          @update:enabled="handleUpdateEnabled"
+          @edit="handleEdit"
+          @duplicate="handleDuplicate"
+          @delete="handleDelete"
+          @view-logs="handleViewLogs"
+        />
+
+        <div v-else class="flex flex-col items-center justify-center h-full text-muted-foreground">
+          <p class="text-sm">{{ activeTab }} 视图</p>
+        </div>
+      </main>
+    </template>
+
+    <SettingsPage
+      v-else
+      @close="handleCloseSettings"
+    />
   </div>
 </template>
