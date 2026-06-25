@@ -7,9 +7,7 @@
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "tauri": "./node_modules/.bin/tauri -c ../backend/tauri.conf.json",
-    "tauri:dev": "./node_modules/.bin/tauri dev -c ../backend/tauri.conf.json",
-    "tauri:build": "./node_modules/.bin/tauri build -c ../backend/tauri.conf.json"
+    "tauri": "cd ../backend && bun ../frontend/node_modules/@tauri-apps/cli/tauri.js"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.1",
