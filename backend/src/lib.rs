@@ -8,330 +8,304 @@ use tauri::{
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
-use toml;
 
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
+// ── TOML file structures ──
+
 #[derive(Debug, Serialize, Deserialize)]
-pub struct ProxyConfig {
-    pub id: String,
-    pub name: String,
-    pub url: String,
-    pub enabled: bool,
-    pub icon: Option<String>,
-    pub color: Option<String>,
+struct AuthConfig {
+    method: Option<String>,
+    token: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct FrpcConfig {
-    pub server_addr: Option<String>,
-    pub server_port: Option<u16>,
-    pub token: Option<String>,
-    pub log: Option<LogConfig>,
-    pub http_proxy: Option<HttpProxyConfig>,
-    pub https_proxy: Option<HttpsProxyConfig>,
-    pub proxies: Option<Vec<ProxyConfig>>,
+struct LogConfig {
+    to: Option<String>,
+    level: Option<String>,
+    #[serde(rename = "maxDays")]
+    max_days: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct LogConfig {
-    pub level: Option<String>,
-    pub file: Option<String>,
-    pub max_size: Option<u64>,
-    pub max_backups: Option<u32>,
-    pub max_age: Option<u32>,
+struct FrpcConfigFile {
+    title: String,
+    enable: bool,
+    sort: i32,
+    #[serde(rename = "serverAddr")]
+    server_addr: String,
+    #[serde(rename = "serverPort")]
+    server_port: u16,
+    auth: Option<AuthConfig>,
+    log: Option<LogConfig>,
+    proxies: Option<Vec<ProxyItem>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct HttpProxyConfig {
-    pub enabled: Option<bool>,
-    pub addr: Option<String>,
-    pub port: Option<u16>,
+struct ProxyItem {
+    name: String,
+    desc: Option<String>,
+    #[serde(rename = "type")]
+    proxy_type: String,
+    #[serde(rename = "localIP")]
+    local_ip: Option<String>,
+    #[serde(rename = "localPort")]
+    local_port: u16,
+    #[serde(rename = "customDomains")]
+    custom_domains: Option<Vec<String>>,
+    locations: Option<Vec<String>>,
 }
+
+// ── API structures ──
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct HttpsProxyConfig {
-    pub enabled: Option<bool>,
-    pub addr: Option<String>,
-    pub port: Option<u16>,
-}
-#[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+struct ServerInfo {
+    id: String,
+    title: String,
+    enable: bool,
+    sort: i32,
+    #[serde(rename = "serverAddr")]
+    server_addr: String,
+    #[serde(rename = "serverPort")]
+    server_port: u16,
+    auth: Option<AuthConfig>,
 }
 
-// 获取可执行文件所在目录
+// ── Helper functions ──
+
 fn get_executable_dir() -> PathBuf {
     std::env::current_exe()
         .ok()
-        .and_then(|path| path.parent().map(|p| p.to_path_buf()))
+        .and_then(|p| p.parent().map(|p| p.to_path_buf()))
         .unwrap_or_else(|| PathBuf::from("."))
 }
 
-// 获取配置文件所在目录
 fn get_config_dir() -> &'static PathBuf {
     CONFIG_DIR.get().expect("get_config_dir called before setup")
 }
 
-// 获取同级目录下的 TOML 配置文件列表
+fn server_path(id: &str) -> PathBuf {
+    get_config_dir().join(format!("frpc.{}.toml", id))
+}
+
+fn id_from_filename(filename: &str) -> Option<String> {
+    filename
+        .strip_suffix(".toml")
+        .and_then(|s| s.strip_prefix("frpc."))
+        .map(|s| s.to_string())
+}
+
+fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
+    let path = server_path(id);
+    if !path.exists() {
+        return Err(format!("服务器 '{}' 不存在", id));
+    }
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("读取文件失败: {}", e))?;
+    toml::from_str(&content)
+        .map_err(|e| format!("解析 TOML 失败: {}", e))
+}
+
+fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
+    let path = server_path(id);
+    let content = toml::to_string(config)
+        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
+    fs::write(&path, content)
+        .map_err(|e| format!("写入文件失败: {}", e))
+}
+
+// ── Server commands ──
+
 #[tauri::command]
-fn list_toml_files() -> Result<Vec<String>, String> {
-    let exec_dir = get_config_dir();
+fn list_servers() -> Result<Vec<ServerInfo>, String> {
+    let dir = get_config_dir();
+    fs::create_dir_all(dir)
+        .map_err(|e| format!("创建配置目录失败: {}", e))?;
 
-    // 确保目录存在
-    let _ = fs::create_dir_all(&exec_dir);
-
-    let mut toml_files = Vec::new();
-
-    if let Ok(entries) = fs::read_dir(&exec_dir) {
+    let mut servers = Vec::new();
+    if let Ok(entries) = fs::read_dir(dir) {
         for entry in entries.flatten() {
             let path = entry.path();
-            if path.is_file() {
-                if let Some(ext) = path.extension() {
-                    if ext == "toml" {
-                        if let Some(file_name) = path.file_name() {
-                            toml_files.push(file_name.to_string_lossy().to_string());
-                        }
-                    }
-                }
+            if !path.is_file() {
+                continue;
+            }
+            let name = match path.file_name().and_then(|n| n.to_str()) {
+                Some(n) => n.to_string(),
+                None => continue,
+            };
+            let id = match id_from_filename(&name) {
+                Some(id) => id,
+                None => continue,
+            };
+            if let Ok(config) = read_server_file(&id) {
+                servers.push(ServerInfo {
+                    id,
+                    title: config.title,
+                    enable: config.enable,
+                    sort: config.sort,
+                    server_addr: config.server_addr,
+                    server_port: config.server_port,
+                    auth: config.auth,
+                });
             }
         }
     }
 
-    Ok(toml_files)
+    servers.sort_by_key(|s| s.sort);
+    Ok(servers)
 }
 
-// 读取指定的 TOML 配置文件
 #[tauri::command]
-fn read_toml_file(filename: String) -> Result<String, String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    if !file_path.exists() {
-        return Err("配置文件不存在".to_string());
-    }
-
-    if !file_path.is_file() {
-        return Err("路径不是文件".to_string());
-    }
-
-    fs::read_to_string(&file_path)
-        .map_err(|e| format!("读取文件失败: {}", e))
+fn get_server(id: String) -> Result<ServerInfo, String> {
+    let config = read_server_file(&id)?;
+    Ok(ServerInfo {
+        id,
+        title: config.title,
+        enable: config.enable,
+        sort: config.sort,
+        server_addr: config.server_addr,
+        server_port: config.server_port,
+        auth: config.auth,
+    })
 }
 
-// 写入 TOML 配置文件
 #[tauri::command]
-fn write_toml_file(filename: String, content: String) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
+fn create_server(server: ServerInfo) -> Result<(), String> {
+    let path = server_path(&server.id);
+    if path.exists() {
+        return Err(format!("服务器 '{}' 已存在", server.id));
+    }
 
-    fs::write(&file_path, content)
-        .map_err(|e| format!("写入文件失败: {}", e))
+    let config = FrpcConfigFile {
+        title: server.title,
+        enable: server.enable,
+        sort: server.sort,
+        server_addr: server.server_addr,
+        server_port: server.server_port,
+        auth: server.auth,
+        log: Some(LogConfig {
+            to: Some("frpc.log".to_string()),
+            level: Some("info".to_string()),
+            max_days: Some(3),
+        }),
+        proxies: None,
+    };
+    write_server_file(&server.id, &config)
 }
 
-// 在指定 TOML 文件中添加代理配置
 #[tauri::command]
-fn add_proxy_to_toml(filename: String, proxy: ProxyConfig) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    if !file_path.exists() {
-        return Err("配置文件不存在".to_string());
-    }
-
-    // 读取现有配置
-    let content = fs::read_to_string(&file_path)
-        .map_err(|e| format!("读取文件失败: {}", e))?;
-
-    // 解析 TOML
-    let mut config: FrpcConfig = toml::from_str(&content)
-        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
-
-    // 确保 proxies 数组存在
-    if config.proxies.is_none() {
-        config.proxies = Some(Vec::new());
-    }
-
-    // 添加代理配置
-    config.proxies.as_mut().unwrap().push(proxy);
-
-    // 写回文件
-    let new_content = toml::to_string(&config)
-        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
-
-    fs::write(&file_path, new_content)
-        .map_err(|e| format!("写入文件失败: {}", e))
+fn update_server(server: ServerInfo) -> Result<(), String> {
+    let mut config = read_server_file(&server.id)?;
+    config.title = server.title;
+    config.enable = server.enable;
+    config.sort = server.sort;
+    config.server_addr = server.server_addr;
+    config.server_port = server.server_port;
+    config.auth = server.auth;
+    write_server_file(&server.id, &config)
 }
 
-// 更新指定 TOML 文件中的代理配置
 #[tauri::command]
-fn update_proxy_in_toml(filename: String, proxy_id: String, updates: ProxyConfig) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    if !file_path.exists() {
-        return Err("配置文件不存在".to_string());
+fn delete_server(id: String) -> Result<(), String> {
+    let path = server_path(&id);
+    if !path.exists() {
+        return Err(format!("服务器 '{}' 不存在", id));
     }
-
-    // 读取现有配置
-    let content = fs::read_to_string(&file_path)
-        .map_err(|e| format!("读取文件失败: {}", e))?;
-
-    // 解析 TOML
-    let mut config: FrpcConfig = toml::from_str(&content)
-        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
-
-    // 更新代理配置
-    if let Some(proxies) = config.proxies.as_mut() {
-        for proxy in proxies {
-            if proxy.id == proxy_id {
-                *proxy = updates;
-                break;
-            }
-        }
-    } else {
-        return Err("配置文件中不存在代理配置".to_string());
-    }
-
-    // 写回文件
-    let new_content = toml::to_string(&config)
-        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
-
-    fs::write(&file_path, new_content)
-        .map_err(|e| format!("写入文件失败: {}", e))
+    fs::remove_file(&path)
+        .map_err(|e| format!("删除文件失败: {}", e))
 }
 
-// 删除指定 TOML 文件中的代理配置
 #[tauri::command]
-fn delete_proxy_from_toml(filename: String, proxy_id: String) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    if !file_path.exists() {
-        return Err("配置文件不存在".to_string());
+fn reorder_servers(ids: Vec<String>) -> Result<(), String> {
+    for (index, id) in ids.iter().enumerate() {
+        let mut config = read_server_file(id)?;
+        config.sort = index as i32 + 1;
+        write_server_file(id, &config)?;
     }
-
-    // 读取现有配置
-    let content = fs::read_to_string(&file_path)
-        .map_err(|e| format!("读取文件失败: {}", e))?;
-
-    // 解析 TOML
-    let mut config: FrpcConfig = toml::from_str(&content)
-        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
-
-    // 删除代理配置
-    if let Some(proxies) = config.proxies.as_mut() {
-        proxies.retain(|proxy| proxy.id != proxy_id);
-    } else {
-        return Err("配置文件中不存在代理配置".to_string());
-    }
-
-    // 写回文件
-    let new_content = toml::to_string(&config)
-        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
-
-    fs::write(&file_path, new_content)
-        .map_err(|e| format!("写入文件失败: {}", e))
+    Ok(())
 }
 
-// 获取指定 TOML 文件中的所有代理配置
+// ── Proxy commands ──
+
 #[tauri::command]
-fn get_proxies_from_toml(filename: String) -> Result<Vec<ProxyConfig>, String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    if !file_path.exists() {
-        return Err("配置文件不存在".to_string());
-    }
-
-    // 读取现有配置
-    let content = fs::read_to_string(&file_path)
-        .map_err(|e| format!("读取文件失败: {}", e))?;
-
-    // 解析 TOML
-    let config: FrpcConfig = toml::from_str(&content)
-        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
-
+fn list_proxies(server_id: String) -> Result<Vec<ProxyItem>, String> {
+    let config = read_server_file(&server_id)?;
     Ok(config.proxies.unwrap_or_default())
 }
 
-// 创建新的 TOML 配置文件
 #[tauri::command]
-fn create_toml_file(filename: String, content: Option<String>) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let file_path = exec_dir.join(filename);
-
-    // 检查文件是否已存在
-    if file_path.exists() {
-        return Err("配置文件已存在".to_string());
+fn create_proxy(server_id: String, proxy: ProxyItem) -> Result<(), String> {
+    let mut config = read_server_file(&server_id)?;
+    let proxies = config.proxies.get_or_insert_with(Vec::new);
+    if proxies.iter().any(|p| p.name == proxy.name) {
+        return Err(format!("代理 '{}' 已存在", proxy.name));
     }
-
-    // 如果没有提供内容，使用默认的 frpc 配置模板
-    let default_content = content.unwrap_or_else(|| {
-        r#"[server]
-addr = "127.0.0.1"
-port = 7000
-token = "your_token_here"
-
-[log]
-level = "info"
-file = "frpc.log"
-maxSize = 50
-maxBackups = 3
-maxAge = 7
-
-[[proxies]]
-name = "default_proxy"
-type = "http"
-localPort = 8080
-remotePort = 80
-
-[proxies.plugin]
-type = "http_proxy""#.to_string()
-    });
-
-    fs::write(&file_path, default_content)
-        .map_err(|e| format!("创建文件失败: {}", e))
+    proxies.push(proxy);
+    write_server_file(&server_id, &config)
 }
 
-// 复制 TOML 配置文件
 #[tauri::command]
-fn copy_toml_file(source_filename: String, target_filename: String) -> Result<(), String> {
-    let exec_dir = get_config_dir();
-    let source_path = exec_dir.join(source_filename);
-    let target_path = exec_dir.join(target_filename);
+fn update_proxy(server_id: String, old_name: String, proxy: ProxyItem) -> Result<(), String> {
+    let mut config = read_server_file(&server_id)?;
+    let proxies = config.proxies.as_mut()
+        .ok_or_else(|| "服务器没有代理配置".to_string())?;
 
-    // 检查源文件是否存在
-    if !source_path.exists() {
-        return Err("源配置文件不存在".to_string());
+    if old_name != proxy.name && proxies.iter().any(|p| p.name == proxy.name) {
+        return Err(format!("代理名称 '{}' 已被使用", proxy.name));
     }
 
-    // 检查目标文件是否已存在
-    if target_path.exists() {
-        return Err("目标配置文件已存在".to_string());
+    if let Some(p) = proxies.iter_mut().find(|p| p.name == old_name) {
+        *p = proxy;
+    } else {
+        return Err(format!("代理 '{}' 不存在", old_name));
     }
-
-    // 读取源文件内容
-    let content = fs::read_to_string(&source_path)
-        .map_err(|e| format!("读取源文件失败: {}", e))?;
-
-    // 写入目标文件
-    fs::write(&target_path, content)
-        .map_err(|e| format!("创建目标文件失败: {}", e))
+    write_server_file(&server_id, &config)
 }
+
+#[tauri::command]
+fn delete_proxy(server_id: String, name: String) -> Result<(), String> {
+    let mut config = read_server_file(&server_id)?;
+    let proxies = config.proxies.as_mut()
+        .ok_or_else(|| "服务器没有代理配置".to_string())?;
+    let len_before = proxies.len();
+    proxies.retain(|p| p.name != name);
+    if proxies.len() == len_before {
+        return Err(format!("代理 '{}' 不存在", name));
+    }
+    write_server_file(&server_id, &config)
+}
+
+#[tauri::command]
+fn reorder_proxies(server_id: String, names: Vec<String>) -> Result<(), String> {
+    let mut config = read_server_file(&server_id)?;
+    let proxies = config.proxies.as_mut()
+        .ok_or_else(|| "服务器没有代理配置".to_string())?;
+    let mut ordered = Vec::with_capacity(names.len());
+    for name in &names {
+        let pos = proxies.iter().position(|p| p.name == *name)
+            .ok_or_else(|| format!("代理 '{}' 不存在", name))?;
+        ordered.push(proxies.remove(pos));
+    }
+    *proxies = ordered;
+    write_server_file(&server_id, &config)
+}
+
+// ── App entry ──
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
-            // 初始化配置文件目录
             let config_dir: PathBuf = if cfg!(target_os = "windows") {
                 get_executable_dir().join("conf")
             } else {
-                app.path().app_data_dir().unwrap_or_else(|_| get_executable_dir()).join("conf")
+                app.path().app_data_dir()
+                    .unwrap_or_else(|_| get_executable_dir())
+                    .join("conf")
             };
-            let _ = fs::create_dir_all(&config_dir);
+            fs::create_dir_all(&config_dir)
+                .expect("无法创建配置目录");
             let _ = CONFIG_DIR.set(config_dir);
 
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
@@ -384,16 +358,17 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            greet,
-            list_toml_files,
-            read_toml_file,
-            write_toml_file,
-            create_toml_file,
-            copy_toml_file,
-            add_proxy_to_toml,
-            update_proxy_in_toml,
-            delete_proxy_from_toml,
-            get_proxies_from_toml
+            list_servers,
+            get_server,
+            create_server,
+            update_server,
+            delete_server,
+            reorder_servers,
+            list_proxies,
+            create_proxy,
+            update_proxy,
+            delete_proxy,
+            reorder_proxies,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

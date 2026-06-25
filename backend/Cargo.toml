@@ -32,3 +32,6 @@ lto = true
 opt-level = "z"
 panic = "abort"
 strip = true
+
+[dev-dependencies]
+toml-test = "2.1.0"

@@ -1,48 +1,34 @@
 {
-  "version": "V1",
-  "lastUpdated": "2026-06-25",
+  "version": "V2",
+  "lastUpdated": "2026-06-26",
   "commands": [
     {
-      "name": "list_toml_files",
-      "description": "获取可执行文件同级目录下的所有 TOML 配置文件列表",
+      "name": "list_servers",
+      "description": "获取所有服务器配置列表（扫描 conf/frpc.*.toml）",
       "parameters": [],
       "returns": {
-        "type": "Result<Vec<String>, String>",
-        "success": "文件名数组，如 [\"frpc.toml\", \"proxy.toml\"]",
+        "type": "Result<Vec<ServerInfo>, String>",
+        "success": "按 sort 排序的服务器数组",
         "error": "错误信息字符串"
       }
     },
     {
-      "name": "read_toml_file",
-      "description": "读取指定 TOML 配置文件的内容",
+      "name": "get_server",
+      "description": "获取单个服务器配置",
       "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" }
+        { "name": "id", "type": "String", "description": "服务器 ID（文件名中的标识）" }
       ],
       "returns": {
-        "type": "Result<String, String>",
-        "success": "文件内容字符串",
+        "type": "Result<ServerInfo, String>",
+        "success": "服务器配置对象",
         "error": "错误信息字符串"
       }
     },
     {
-      "name": "write_toml_file",
-      "description": "写入内容到指定 TOML 文件（覆盖）",
+      "name": "create_server",
+      "description": "创建新的服务器配置文件 conf/frpc.{id}.toml",
       "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" },
-        { "name": "content", "type": "String", "description": "文件内容" }
-      ],
-      "returns": {
-        "type": "Result<(), String>",
-        "success": "空",
-        "error": "错误信息字符串"
-      }
-    },
-    {
-      "name": "create_toml_file",
-      "description": "创建新的 TOML 配置文件，如不提供 content 则使用默认 frpc 模板",
-      "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" },
-        { "name": "content", "type": "Option<String>", "description": "可选的文件内容" }
+        { "name": "server", "type": "ServerInfo", "description": "服务器配置（需包含 id）" }
       ],
       "returns": {
         "type": "Result<(), String>",
@@ -51,11 +37,10 @@
       }
     },
     {
-      "name": "copy_toml_file",
-      "description": "复制 TOML 配置文件",
+      "name": "update_server",
+      "description": "更新服务器配置（保留 log/proxies）",
       "parameters": [
-        { "name": "source_filename", "type": "String", "description": "源文件名" },
-        { "name": "target_filename", "type": "String", "description": "目标文件名" }
+        { "name": "server", "type": "ServerInfo", "description": "新的服务器配置" }
       ],
       "returns": {
         "type": "Result<(), String>",
@@ -64,11 +49,10 @@
       }
     },
     {
-      "name": "add_proxy_to_toml",
-      "description": "在指定 TOML 文件中添加代理配置",
+      "name": "delete_server",
+      "description": "删除服务器配置文件",
       "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" },
-        { "name": "proxy", "type": "ProxyConfig", "description": "代理配置对象" }
+        { "name": "id", "type": "String", "description": "服务器 ID" }
       ],
       "returns": {
         "type": "Result<(), String>",
@@ -77,12 +61,10 @@
       }
     },
     {
-      "name": "update_proxy_in_toml",
-      "description": "更新指定 TOML 文件中的代理配置",
+      "name": "reorder_servers",
+      "description": "批量更新服务器排序（按数组顺序分配 sort=1..N）",
       "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" },
-        { "name": "proxy_id", "type": "String", "description": "要更新的代理 ID" },
-        { "name": "updates", "type": "ProxyConfig", "description": "新的代理配置" }
+        { "name": "ids", "type": "Vec<String>", "description": "排序后的服务器 ID 列表" }
       ],
       "returns": {
         "type": "Result<(), String>",
@@ -91,40 +73,101 @@
       }
     },
     {
-      "name": "delete_proxy_from_toml",
-      "description": "删除指定 TOML 文件中的代理配置",
+      "name": "list_proxies",
+      "description": "获取指定服务器的所有代理列表",
       "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" },
-        { "name": "proxy_id", "type": "String", "description": "要删除的代理 ID" }
+        { "name": "server_id", "type": "String", "description": "服务器 ID" }
       ],
       "returns": {
-        "type": "Result<(), String>",
-        "success": "空",
-        "error": "错误信息字符串"
-      }
-    },
-    {
-      "name": "get_proxies_from_toml",
-      "description": "获取指定 TOML 文件中的所有代理配置",
-      "parameters": [
-        { "name": "filename", "type": "String", "description": "TOML 文件名" }
-      ],
-      "returns": {
-        "type": "Result<Vec<ProxyConfig>, String>",
+        "type": "Result<Vec<ProxyItem>, String>",
         "success": "代理配置数组",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "create_proxy",
+      "description": "在指定服务器中添加代理",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" },
+        { "name": "proxy", "type": "ProxyItem", "description": "代理配置" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "update_proxy",
+      "description": "更新指定服务器中的代理（支持重命名，old_name 匹配原名）",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" },
+        { "name": "old_name", "type": "String", "description": "代理原名" },
+        { "name": "proxy", "type": "ProxyItem", "description": "新的代理配置" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "delete_proxy",
+      "description": "删除指定服务器中的代理",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" },
+        { "name": "name", "type": "String", "description": "代理名称" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "reorder_proxies",
+      "description": "重新排序指定服务器中的代理（按数组顺序重排 [[proxies]]）",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" },
+        { "name": "names", "type": "Vec<String>", "description": "排序后的代理名称列表" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
         "error": "错误信息字符串"
       }
     }
   ],
   "dataStructures": {
-    "ProxyConfig": {
+    "ServerInfo": {
+      "description": "服务器配置（对应 conf/frpc.{id}.toml）",
       "fields": [
-        { "name": "id", "type": "String", "description": "代理唯一标识" },
+        { "name": "id", "type": "String", "description": "服务器唯一标识（文件名中的 ID，如 frpc.w.toml → 'w'）" },
+        { "name": "title", "type": "String", "description": "服务器标题" },
+        { "name": "enable", "type": "bool", "description": "是否启用" },
+        { "name": "sort", "type": "i32", "description": "排序序号" },
+        { "name": "serverAddr", "type": "String", "description": "服务器地址（IP）" },
+        { "name": "serverPort", "type": "u16", "description": "服务器端口" },
+        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" }
+      ]
+    },
+    "AuthConfig": {
+      "description": "鉴权配置",
+      "fields": [
+        { "name": "method", "type": "String | null", "description": "鉴权方式（如 token）" },
+        { "name": "token", "type": "String | null", "description": "鉴权密钥" }
+      ]
+    },
+    "ProxyItem": {
+      "description": "代理配置（对应 [[proxies]]），字段名与 TOML 完全一致",
+      "fields": [
         { "name": "name", "type": "String", "description": "代理名称" },
-        { "name": "url", "type": "String", "description": "代理 URL" },
-        { "name": "enabled", "type": "bool", "description": "是否启用" },
-        { "name": "icon", "type": "Option<String>", "description": "图标（可选）" },
-        { "name": "color", "type": "Option<String>", "description": "颜色（可选）" }
+        { "name": "desc", "type": "String | null", "description": "代理描述" },
+        { "name": "type", "type": "String", "description": "代理类型（http/https/tcp/udp 等）" },
+        { "name": "localIP", "type": "String | null", "description": "本地 IP" },
+        { "name": "localPort", "type": "u16", "description": "本地端口" },
+        { "name": "customDomains", "type": "Vec<String> | null", "description": "绑定域名列表" },
+        { "name": "locations", "type": "Vec<String> | null", "description": "路径列表" }
       ]
     }
   }
