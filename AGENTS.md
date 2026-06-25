@@ -38,9 +38,14 @@ cd frontend && bun run tauri build  # Build Tauri app
 - Backend writes to `BACKEND_STATUS.md` only
 - API specs in `/backend/api_spec.json`
 
+## 项目 Git 习惯
+- 提交在项目根目录使用 `git add . && git commit -m "..."` 而非 `git add -A`
+- 每次修改完文件都执行git提交
+
 ## 会话开始 (on session start)
 - 不要一上来就扫描整个项目
 - 阅读`BUN_USAGE.md`
 - 后端阅读`backend/AGENT_CONTEXT.md`恢复上下文
 - 前端阅读`frontend/AGENT_CONTEXT.md`恢复上下文
 - 上下文恢复完成后再根据用户指示按需阅读代码
+- 每次对话结束前，如果有文件修改，在提交git之前，先更新自己的`AGENT_CONTEXT.md`(注意增量更新，不随意删除)
