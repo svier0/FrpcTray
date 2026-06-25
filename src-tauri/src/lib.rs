@@ -5,6 +5,58 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
+use std::fs;
+use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
+use toml;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ProxyConfig {
+    pub id: String,
+    pub name: String,
+    pub url: String,
+    pub enabled: bool,
+    pub icon: Option<String>,
+    pub color: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct FrpcConfig {
+    pub server_addr: Option<String>,
+    pub server_port: Option<u16>,
+    pub token: Option<String>,
+    pub log: Option<LogConfig>,
+    pub http_proxy: Option<HttpProxyConfig>,
+    pub https_proxy: Option<HttpsProxyConfig>,
+    pub [toml::as_array()]: Option<Vec<ProxyConfig>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct LogConfig {
+    pub level: Option<String>,
+    pub file: Option<String>,
+    pub max_size: Option<u64>,
+    pub max_backups: Option<u32>,
+    pub max_age: Option<u32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HttpProxyConfig {
+    pub enabled: Option<bool>,
+    pub addr: Option<String>,
+    pub port: Option<u16>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct HttpsProxyConfig {
+    pub enabled: Option<bool>,
+    pub addr: Option<String>,
+    pub port: Option<u16>,
+}
+use std::fs;
+use std::path::{Path, PathBuf};
+use serde::{Deserialize, Serialize};
+use toml;
 
 #[tauri::command]
 fn greet(name: &str) -> String {

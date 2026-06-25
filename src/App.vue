@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import AppHeader from "./components/AppHeader.vue";
+import type { ViewTab } from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
 
 const globalEnabled = ref(true);
+const activeTab = ref<ViewTab>("proxy");
 const activeProxyId = ref<string | undefined>();
 
 const proxies = ref<ProxyItem[]>([
@@ -71,23 +73,20 @@ function handleAddProxy() {
 function handleOpenSettings() {
   console.log("openSettings");
 }
-
-function handleRefresh() {
-  console.log("refresh");
-}
 </script>
 
 <template>
   <div class="flex flex-col h-screen overflow-hidden bg-background text-foreground">
     <AppHeader
       v-model:global-enabled="globalEnabled"
+      v-model:active-tab="activeTab"
       @open-settings="handleOpenSettings"
       @add-proxy="handleAddProxy"
-      @refresh="handleRefresh"
     />
 
     <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
       <ProxyList
+        v-if="activeTab === 'proxy'"
         :items="proxies"
         :active-id="activeProxyId"
         @update:enabled="handleUpdateEnabled"
@@ -97,6 +96,10 @@ function handleRefresh() {
         @view-logs="handleViewLogs"
         @drag-start="handleDragStart"
       />
+
+      <div v-else class="flex flex-col items-center justify-center h-full text-muted-foreground">
+        <p class="text-sm">{{ activeTab }} 视图</p>
+      </div>
     </main>
   </div>
 </template>
