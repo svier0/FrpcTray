@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: hsl(240, 5%, 12%);
+  --color-foreground: hsl(0, 0%, 98%);
+  --color-card: hsl(240, 5%, 16%);
+  --color-card-foreground: hsl(0, 0%, 98%);
+  --color-muted: hsl(240, 5%, 18%);
+  --color-muted-foreground: hsl(240, 5%, 64.9%);
+  --color-border: hsl(240, 5%, 24%);
+  --color-primary: hsl(210, 100%, 54%);
+  --color-primary-foreground: hsl(0, 0%, 100%);
+  --color-destructive: hsl(0, 62.8%, 30.6%);
+  --color-destructive-foreground: hsl(0, 0%, 98%);
+  --color-accent: hsl(240, 5%, 18%);
+  --color-accent-foreground: hsl(0, 0%, 98%);
+  --color-orange-500: hsl(24, 95%, 53%);
+  --color-orange-600: hsl(20, 91%, 47%);
+  --color-emerald-400: hsl(160, 84%, 39%);
+  --color-emerald-500: hsl(160, 84%, 39%);
+  --color-emerald-600: hsl(160, 84%, 34%);
+  --color-blue-400: hsl(217, 91%, 60%);
+  --color-blue-500: hsl(217, 91%, 60%);
+}
+
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-no-drag],
+[data-tauri-drag-region] .no-drag {
+  -webkit-app-region: no-drag;
+}
+
+* {
+  box-sizing: border-box;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.5;
+  color-scheme: dark;
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 0.875rem;
+  background-color: hsl(var(--color-background));
+  color: hsl(var(--color-foreground));
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+*:focus-visible {
+  outline: 2px solid hsl(var(--color-primary));
+  outline-offset: 2px;
+}
