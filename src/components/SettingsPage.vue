@@ -23,9 +23,9 @@ const languages = [
 ];
 
 const themes = [
-  { value: "light" as Theme, labelKey: "settings.theme.light" },
-  { value: "dark" as Theme, labelKey: "settings.theme.dark" },
-  { value: "system" as Theme, labelKey: "settings.theme.system" },
+  { value: "light" as Theme, labelKey: "settings.theme.light", icon: "sun" },
+  { value: "dark" as Theme, labelKey: "settings.theme.dark", icon: "moon" },
+  { value: "system" as Theme, labelKey: "settings.theme.system", icon: "monitor" },
 ];
 
 function applyTheme(newTheme: Theme) {
@@ -57,7 +57,7 @@ watch(language, (newLang) => {
 
 <template>
   <div class="flex flex-col h-full">
-    <header class="flex items-center gap-3 px-4 py-3 border-b border-border">
+    <header class="flex items-center gap-3 px-6 py-4 border-b border-border">
       <button
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         @click="emit('close')"
@@ -70,77 +70,104 @@ watch(language, (newLang) => {
       <h1 class="text-lg font-semibold">{{ t('settings.title') }}</h1>
     </header>
 
-    <div class="flex gap-1 p-2 border-b border-border">
+    <div class="flex gap-1 p-2 mx-6 mt-4 border border-border rounded-lg bg-muted/50">
       <button
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        :class="activeTab === 'general' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'general' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'general'"
       >
         {{ t('settings.tabs.general') }}
       </button>
       <button
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        :class="activeTab === 'advanced' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'advanced' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'advanced'"
       >
         {{ t('settings.tabs.advanced') }}
       </button>
       <button
-        class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        :class="activeTab === 'about' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'about' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'about'"
       >
         {{ t('settings.tabs.about') }}
       </button>
     </div>
 
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 overflow-y-auto px-6 py-6">
       <div v-if="activeTab === 'general'" class="space-y-6">
-        <div>
-          <h3 class="text-sm font-medium mb-2">{{ t('settings.language.title') }}</h3>
-          <p class="text-xs text-muted-foreground mb-3">{{ t('settings.language.description') }}</p>
-          <div class="flex gap-2">
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.language.title') }}</h3>
+            <p class="text-xs text-muted-foreground">{{ t('settings.language.description') }}</p>
+          </header>
+          <div class="inline-flex gap-1 rounded-lg border border-border bg-background p-1">
             <button
               v-for="lang in languages"
               :key="lang.value"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="language === lang.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+              class="inline-flex items-center justify-center gap-1.5 min-w-[80px] px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              :class="language === lang.value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'"
               @click="language = lang.value"
             >
               {{ lang.label }}
             </button>
           </div>
-        </div>
+        </section>
 
-        <div>
-          <h3 class="text-sm font-medium mb-2">{{ t('settings.theme.title') }}</h3>
-          <p class="text-xs text-muted-foreground mb-3">{{ t('settings.theme.description') }}</p>
-          <div class="flex gap-2">
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.theme.title') }}</h3>
+            <p class="text-xs text-muted-foreground">{{ t('settings.theme.description') }}</p>
+          </header>
+          <div class="inline-flex gap-1 rounded-lg border border-border bg-background p-1">
             <button
               v-for="th in themes"
               :key="th.value"
-              class="px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              :class="theme === th.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+              class="inline-flex items-center justify-center gap-1.5 min-w-[96px] px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+              :class="theme === th.value ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted'"
               @click="theme = th.value"
             >
+              <svg v-if="th.icon === 'sun'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2" />
+                <path d="M12 20v2" />
+                <path d="m4.93 4.93 1.41 1.41" />
+                <path d="m17.66 17.66 1.41 1.41" />
+                <path d="M2 12h2" />
+                <path d="M20 12h2" />
+                <path d="m6.34 17.66-1.41 1.41" />
+                <path d="m19.07 4.93-1.41 1.41" />
+              </svg>
+              <svg v-else-if="th.icon === 'moon'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+              </svg>
+              <svg v-else-if="th.icon === 'monitor'" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="14" x="2" y="3" rx="2" />
+                <line x1="8" x2="16" y1="21" y2="21" />
+                <line x1="12" x2="12" y1="17" y2="21" />
+              </svg>
               {{ t(th.labelKey) }}
             </button>
           </div>
-        </div>
+        </section>
       </div>
 
       <div v-else-if="activeTab === 'advanced'" class="space-y-6">
-        <div>
-          <h3 class="text-sm font-medium mb-2">{{ t('settings.tabs.advanced') }}</h3>
-          <p class="text-xs text-muted-foreground">Advanced settings coming soon.</p>
-        </div>
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.tabs.advanced') }}</h3>
+            <p class="text-xs text-muted-foreground">Advanced settings coming soon.</p>
+          </header>
+        </section>
       </div>
 
       <div v-else-if="activeTab === 'about'" class="space-y-6">
-        <div>
-          <h3 class="text-sm font-medium mb-2">{{ t('settings.tabs.about') }}</h3>
-          <p class="text-xs text-muted-foreground">frpc tray v0.1.0</p>
-        </div>
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.tabs.about') }}</h3>
+            <p class="text-xs text-muted-foreground">frpc tray v0.1.0</p>
+          </header>
+        </section>
       </div>
     </div>
   </div>
