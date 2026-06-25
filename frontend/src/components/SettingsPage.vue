@@ -70,24 +70,24 @@ watch(language, (newLang) => {
       <h1 class="text-lg font-semibold">{{ t('settings.title') }}</h1>
     </header>
 
-    <div class="flex gap-1 p-2 mx-6 mt-4 border border-border rounded-lg bg-muted/50">
+    <div class="flex gap-1 p-1 mx-6 mt-4 border border-border rounded-lg bg-muted/30">
       <button
-        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-        :class="activeTab === 'general' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+        class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'general' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'general'"
       >
         {{ t('settings.tabs.general') }}
       </button>
       <button
-        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-        :class="activeTab === 'advanced' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+        class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'advanced' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'advanced'"
       >
         {{ t('settings.tabs.advanced') }}
       </button>
       <button
-        class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-        :class="activeTab === 'about' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
+        class="flex-1 px-3 py-1.5 rounded-md text-sm font-medium transition-colors"
+        :class="activeTab === 'about' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'"
         @click="activeTab = 'about'"
       >
         {{ t('settings.tabs.about') }}
