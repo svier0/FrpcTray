@@ -120,7 +120,7 @@ function handleDelete() {
     >
       <div class="space-y-3">
         <div class="flex items-end gap-2">
-          <div class="flex-1 space-y-1">
+          <div class="w-1/2 space-y-1">
             <label class="text-xs text-muted-foreground">{{ t('server.form.title') }}</label>
             <input
               v-model="editData.title"
@@ -153,7 +153,7 @@ function handleDelete() {
         </div>
 
         <div class="flex items-end gap-2">
-          <div class="flex-1 space-y-1">
+          <div class="w-1/2 space-y-1">
             <label class="text-xs text-muted-foreground">{{ t('server.form.address') }}</label>
             <input
               v-model="editData.serverAddr"
@@ -161,7 +161,7 @@ function handleDelete() {
               class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
-          <div class="w-24 space-y-1">
+          <div class="w-1/2 space-y-1">
             <label class="text-xs text-muted-foreground">{{ t('server.form.port') }}</label>
             <input
               v-model.number="editData.serverPort"
