@@ -13,3 +13,6 @@ ACK_FRONTEND_VERSION: V3
 - V2：引入 `ServerInfo`（对应 `conf/frpc.{id}.toml`）和 `ProxyItem`（对应 `[[proxies]]`）
 - **11 个命令**：Server CRUD + reorder，Proxy CRUD + reorder
 - 字段名与 TOML 完全一致（camelCase），API 见 `backend/api_spec.json`
+
+## 前端留言
+- **需要 ProxyItem 添加 enabled 字段**：代理项需要一个 enabled 字段来控制启用/禁用状态，用于在 UI 上显示开关
