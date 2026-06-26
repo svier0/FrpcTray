@@ -118,60 +118,80 @@ function handleDelete() {
       v-show="isExpanded"
       class="border-t border-border px-4 pb-4 pt-4"
     >
-      <div class="space-y-4">
-        <div class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">
-            {{ t('server.form.title') }}
-          </label>
+      <div class="space-y-3">
+        <div class="flex items-center gap-2">
           <input
             v-model="editData.title"
             type="text"
-            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.titlePlaceholder')"
           />
+          <button
+            class="inline-flex items-center justify-center rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            @click="handleSave"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+            {{ t('common.save') }}
+          </button>
+          <button
+            class="inline-flex items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+            @click="handleDelete"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+            </svg>
+          </button>
         </div>
 
-        <div class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">
-            {{ t('server.form.address') }}
-          </label>
+        <div class="flex items-center gap-2">
           <input
             v-model="editData.serverAddr"
             type="text"
-            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.addressPlaceholder')"
           />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">
-            {{ t('server.form.port') }}
-          </label>
           <input
             v-model.number="editData.serverPort"
             type="number"
-            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.portPlaceholder')"
           />
         </div>
 
-        <div class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">
-            {{ t('server.form.authMethod') }}
-          </label>
+        <div class="flex items-center gap-2">
           <input
             v-model="editData.authMethod"
             type="text"
-            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-32 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.authMethodPlaceholder')"
           />
-        </div>
-
-        <div class="space-y-2">
-          <label class="text-xs font-medium text-muted-foreground">
-            {{ t('server.form.authToken') }}
-          </label>
-          <div class="relative">
+          <div class="relative flex-1">
             <input
               v-model="editData.authToken"
               :type="showAuthToken ? 'text' : 'password'"
@@ -217,52 +237,6 @@ function handleDelete() {
               </svg>
             </button>
           </div>
-        </div>
-
-        <div class="flex items-center gap-2 pt-2">
-          <button
-            class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            @click="handleSave"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            {{ t('common.save') }}
-          </button>
-
-          <button
-            class="inline-flex items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
-            @click="handleDelete"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M3 6h18" />
-              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-            </svg>
-            {{ t('common.delete') }}
-          </button>
         </div>
       </div>
     </div>
