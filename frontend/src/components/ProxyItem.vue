@@ -35,7 +35,7 @@ const { t } = useI18n();
 
 <template>
   <div
-    class="group relative overflow-hidden rounded-xl border border-border p-4 transition-all duration-300 bg-card text-card-foreground hover:border-border hover:shadow-sm"
+    class="group relative rounded-xl border border-border p-4 transition-all duration-300 bg-card text-card-foreground hover:border-border hover:shadow-sm"
     :class="{
       'border-blue-500/60 shadow-sm shadow-blue-500/10': props.isActive,
     }"

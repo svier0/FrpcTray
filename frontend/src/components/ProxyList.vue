@@ -33,19 +33,23 @@ watch(
   { deep: true }
 );
 
+function initSortable() {
+  if (listRef.value) {
+    sortable = Sortable.create(listRef.value, {
+      animation: 150,
+      ghostClass: "opacity-50",
+      chosenClass: "sortable-chosen",
+      forceFallback: true,
+      fallbackClass: "sortable-fallback",
+      onEnd: () => {
+        emit("update:items", [...dragList.value]);
+      },
+    });
+  }
+}
+
 onMounted(() => {
-  nextTick(() => {
-    if (listRef.value) {
-      sortable = Sortable.create(listRef.value, {
-        animation: 150,
-        handle: ".drag-handle",
-        ghostClass: "opacity-50",
-        onEnd: () => {
-          emit("update:items", [...dragList.value]);
-        },
-      });
-    }
-  });
+  nextTick(initSortable);
 });
 
 onBeforeUnmount(() => {
@@ -56,7 +60,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div ref="listRef" class="space-y-3">
-    <div v-for="item in dragList" :key="item.id">
+    <div v-for="item in dragList" :key="item.id" class="sortable-item">
       <ProxyItem
         :item="item"
         :is-active="item.id === activeId"
@@ -93,3 +97,15 @@ onBeforeUnmount(() => {
     <p class="text-xs mt-1">{{ t('proxy.emptyHint') }}</p>
   </div>
 </template>
+
+<style scoped>
+.sortable-item {
+  cursor: default;
+}
+.sortable-item:global(.sortable-chosen) {
+  opacity: 0.5;
+}
+.sortable-item:global(.sortable-fallback) {
+  opacity: 0.8;
+}
+</style>

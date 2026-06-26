@@ -31,19 +31,23 @@ watch(
   { deep: true }
 );
 
+function initSortable() {
+  if (listRef.value) {
+    sortable = Sortable.create(listRef.value, {
+      animation: 150,
+      handle: ".drag-handle",
+      ghostClass: "opacity-50",
+      forceFallback: true,
+      fallbackClass: "sortable-fallback",
+      onEnd: () => {
+        emit("update:items", [...dragList.value]);
+      },
+    });
+  }
+}
+
 onMounted(() => {
-  nextTick(() => {
-    if (listRef.value) {
-      sortable = Sortable.create(listRef.value, {
-        animation: 150,
-        handle: ".drag-handle",
-        ghostClass: "opacity-50",
-        onEnd: () => {
-          emit("update:items", [...dragList.value]);
-        },
-      });
-    }
-  });
+  nextTick(initSortable);
 });
 
 onBeforeUnmount(() => {
