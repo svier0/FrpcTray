@@ -119,29 +119,20 @@ function handleDelete() {
       class="border-t border-border px-4 pb-4 pt-4"
     >
       <div class="space-y-3">
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.title') }}</label>
-          <input
-            v-model="editData.title"
-            type="text"
-            class="w-1/2 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="t('server.form.titlePlaceholder')"
-          />
+        <div class="flex items-end gap-2">
+          <div class="flex-1 relative">
+            <label class="absolute left-3 top-1 text-[10px] text-muted-foreground">{{ t('server.form.title') }}</label>
+            <input
+              v-model="editData.title"
+              type="text"
+              class="w-full rounded-lg border border-border bg-background px-3 pt-4 pb-1 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
           <button
-            class="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-blue-500 px-3 text-sm font-medium text-white transition-colors hover:bg-blue-600"
             @click="handleSave"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
               <polyline points="7 3 7 8 15 8" />
@@ -149,20 +140,10 @@ function handleDelete() {
             {{ t('common.save') }}
           </button>
           <button
-            class="inline-flex items-center justify-center rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20 focus:outline-none focus:ring-2 focus:ring-destructive focus:ring-offset-2"
+            class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20"
             @click="handleDelete"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M3 6h18" />
               <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
               <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
@@ -170,71 +151,51 @@ function handleDelete() {
           </button>
         </div>
 
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.address') }}</label>
-          <input
-            v-model="editData.serverAddr"
-            type="text"
-            class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="t('server.form.addressPlaceholder')"
-          />
-          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.port') }}</label>
-          <input
-            v-model.number="editData.serverPort"
-            type="number"
-            class="w-24 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="t('server.form.portPlaceholder')"
-          />
+        <div class="flex items-end gap-2">
+          <div class="flex-1 relative">
+            <label class="absolute left-3 top-1 text-[10px] text-muted-foreground">{{ t('server.form.address') }}</label>
+            <input
+              v-model="editData.serverAddr"
+              type="text"
+              class="w-full rounded-lg border border-border bg-background px-3 pt-4 pb-1 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div class="w-24 relative">
+            <label class="absolute left-3 top-1 text-[10px] text-muted-foreground">{{ t('server.form.port') }}</label>
+            <input
+              v-model.number="editData.serverPort"
+              type="number"
+              class="w-full rounded-lg border border-border bg-background px-3 pt-4 pb-1 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.authMethod') }}</label>
-          <input
-            v-model="editData.authMethod"
-            type="text"
-            class="w-32 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            :placeholder="t('server.form.authMethodPlaceholder')"
-          />
-          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.authToken') }}</label>
-          <div class="relative flex-1">
+        <div class="flex items-end gap-2">
+          <div class="w-28 relative">
+            <label class="absolute left-3 top-1 text-[10px] text-muted-foreground">{{ t('server.form.authMethod') }}</label>
+            <input
+              v-model="editData.authMethod"
+              type="text"
+              class="w-full rounded-lg border border-border bg-background px-3 pt-4 pb-1 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div class="flex-1 relative">
+            <label class="absolute left-3 top-1 text-[10px] text-muted-foreground">{{ t('server.form.authToken') }}</label>
             <input
               v-model="editData.authToken"
               :type="showAuthToken ? 'text' : 'password'"
-              class="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              :placeholder="t('server.form.authTokenPlaceholder')"
+              class="w-full rounded-lg border border-border bg-background px-3 pt-4 pb-1 pr-10 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               type="button"
               class="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
               @click="showAuthToken = !showAuthToken"
             >
-              <svg
-                v-if="!showAuthToken"
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg v-if="!showAuthToken" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <svg
-                v-else
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
                 <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
                 <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
