@@ -383,27 +383,20 @@ fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     doc.insert("proxies", Item::ArrayOfTables(arr));
 }
 
-/// Set metadata comments (# @title / # @enable / # @sort) on the document root.
-/// In toml_edit, top-of-file comments are stored as the prefix decor of the first
-/// key-value entry. We set them on the first available item.
+/// Set metadata comments (# @title / # @enable / # @sort) on the first key's decor.
+/// In toml_edit, top-of-file comments are stored as the prefix of the first KEY
+/// (before the key name), NOT the value (between = and value).
 fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     let meta = format!(
         "# @title {}\n# @enable {}\n# @sort {}\n",
         config.title, config.enable, config.sort
     );
 
-    // Set on the first key's prefix decor
-    for (_, item) in doc.iter_mut() {
-        // Get existing prefix, filter out old @ lines
-        let existing = match item {
-            Item::Value(v) => v.decor().prefix()
-                .and_then(|r| r.as_str())
-                .unwrap_or(""),
-            Item::Table(t) => t.decor().prefix()
-                .and_then(|r| r.as_str())
-                .unwrap_or(""),
-            _ => "",
-        };
+    // Set on the first KEY's prefix decor (top-of-file comments live before the key line)
+    if let Some((mut key, _)) = doc.iter_mut().next() {
+        let existing = key.leaf_decor().prefix()
+            .and_then(|r| r.as_str())
+            .unwrap_or("");
 
         let filtered: Vec<&str> = existing
             .lines()
@@ -421,12 +414,7 @@ fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
             format!("{}{}", filtered.join("\n"), meta)
         };
 
-        match item {
-            Item::Value(v) => v.decor_mut().set_prefix(new_prefix),
-            Item::Table(t) => { t.decor_mut().set_prefix(new_prefix); }
-            _ => {}
-        }
-        break; // Only set on first key
+        key.leaf_decor_mut().set_prefix(new_prefix);
     }
 }
 
