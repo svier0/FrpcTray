@@ -1,9 +1,10 @@
 # 前端联调看板
-VERSION: V1
-ACK_BACKEND_VERSION: V1
+VERSION: V2
+ACK_BACKEND_VERSION: V2
 
 ## 📢 最新进度与反馈
-- 收到 V1 通知,相关接口与前端所需不符，请修改
+- create_server 接口需要修改：参数不需要传 id，返回值改为新增的 id（单个字母）
+- 前端已按此逻辑实现，等待后端修改
 
 ## 📢 最新联调通知
 
