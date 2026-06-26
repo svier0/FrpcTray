@@ -112,7 +112,6 @@ onMounted(() => {
 
       <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
         <ProxyList
-          v-if="activeTab === 'proxy'"
           :items="proxies"
           :active-id="activeProxyId"
           @update:items="handleUpdateItems"
@@ -122,10 +121,6 @@ onMounted(() => {
           @delete="handleDelete"
           @view-logs="handleViewLogs"
         />
-
-        <div v-else class="flex flex-col items-center justify-center h-full text-muted-foreground">
-          <p class="text-sm">{{ activeTab }} 视图</p>
-        </div>
       </main>
     </template>
 
