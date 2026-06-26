@@ -35,11 +35,11 @@ cd frontend && bun run tauri dev    # Start Tauri dev
 cd frontend && bun run tauri build  # Build Tauri app
 ```
 
-## 目录隔离 (Directory isolation)
+## 目录隔离 (Directory isolation) - 必须记住
 - 前端角色，只能写`/frontend/`目录，禁止修改`/backend/`目录
 - 后端角色，只能写`/backend/`目录，禁止修改`/frontend/`目录
 
-## 协作 (Collaboration)
+## 协作 (Collaboration) - 必须记住
 - See `/AI_COLLABORATION_GUIDE.md` for frontend-backend collaboration protocol
 - Frontend writes to `FRONTEND_STATUS.md` only
 - Backend writes to `BACKEND_STATUS.md` only
@@ -61,7 +61,7 @@ cd frontend && bun run tauri build  # Build Tauri app
 
 **注意：用户发送任何内容（包括空消息或占位符）都必须先完成上述步骤。**
 
-## **重要记忆**
+## **重要记忆** - 必须永远记住
 - `AGENT_CONTEXT.md`是你自己的上下文记忆，你需要自行维护
 - 每次对话结束前，如果有文件修改，在提交git之前，先更新自己的`AGENT_CONTEXT.md`(注意增量更新，不随意删除)
 - 当用户要求 更新上下文、更新记忆、保存上下文 时，更新自己的`AGENT_CONTEXT.md`
