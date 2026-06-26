@@ -26,6 +26,24 @@
     "disabled": "已禁用",
     "viewLogs": "查看日志"
   },
+  "server": {
+    "title": "服务器列表",
+    "empty": "暂无服务器配置",
+    "emptyHint": "点击下方按钮添加",
+    "add": "添加服务器",
+    "form": {
+      "title": "服务器名称",
+      "titlePlaceholder": "输入服务器名称",
+      "address": "服务器地址",
+      "addressPlaceholder": "例如：192.168.1.100",
+      "port": "服务器端口",
+      "portPlaceholder": "例如：7000",
+      "authMethod": "鉴权方式",
+      "authMethodPlaceholder": "例如：token",
+      "authToken": "鉴权密钥",
+      "authTokenPlaceholder": "输入鉴权密钥"
+    }
+  },
   "settings": {
     "title": "设置",
     "tabs": {

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import ServerList from "./ServerList.vue";
+import type { ServerItem } from "./ServerItem.vue";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
@@ -14,6 +16,30 @@ const { t, locale } = useI18n();
 const activeTab = ref<SettingsTab>("general");
 const language = ref(locale.value);
 const theme = ref<Theme>((localStorage.getItem("theme") as Theme) || "system");
+
+const servers = ref<ServerItem[]>([
+  {
+    id: "1",
+    title: "主服务器",
+    enable: true,
+    sort: 1,
+    serverAddr: "192.168.1.100",
+    serverPort: 7000,
+    auth: {
+      method: "token",
+      token: "my-secret-token",
+    },
+  },
+  {
+    id: "2",
+    title: "备用服务器",
+    enable: false,
+    sort: 2,
+    serverAddr: "10.0.0.1",
+    serverPort: 7000,
+    auth: null,
+  },
+]);
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -42,6 +68,34 @@ function applyTheme(newTheme: Theme) {
     root.classList.add("light");
     root.classList.remove("dark");
   }
+}
+
+function handleUpdateServers(newItems: ServerItem[]) {
+  servers.value = newItems;
+}
+
+function handleSaveServer(id: string, data: ServerItem) {
+  const index = servers.value.findIndex((s) => s.id === id);
+  if (index !== -1) {
+    servers.value[index] = data;
+  }
+}
+
+function handleDeleteServer(id: string) {
+  servers.value = servers.value.filter((s) => s.id !== id);
+}
+
+function handleAddServer() {
+  const newServer: ServerItem = {
+    id: String(Date.now()),
+    title: "新服务器",
+    enable: false,
+    sort: servers.value.length + 1,
+    serverAddr: "127.0.0.1",
+    serverPort: 7000,
+    auth: null,
+  };
+  servers.value.push(newServer);
 }
 
 watch(theme, (newTheme) => {
@@ -167,12 +221,13 @@ watch(language, (newLang) => {
       </div>
 
       <div v-else-if="activeTab === 'server'" class="space-y-6">
-        <section class="space-y-3">
-          <header class="space-y-1">
-            <h3 class="text-sm font-medium">{{ t('settings.tabs.server') }}</h3>
-            <p class="text-xs text-muted-foreground">Server settings coming soon.</p>
-          </header>
-        </section>
+        <ServerList
+          :items="servers"
+          @update:items="handleUpdateServers"
+          @save="handleSaveServer"
+          @delete="handleDeleteServer"
+          @add="handleAddServer"
+        />
       </div>
 
       <div v-else-if="activeTab === 'kernel'" class="space-y-6">

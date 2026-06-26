@@ -26,6 +26,24 @@
     "disabled": "無効",
     "viewLogs": "ログを表示"
   },
+  "server": {
+    "title": "サーバーリスト",
+    "empty": "サーバー設定がありません",
+    "emptyHint": "下のボタンで追加",
+    "add": "サーバーを追加",
+    "form": {
+      "title": "サーバー名",
+      "titlePlaceholder": "サーバー名を入力",
+      "address": "サーバーアドレス",
+      "addressPlaceholder": "例：192.168.1.100",
+      "port": "サーバーポート",
+      "portPlaceholder": "例：7000",
+      "authMethod": "認証方式",
+      "authMethodPlaceholder": "例：token",
+      "authToken": "認証トークン",
+      "authTokenPlaceholder": "認証トークンを入力"
+    }
+  },
   "settings": {
     "title": "設定",
     "tabs": {

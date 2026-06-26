@@ -26,6 +26,24 @@
     "disabled": "Disabled",
     "viewLogs": "View Logs"
   },
+  "server": {
+    "title": "Server List",
+    "empty": "No server configurations",
+    "emptyHint": "Click button below to add",
+    "add": "Add Server",
+    "form": {
+      "title": "Server Name",
+      "titlePlaceholder": "Enter server name",
+      "address": "Server Address",
+      "addressPlaceholder": "e.g. 192.168.1.100",
+      "port": "Server Port",
+      "portPlaceholder": "e.g. 7000",
+      "authMethod": "Auth Method",
+      "authMethodPlaceholder": "e.g. token",
+      "authToken": "Auth Token",
+      "authTokenPlaceholder": "Enter auth token"
+    }
+  },
   "settings": {
     "title": "Settings",
     "tabs": {
