@@ -30,6 +30,9 @@
   - `desc` → `[[proxies]]` 上方注释，读写由 `toml_edit` DOM API 处理
   - V2 文件自动迁移：读取兼容注释+key 双路径，写入统一 V3 格式
   - 11 个 tauri command 签名和 API 结构完全不变
+  - 🐛 修复 `set_meta_comments` 注释位置错误：`Value.decor_mut()` → `Key.leaf_decor_mut()`（`5969f60`）
+    - toml_edit 中 `Key.decor` = key 之前的注释，`Value.decor` = `=` 和值之间的空白
+    - 用错导致输出 `serverAddr =# @title xxx` 而非注释在 key 上方
 
 ### 待办事项
 - [ ] 等待前端确认 V3 实现
@@ -80,6 +83,12 @@
 - `reorder_proxies(server_id, names)` 重排 `[[proxies]]` 数组顺序
 - `update_server` 保留原有 log/proxies，只覆盖 server 级字段
 
+### toml_edit 注意事项
+- **Key.decor vs Value.decor**: `Key.leaf_decor().prefix()` = key 之前的注释（用这个放 `# @` 元数据），`Value.decor().prefix()` = `=` 和值之间的空白（不是放注释的地方）
+- **方法弃用**: `Key::decor()`/`decor_mut()` 已弃用，替换为 `leaf_decor()`/`leaf_decor_mut()`（非 dotted key）或 `dotted_decor()`/`dotted_decor_mut()`（dotted key 如 `auth.method`）
+- **读取**: `table.decor().prefix()` 可直接在 `Table` 上用，`Table` 实现了 `TableLike` trait（不需要显式 import）
+- **数组**: `ArrayOfTables` 每项是独立 `Table`，各自有独立 decor，desc 注释通过 `table.decor_mut().set_prefix()` 设置
+
 ---
 
 ## 协作状态
@@ -90,7 +99,6 @@
 ---
 
 ## 下次启动检查清单
-1. 读取 `FRONTEND_STATUS.md` 检查 ACK 状态
-2. 如果前端已 ACK V2，可以开展下一步开发
-3. 如果前端有反馈/bug 报告，优先处理
-4. 如无新需求，继续等待或开发新功能
+1. 读取 `FRONTEND_STATUS.md` 检查是否有新反馈
+2. 如有 bug 报告，优先处理
+3. 如无新需求，继续等待或开发新功能
