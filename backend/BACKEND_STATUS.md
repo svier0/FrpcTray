@@ -1,8 +1,9 @@
 # 后端联调看板
 VERSION: V3
-ACK_FRONTEND_VERSION: V2
+ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
+- ✅ ProxyItem 添加 `enabled: bool` 字段（2026-06-26）：作为普通 TOML key 存储在 `[[proxies]]` 中，读取默认 true
 - ✅ V3 TOML 存储方案重构完成（2026-06-26）
   - `toml` crate → `toml_edit` 0.22（纯 DOM API）
   - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort` 注释

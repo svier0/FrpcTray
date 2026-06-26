@@ -43,6 +43,8 @@ struct FrpcConfigFile {
 struct ProxyItem {
     name: String,
     desc: Option<String>,
+    #[serde(default = "default_true")]
+    enabled: bool,
     #[serde(rename = "type")]
     proxy_type: String,
     #[serde(rename = "localIP")]
@@ -53,6 +55,8 @@ struct ProxyItem {
     custom_domains: Option<Vec<String>>,
     locations: Option<Vec<String>>,
 }
+
+fn default_true() -> bool { true }
 
 // ── API structures ──
 
@@ -217,10 +221,14 @@ fn extract_proxies(doc: &DocumentMut) -> Option<Vec<ProxyItem>> {
         let local_port = table.get("localPort")
             .and_then(|v| v.as_integer())
             .unwrap_or(0) as u16;
+        let enabled = table.get("enabled")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(true);
 
         proxies.push(ProxyItem {
             name,
             desc,
+            enabled,
             proxy_type,
             local_ip,
             local_port,
@@ -362,6 +370,7 @@ fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
 
         table.insert("name", value(&proxy.name));
         table.insert("type", value(&proxy.proxy_type));
+        table.insert("enabled", value(proxy.enabled));
         if let Some(ref ip) = proxy.local_ip {
             table.insert("localIP", value(ip));
         }

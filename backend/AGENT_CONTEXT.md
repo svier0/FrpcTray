@@ -35,6 +35,7 @@
     - 用错导致输出 `serverAddr =# @title xxx` 而非注释在 key 上方
 
 ### 待办事项
+- [x] ProxyItem 添加 `enabled` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
 - [ ] 等待前端确认 V3 实现
 - [ ] 后续功能开发...
 

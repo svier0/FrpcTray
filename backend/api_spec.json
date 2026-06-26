@@ -1,5 +1,5 @@
 {
-  "version": "V2",
+  "version": "V3",
   "lastUpdated": "2026-06-26",
   "commands": [
     {
@@ -174,6 +174,7 @@
       "fields": [
         { "name": "name", "type": "String", "description": "代理名称" },
         { "name": "desc", "type": "String | null", "description": "代理描述" },
+        { "name": "enabled", "type": "bool", "description": "是否启用（默认 true）" },
         { "name": "type", "type": "String", "description": "代理类型（http/https/tcp/udp 等）" },
         { "name": "localIP", "type": "String | null", "description": "本地 IP" },
         { "name": "localPort", "type": "u16", "description": "本地端口" },
