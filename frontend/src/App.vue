@@ -65,13 +65,17 @@ async function loadProxies(serverId: string) {
 
 async function handleUpdateItems(newItems: ProxyItem[]) {
   proxies.value = newItems;
-  // 调用后端接口保存排序
   if (activeTab.value) {
+    const names = newItems.map((p) => p.name);
+    console.log("[reorder] serverId:", activeTab.value, "names:", names);
     try {
-      await reorderProxies(activeTab.value, newItems.map((p) => p.name));
+      await reorderProxies(activeTab.value, names);
+      console.log("[reorder] success");
     } catch (e) {
-      console.error("Failed to reorder proxies:", e);
+      console.error("[reorder] failed:", e);
     }
+  } else {
+    console.warn("[reorder] activeTab is null, skip");
   }
 }
 
