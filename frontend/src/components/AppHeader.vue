@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { SwitchRoot, SwitchThumb } from "radix-vue";
 import { useI18n } from "vue-i18n";
+import type { ServerItem } from "./ServerItem.vue";
 
 export type ViewTab = "proxy" | "terminal";
 
 const props = defineProps<{
   globalEnabled: boolean;
   activeTab: ViewTab;
+  enabledServers: ServerItem[];
 }>();
 
 const emit = defineEmits<{
@@ -83,6 +85,16 @@ function setActiveTab(tab: ViewTab) {
             <polyline points="4 17 10 11 4 5" />
             <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-1">
+        <button
+          v-for="server in props.enabledServers"
+          :key="server.id"
+          class="inline-flex items-center justify-center h-7 px-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-colors"
+        >
+          {{ server.id.toUpperCase() }}
         </button>
       </div>
 

@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import AppHeader from "./components/AppHeader.vue";
 import type { ViewTab } from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
 import SettingsPage from "./components/SettingsPage.vue";
+import type { ServerItem } from "./components/ServerItem.vue";
+import { listServers } from "./utils/ipc";
 
 const globalEnabled = ref(true);
 const activeTab = ref<ViewTab>("proxy");
 const activeProxyId = ref<string | undefined>();
 const showSettings = ref(false);
+const servers = ref<ServerItem[]>([]);
 
 const proxies = ref<ProxyItem[]>([
   {
@@ -25,6 +28,17 @@ const proxies = ref<ProxyItem[]>([
     enabled: false,
   },
 ]);
+
+const enabledServers = ref<ServerItem[]>([]);
+
+async function loadServers() {
+  try {
+    servers.value = await listServers();
+    enabledServers.value = servers.value.filter((s) => s.enable);
+  } catch (e) {
+    console.error("Failed to load servers:", e);
+  }
+}
 
 function handleUpdateItems(newItems: ProxyItem[]) {
   proxies.value = newItems;
@@ -78,7 +92,12 @@ function handleOpenSettings() {
 
 function handleCloseSettings() {
   showSettings.value = false;
+  loadServers();
 }
+
+onMounted(() => {
+  loadServers();
+});
 </script>
 
 <template>
@@ -87,6 +106,7 @@ function handleCloseSettings() {
       <AppHeader
         v-model:global-enabled="globalEnabled"
         v-model:active-tab="activeTab"
+        :enabled-servers="enabledServers"
         @open-settings="handleOpenSettings"
         @add-proxy="handleAddProxy"
       />
