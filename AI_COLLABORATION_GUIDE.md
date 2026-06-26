@@ -16,21 +16,24 @@
 ## 3. 看板格式规范 (Status File Format)
 
 ### == BACKEND_STATUS.md (仅允许后端写入，控制在30行内) ==
+```
 # 后端联调看板
 VERSION: V1
 ACK_FRONTEND_VERSION: V1
 
 ## 📢 最新联调通知
 - [例如：我写好了登录和注册接口，接口详情已更新至 /backend/api_spec.json，请前端开始对接。]
-
+```
 
 ### == FRONTEND_STATUS.md (仅允许前端写入，控制在30行内) ==
+```
 # 前端联调看板
 VERSION: V1
 ACK_BACKEND_VERSION: V1
 
 ## 📢 最新进度与反馈
 - [例如：收到 V1 通知，已根据 api_spec.json 对接完登录页。发现密码错误时后端返回了 500，请修复。]
+```
 
 ---
 
@@ -54,3 +57,18 @@ ACK_BACKEND_VERSION: V1
 
 ## 5. 死锁仲裁 (Human Escalation)
 如果前端在某一版本卡住（遇到 Bug），在 `FRONTEND_STATUS.md` 提出了报错反馈。后端在未修复该 Bug 并获得前端新一轮 ACK 之前，不得强推看板版本。若双方逻辑产生冲突无法推进，立即停止自动化，向人类 Owner 汇报。
+
+## 6. 沟通真实性 (Authenticity)
+绝对不要虚构沟通结果
+例如：
+```
+# 前端联调看板
+VERSION: V1
+ACK_BACKEND_VERSION: V1
+```
+```
+# 后端联调看板
+VERSION: V2
+ACK_FRONTEND_VERSION: V2
+```
+后端更新看板为V2时，直接顺带更新ACK_FRONTEND_VERSION为V2(表示已经看过前端的V2看板)，实际前端看板最新版本为V1，这将造成版本混乱。
