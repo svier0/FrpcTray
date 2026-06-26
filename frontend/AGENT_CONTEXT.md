@@ -80,9 +80,10 @@
 
 ### 主页面显示设置
 - 在设置-通用tab中，外观主题下方新增"主页面显示"区域
-- 使用Switch组件（radix-vue）控制服务器在主页面的显示/隐藏
-- 状态存储在localStorage的`serverVisibility`键中
-- 默认所有服务器都显示（true）
+- 使用CC Switch风格的标签切换，点击标签切换服务器在主页面的显示状态
+- 点击标签调用updateServer接口修改enable状态
+- 选中状态（enable=true）：蓝色背景白色文字
+- 未选中状态（enable=false）：灰色背景灰色文字
 
 ---
 
