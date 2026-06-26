@@ -40,7 +40,7 @@ async function loadProxies(serverId: string) {
       id: String(index),
       name: p.name,
       desc: p.desc || undefined,
-      url: p.customDomains?.[0] || `${p.type}://localhost:${p.localPort}`,
+      url: '',
       enabled: true,
     }));
   } catch (e) {
