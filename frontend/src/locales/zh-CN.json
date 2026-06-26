@@ -24,7 +24,25 @@
     "dragHandle": "拖拽排序",
     "enabled": "已启用",
     "disabled": "已禁用",
-    "viewLogs": "查看日志"
+    "viewLogs": "查看日志",
+    "dialog": {
+      "createTitle": "添加代理",
+      "editTitle": "编辑代理",
+      "name": "代理名称",
+      "namePlaceholder": "例如：web",
+      "desc": "代理描述",
+      "descPlaceholder": "例如：Web 服务",
+      "type": "代理类型",
+      "localIP": "本地 IP",
+      "localPort": "本地端口",
+      "remotePort": "远程端口",
+      "required": "必填",
+      "optional": "可选",
+      "customDomains": "绑定域名",
+      "customDomainsPlaceholder": "多个域名用逗号分隔",
+      "locations": "路径",
+      "locationsPlaceholder": "多个路径用逗号分隔"
+    }
   },
   "server": {
     "title": "服务器列表",

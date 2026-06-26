@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
-import { listServers, createServer, updateServer, deleteServer } from "../utils/ipc";
+import { listServers, createServer, updateServer, deleteServer, reorderServers } from "../utils/ipc";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
@@ -65,8 +65,14 @@ async function loadServers() {
   }
 }
 
-function handleUpdateServers(newItems: ServerItem[]) {
+async function handleUpdateServers(newItems: ServerItem[]) {
   servers.value = newItems;
+  // 调用后端接口保存排序
+  try {
+    await reorderServers(newItems.map((s) => s.id));
+  } catch (e) {
+    console.error("Failed to reorder servers:", e);
+  }
 }
 
 async function handleSaveServer(id: string, data: ServerItem) {

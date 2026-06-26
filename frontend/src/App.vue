@@ -3,9 +3,11 @@ import { ref, watch, onMounted } from "vue";
 import AppHeader from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
+import ProxyDialog from "./components/ProxyDialog.vue";
+import type { ProxyFormData } from "./components/ProxyDialog.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
-import { listServers, listProxies } from "./utils/ipc";
+import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies } from "./utils/ipc";
 
 const globalEnabled = ref(true);
 const activeTab = ref<string>("");
@@ -15,6 +17,11 @@ const servers = ref<ServerItem[]>([]);
 const proxies = ref<ProxyItem[]>([]);
 const enabledServers = ref<ServerItem[]>([]);
 const isLoadingProxies = ref(false);
+
+const showProxyDialog = ref(false);
+const proxyDialogMode = ref<"create" | "edit">("create");
+const editingProxy = ref<ProxyFormData | undefined>();
+const editingProxyOldName = ref("");
 
 async function loadServers() {
   try {
@@ -41,7 +48,7 @@ async function loadProxies(serverId: string) {
       name: p.name,
       desc: p.desc || undefined,
       type: p.type,
-      enabled: true,
+      enabled: p.enabled,
     }));
   } catch (e) {
     console.error("Failed to load proxies:", e);
@@ -51,36 +58,83 @@ async function loadProxies(serverId: string) {
   }
 }
 
-function handleUpdateItems(newItems: ProxyItem[]) {
+async function handleUpdateItems(newItems: ProxyItem[]) {
   proxies.value = newItems;
+  // 调用后端接口保存排序
+  if (activeTab.value) {
+    try {
+      await reorderProxies(activeTab.value, newItems.map((p) => p.name));
+    } catch (e) {
+      console.error("Failed to reorder proxies:", e);
+    }
+  }
 }
 
-function handleUpdateEnabled(id: string, value: boolean) {
+async function handleUpdateEnabled(id: string, value: boolean) {
   const proxy = proxies.value.find((p) => p.id === id);
-  if (proxy) {
+  if (proxy && activeTab.value) {
     proxy.enabled = value;
+    try {
+      await updateProxy(activeTab.value, proxy.name, {
+        name: proxy.name,
+        enabled: value,
+        type: proxy.type || "tcp",
+        localPort: 0,
+      });
+    } catch (e) {
+      console.error("Failed to update proxy enabled:", e);
+      proxy.enabled = !value;
+    }
   }
 }
 
 function handleEdit(id: string) {
-  console.log("edit", id);
+  const proxy = proxies.value.find((p) => p.id === id);
+  if (proxy && activeTab.value) {
+    editingProxyOldName.value = proxy.name;
+    editingProxy.value = {
+      name: proxy.name,
+      desc: proxy.desc || "",
+      type: proxy.type || "tcp",
+      localIP: "127.0.0.1",
+      localPort: 8080,
+      remotePort: null,
+      customDomains: "",
+      locations: "",
+    };
+    proxyDialogMode.value = "edit";
+    showProxyDialog.value = true;
+  }
 }
 
 function handleDuplicate(id: string) {
   const source = proxies.value.find((p) => p.id === id);
   if (source) {
-    const newProxy: ProxyItem = {
-      id: String(Date.now()),
+    editingProxy.value = {
       name: `${source.name} copy`,
-      url: source.url,
-      enabled: false,
+      desc: source.desc || "",
+      type: source.type || "tcp",
+      localIP: "127.0.0.1",
+      localPort: 8080,
+      remotePort: null,
+      customDomains: "",
+      locations: "",
     };
-    proxies.value.push(newProxy);
+    proxyDialogMode.value = "create";
+    showProxyDialog.value = true;
   }
 }
 
-function handleDelete(id: string) {
-  proxies.value = proxies.value.filter((p) => p.id !== id);
+async function handleDelete(id: string) {
+  const proxy = proxies.value.find((p) => p.id === id);
+  if (proxy && activeTab.value) {
+    try {
+      await deleteProxy(activeTab.value, proxy.name);
+      await loadProxies(activeTab.value);
+    } catch (e) {
+      console.error("Failed to delete proxy:", e);
+    }
+  }
 }
 
 function handleViewLogs(id: string) {
@@ -88,7 +142,36 @@ function handleViewLogs(id: string) {
 }
 
 function handleAddProxy() {
-  console.log("addProxy");
+  editingProxy.value = undefined;
+  proxyDialogMode.value = "create";
+  showProxyDialog.value = true;
+}
+
+async function handleProxySubmit(data: ProxyFormData) {
+  if (!activeTab.value) return;
+
+  const proxyData = {
+    name: data.name,
+    desc: data.desc || undefined,
+    enabled: true,
+    type: data.type,
+    localIP: data.localIP || undefined,
+    localPort: data.localPort,
+    remotePort: data.remotePort || undefined,
+    customDomains: data.customDomains ? data.customDomains.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+    locations: data.locations ? data.locations.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+  };
+
+  try {
+    if (proxyDialogMode.value === "create") {
+      await createProxy(activeTab.value, proxyData);
+    } else {
+      await updateProxy(activeTab.value, editingProxyOldName.value, proxyData);
+    }
+    await loadProxies(activeTab.value);
+  } catch (e) {
+    console.error("Failed to save proxy:", e);
+  }
 }
 
 function handleOpenSettings() {
@@ -143,6 +226,14 @@ onMounted(() => {
     <SettingsPage
       v-else
       @close="handleCloseSettings"
+    />
+
+    <ProxyDialog
+      :open="showProxyDialog"
+      :mode="proxyDialogMode"
+      :initial-data="editingProxy"
+      @update:open="showProxyDialog = $event"
+      @submit="handleProxySubmit"
     />
   </div>
 </template>

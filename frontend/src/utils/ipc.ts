@@ -4,9 +4,11 @@ import type { ServerItem } from "../components/ServerItem.vue";
 export interface ProxyItem {
   name: string;
   desc?: string | null;
+  enabled: boolean;
   type: string;
   localIP?: string | null;
   localPort: number;
+  remotePort?: number | null;
   customDomains?: string[] | null;
   locations?: string[] | null;
 }

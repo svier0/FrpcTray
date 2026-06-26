@@ -3,24 +3,22 @@ import { SwitchRoot, SwitchThumb } from "radix-vue";
 import { useI18n } from "vue-i18n";
 import type { ServerItem } from "./ServerItem.vue";
 
-export type ViewTab = "proxy" | "terminal";
-
 const props = defineProps<{
   globalEnabled: boolean;
-  activeTab: ViewTab;
+  activeTab: string;
   enabledServers: ServerItem[];
 }>();
 
 const emit = defineEmits<{
   (e: "update:globalEnabled", value: boolean): void;
-  (e: "update:activeTab", value: ViewTab): void;
+  (e: "update:activeTab", value: string): void;
   (e: "openSettings"): void;
   (e: "addProxy"): void;
 }>();
 
 const { t } = useI18n();
 
-function setActiveTab(tab: ViewTab) {
+function setActiveTab(tab: string) {
   emit("update:activeTab", tab);
 }
 </script>
@@ -68,7 +66,7 @@ function setActiveTab(tab: ViewTab) {
           :key="server.id"
           class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
           :class="props.activeTab === server.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          @click="setActiveTab(server.id as ViewTab)"
+          @click="setActiveTab(server.id)"
         >
           {{ server.id.toUpperCase() }}
         </button>
