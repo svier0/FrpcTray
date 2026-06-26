@@ -38,6 +38,7 @@
 - [x] ProxyItem 添加 `enabled: bool` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
 - [x] 修复 TOML 写入格式破坏（2026-06-26）— 最小侵入式更新，保留空行/未知字段/数组格式
 - [x] 补充高频配置字段（2026-06-26）— Server: transport(protocol/tcpMux) + tls(enable)；Proxy: remotePort
+- [x] 🐛 修复 reorder_proxies 不生效（2026-06-27）— `update_proxies` 只按 name 更新字段，从未重排 `[[proxies]]` 数组顺序。修复：更新后 clone+remove+push 重建数组顺序
 - [ ] 等待前端确认
 - [ ] 后续功能开发...
 
