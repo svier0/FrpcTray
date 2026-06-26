@@ -82,9 +82,14 @@ async function handleUpdateEnabled(id: string, value: boolean) {
     try {
       await updateProxy(activeTab.value, proxy.name, {
         name: proxy.name,
+        desc: proxy.desc,
         enabled: value,
         type: proxy.type || "tcp",
-        localPort: 0,
+        localIP: proxy.localIP,
+        localPort: proxy.localPort || 0,
+        remotePort: proxy.remotePort,
+        customDomains: proxy.customDomains,
+        locations: proxy.locations,
       });
     } catch (e) {
       console.error("Failed to update proxy enabled:", e);
@@ -158,7 +163,7 @@ async function handleProxySubmit(data: ProxyFormData) {
   const proxyData = {
     name: data.name,
     desc: data.desc || undefined,
-    enabled: true,
+    enabled: false,
     type: data.type,
     localIP: data.localIP || undefined,
     localPort: data.localPort,
