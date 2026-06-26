@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import AppHeader from "./components/AppHeader.vue";
-import type { ViewTab } from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
 import SettingsPage from "./components/SettingsPage.vue";
@@ -9,7 +8,7 @@ import type { ServerItem } from "./components/ServerItem.vue";
 import { listServers } from "./utils/ipc";
 
 const globalEnabled = ref(true);
-const activeTab = ref<ViewTab>("proxy");
+const activeTab = ref<string>("proxy");
 const activeProxyId = ref<string | undefined>();
 const showSettings = ref(false);
 const servers = ref<ServerItem[]>([]);

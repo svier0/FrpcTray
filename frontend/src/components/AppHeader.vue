@@ -62,37 +62,13 @@ function setActiveTab(tab: ViewTab) {
       class="flex items-center gap-2"
       style="WebkitAppRegion: no-drag"
     >
-      <div class="flex items-center gap-0.5 p-1 bg-muted rounded-xl">
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'proxy' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          :title="t('header.proxy')"
-          @click="setActiveTab('proxy')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <line x1="2" y1="12" x2="22" y2="12" />
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-          </svg>
-        </button>
-        <button
-          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
-          :class="props.activeTab === 'terminal' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
-          :title="t('header.terminal')"
-          @click="setActiveTab('terminal')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 17 10 11 4 5" />
-            <line x1="12" y1="19" x2="20" y2="19" />
-          </svg>
-        </button>
-      </div>
-
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1 p-1 bg-muted rounded-xl">
         <button
           v-for="server in props.enabledServers"
           :key="server.id"
-          class="inline-flex items-center justify-center h-7 px-2 rounded-lg bg-primary text-primary-foreground text-xs font-bold transition-colors"
+          class="inline-flex items-center justify-center h-7 w-7 rounded-lg transition-colors"
+          :class="props.activeTab === server.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
+          @click="setActiveTab(server.id as ViewTab)"
         >
           {{ server.id.toUpperCase() }}
         </button>
