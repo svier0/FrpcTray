@@ -2,14 +2,14 @@
 
 ## 1. 核心职责与目录隔离 (Core Isolation)
 为了彻底避免 Git 代码冲突，两位 Agent 必须严格在自己的领地工作，严禁修改对方的代码目录和状态文件：
-* **后端 Agent (OpenCode)：** 主战场在 `/backend`。对 `BACKEND_STATUS.md` 拥有唯一写入权；对 `FRONTEND_STATUS.md` 只读。
-* **前端 Agent (Claude)：** 主战场在 `/frontend`。对 `FRONTEND_STATUS.md` 拥有唯一写入权；对 `BACKEND_STATUS.md` 只读。
+* **后端 Agent (Claude)：** 主战场在 `/backend`。对 `/backend/BACKEND_STATUS.md` 拥有唯一写入权；对 `/frontend/FRONTEND_STATUS.md` 只读；对 `/frontend/*` 只读。
+* **前端 Agent (OpenCode)：** 主战场在 `/frontend`。对 `/frontend/FRONTEND_STATUS.md` 拥有唯一写入权；对 `/backend/BACKEND_STATUS.md` 只读；对 `/backend/*` 只读。
 
 ---
 
 ## 2. 接口文档与动态通知分离原则 (Crucial Principle)
 * **长久资产（不准删除）：** 具体的 API 路由、请求参数、返回格式等技术细节，后端必须记录在 `/backend/api_spec.json`（或 Swagger/Markdown 文档）中。该文件随开发持续追加，作为前端开发的唯一事实来源。
-* **即时通知（覆盖更新）：** 根目录下的两个 `.md` 状态文件**仅作为“联调看板”**，只写一句话动态。必须控制在 15 行以内，看完即覆盖。
+* **即时通知（覆盖更新）：** `/frontend/FRONTEND_STATUS.md`和`/backend/BACKEND_STATUS.md`状态文件**仅作为“联调看板”**，只写一句话动态。必须控制在 30 行以内，看完即覆盖(要确定对方看过)。
 
 ---
 
@@ -18,6 +18,7 @@
 ### == BACKEND_STATUS.md (仅允许后端写入，控制在30行内) ==
 # 后端联调看板
 VERSION: V1
+ACK_FRONTEND_VERSION: V1
 
 ## 📢 最新联调通知
 - [例如：我写好了登录和注册接口，接口详情已更新至 /backend/api_spec.json，请前端开始对接。]
@@ -25,6 +26,7 @@ VERSION: V1
 
 ### == FRONTEND_STATUS.md (仅允许前端写入，控制在30行内) ==
 # 前端联调看板
+VERSION: V1
 ACK_BACKEND_VERSION: V1
 
 ## 📢 最新进度与反馈
