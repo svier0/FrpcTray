@@ -554,6 +554,30 @@ fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
                     arr.push(build_proxy_table(proxy));
                 }
             }
+
+            // Reorder arr to match config.proxies order.
+            // Existing entries were updated in-place so their positions in arr
+            // are still the old order; new entries were appended at the end.
+            // Clone each table (preserving unknown fields + decor), then rebuild.
+            let mut reordered: Vec<Table> = Vec::with_capacity(arr.len());
+            for proxy in proxies {
+                let idx = arr.iter().position(|t| {
+                    t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str())
+                });
+                if let Some(idx) = idx {
+                    reordered.push(arr.get(idx).unwrap().clone());
+                    arr.remove(idx);
+                }
+            }
+            // Any leftover (shouldn't normally happen after the update loop)
+            while arr.len() > 0 {
+                let table = arr.get(0).unwrap().clone();
+                arr.remove(0);
+                reordered.push(table);
+            }
+            for table in reordered {
+                arr.push(table);
+            }
         }
         _ => { doc.remove("proxies"); }
     }
