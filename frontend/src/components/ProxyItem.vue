@@ -8,6 +8,11 @@ export interface ProxyItem {
   desc?: string;
   type?: string;
   enabled: boolean;
+  localIP?: string;
+  localPort?: number;
+  remotePort?: number;
+  customDomains?: string[];
+  locations?: string[];
   icon?: string;
   color?: string;
 }

@@ -49,6 +49,11 @@ async function loadProxies(serverId: string) {
       desc: p.desc || undefined,
       type: p.type,
       enabled: p.enabled,
+      localIP: p.localIP || undefined,
+      localPort: p.localPort,
+      remotePort: p.remotePort || undefined,
+      customDomains: p.customDomains || undefined,
+      locations: p.locations || undefined,
     }));
   } catch (e) {
     console.error("Failed to load proxies:", e);
@@ -96,11 +101,11 @@ function handleEdit(id: string) {
       name: proxy.name,
       desc: proxy.desc || "",
       type: proxy.type || "tcp",
-      localIP: "127.0.0.1",
-      localPort: 8080,
-      remotePort: null,
-      customDomains: "",
-      locations: "",
+      localIP: proxy.localIP || "127.0.0.1",
+      localPort: proxy.localPort || 8080,
+      remotePort: proxy.remotePort || null,
+      customDomains: proxy.customDomains ? proxy.customDomains.join(", ") : "",
+      locations: proxy.locations ? proxy.locations.join(", ") : "",
     };
     proxyDialogMode.value = "edit";
     showProxyDialog.value = true;
@@ -114,11 +119,11 @@ function handleDuplicate(id: string) {
       name: `${source.name} copy`,
       desc: source.desc || "",
       type: source.type || "tcp",
-      localIP: "127.0.0.1",
-      localPort: 8080,
-      remotePort: null,
-      customDomains: "",
-      locations: "",
+      localIP: source.localIP || "127.0.0.1",
+      localPort: source.localPort || 8080,
+      remotePort: source.remotePort || null,
+      customDomains: source.customDomains ? source.customDomains.join(", ") : "",
+      locations: source.locations ? source.locations.join(", ") : "",
     };
     proxyDialogMode.value = "create";
     showProxyDialog.value = true;
