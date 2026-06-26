@@ -295,107 +295,189 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
     })
 }
 
-// ── TOML write (DOM API) ──
+// ── TOML write (DOM API, minimally invasive) ──
 
-/// Build a string array Value from string items
+/// Build an inline string array (e.g. ["a", "b"])
 fn make_string_array(items: &[String]) -> Item {
     let mut arr = toml_edit::Array::new();
     for s in items {
         arr.push(s.as_str());
     }
-    arr.set_trailing_comma(true);
-    arr.set_trailing("\n");
     value(toml_edit::Value::Array(arr))
 }
 
-/// Set frpc-native fields into the document
-fn set_frpc_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    doc.insert("serverAddr", value(&config.server_addr));
-    doc.insert("serverPort", value(config.server_port as i64));
-
-    // Auth: rebuild as [auth] table
-    doc.remove("auth");
-    if let Some(ref auth) = config.auth {
-        if auth.method.is_some() || auth.token.is_some() {
-            let mut auth_table = Table::new();
-            auth_table.decor_mut().set_prefix("\n");
-            if let Some(ref m) = auth.method {
-                auth_table.insert("method", value(m));
-            }
-            if let Some(ref t) = auth.token {
-                auth_table.insert("token", value(t));
-            }
-            doc.insert("auth", Item::Table(auth_table));
-        }
-    }
-
-    // Log: rebuild as [log] table
-    doc.remove("log");
-    if let Some(ref log) = config.log {
-        if log.to.is_some() || log.level.is_some() || log.max_days.is_some() {
-            let mut log_table = Table::new();
-            log_table.decor_mut().set_prefix("\n");
-            if let Some(ref to) = log.to {
-                log_table.insert("to", value(to));
-            }
-            if let Some(ref level) = log.level {
-                log_table.insert("level", value(level));
-            }
-            if let Some(max_days) = log.max_days {
-                log_table.insert("maxDays", value(max_days as i64));
-            }
-            doc.insert("log", Item::Table(log_table));
-        }
+/// Update or insert a scalar field in a table, preserving Key decor for existing keys.
+/// Uses get_mut() which accesses the Item via mutable reference into the BTreeMap,
+/// so the Key (and its prefix decor: blank lines, comments) is untouched.
+fn set_or_insert(table: &mut Table, key: &str, val: Item) {
+    if let Some(item) = table.get_mut(key) {
+        *item = val;
+    } else {
+        table.insert(key, val);
     }
 }
 
-/// Rebuild the [[proxies]] array with desc comments
-fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    doc.remove("proxies");
-
-    let Some(ref proxies) = config.proxies else { return };
-    if proxies.is_empty() { return; }
-
-    let mut arr = ArrayOfTables::new();
-
-    for proxy in proxies {
-        let mut table = Table::new();
-
-        // Set desc as comment before [[proxies]]
-        let desc_prefix = match proxy.desc {
-            Some(ref d) if !d.trim().is_empty() => format!("# {}\n", d.trim()),
-            _ => String::new(),
-        };
-        table.decor_mut().set_prefix(desc_prefix);
-
-        table.insert("name", value(&proxy.name));
-        table.insert("type", value(&proxy.proxy_type));
-        table.insert("enabled", value(proxy.enabled));
-        if let Some(ref ip) = proxy.local_ip {
-            table.insert("localIP", value(ip));
-        }
-        table.insert("localPort", value(proxy.local_port as i64));
-        if let Some(ref domains) = proxy.custom_domains {
-            if !domains.is_empty() {
-                table.insert("customDomains", make_string_array(domains));
-            }
-        }
-        if let Some(ref locs) = proxy.locations {
-            if !locs.is_empty() {
-                table.insert("locations", make_string_array(locs));
-            }
-        }
-
-        arr.push(table);
+/// Update a string-like field in a table (Some = set/update, None = remove)
+fn set_or_remove_str(table: &mut Table, key: &str, val: Option<&str>) {
+    match val {
+        Some(v) => set_or_insert(table, key, value(v)),
+        None => { table.remove(key); }
     }
-
-    doc.insert("proxies", Item::ArrayOfTables(arr));
 }
 
-/// Set metadata comments (# @title / # @enable / # @sort) on the first key's decor.
+/// Update frpc-native fields in-place, preserving unknown keys and formatting
+fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    // Simple scalar fields: update in-place, preserving decor
+    set_or_insert(doc, "serverAddr", value(&config.server_addr));
+    set_or_insert(doc, "serverPort", value(config.server_port as i64));
+
+    // Auth: update in-place if exists, create if new, remove if clearing
+    match &config.auth {
+        Some(a) if a.method.is_some() || a.token.is_some() => {
+            match doc.get_mut("auth") {
+                Some(Item::Table(t)) => {
+                    set_or_remove_str(t, "method", a.method.as_deref());
+                    set_or_remove_str(t, "token", a.token.as_deref());
+                }
+                _ => {
+                    doc.remove("auth");
+                    let mut t = Table::new();
+                    t.decor_mut().set_prefix("\n");
+                    if let Some(ref m) = a.method { t.insert("method", value(m)); }
+                    if let Some(ref tk) = a.token { t.insert("token", value(tk)); }
+                    doc.insert("auth", Item::Table(t));
+                }
+            }
+        }
+        _ => { doc.remove("auth"); }
+    }
+
+    // Log: update in-place if exists, create if new, remove if clearing
+    match &config.log {
+        Some(l) if l.to.is_some() || l.level.is_some() || l.max_days.is_some() => {
+            match doc.get_mut("log") {
+                Some(Item::Table(t)) => {
+                    set_or_remove_str(t, "to", l.to.as_deref());
+                    set_or_remove_str(t, "level", l.level.as_deref());
+                    match l.max_days {
+                        Some(md) => set_or_insert(t, "maxDays", value(md as i64)),
+                        None => { t.remove("maxDays"); }
+                    }
+                }
+                _ => {
+                    doc.remove("log");
+                    let mut t = Table::new();
+                    t.decor_mut().set_prefix("\n");
+                    if let Some(ref to) = l.to { t.insert("to", value(to)); }
+                    if let Some(ref level) = l.level { t.insert("level", value(level)); }
+                    if let Some(md) = l.max_days { t.insert("maxDays", value(md as i64)); }
+                    doc.insert("log", Item::Table(t));
+                }
+            }
+        }
+        _ => { doc.remove("log"); }
+    }
+}
+
+/// Update a single proxy table in-place, preserving unknown fields.
+fn update_proxy_table(table: &mut Table, proxy: &ProxyItem) {
+    // Update desc comment: strip old plain-comment, keep # @ lines, prepend new desc
+    let existing_prefix = table.decor().prefix()
+        .and_then(|r| r.as_str())
+        .unwrap_or("");
+    let filtered: Vec<&str> = existing_prefix
+        .lines()
+        .filter(|l| {
+            let t = l.trim();
+            !(t.starts_with('#') && !t.starts_with("# @"))
+        })
+        .collect();
+    let desc_prefix = match proxy.desc {
+        Some(ref d) if !d.trim().is_empty() => format!("# {}\n", d.trim()),
+        _ => String::new(),
+    };
+    let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
+        desc_prefix
+    } else {
+        format!("{}{}", filtered.join("\n"), desc_prefix)
+    };
+    table.decor_mut().set_prefix(new_prefix);
+
+    // Scalar fields — set_or_insert preserves Key decor on existing keys
+    set_or_insert(table, "name", value(&proxy.name));
+    set_or_insert(table, "type", value(&proxy.proxy_type));
+    set_or_insert(table, "enabled", value(proxy.enabled));
+    set_or_remove_str(table, "localIP", proxy.local_ip.as_deref());
+    set_or_insert(table, "localPort", value(proxy.local_port as i64));
+
+    // Array fields
+    match &proxy.custom_domains {
+        Some(domains) if !domains.is_empty() => set_or_insert(table, "customDomains", make_string_array(domains)),
+        _ => { table.remove("customDomains"); }
+    }
+    match &proxy.locations {
+        Some(locs) if !locs.is_empty() => set_or_insert(table, "locations", make_string_array(locs)),
+        _ => { table.remove("locations"); }
+    }
+}
+
+/// Create a new proxy table from a ProxyItem (no existing table to update)
+fn build_proxy_table(proxy: &ProxyItem) -> Table {
+    let mut table = Table::new();
+    update_proxy_table(&mut table, proxy);
+    table
+}
+
+/// Update [[proxies]] in-place: match existing by name, add new, remove deleted.
+/// Preserves unknown fields in unchanged parts of each proxy table.
+fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    match &config.proxies {
+        Some(proxies) if !proxies.is_empty() => {
+            // Get or create ArrayOfTables
+            let arr: &mut ArrayOfTables = match doc.get_mut("proxies").and_then(|v| v.as_array_of_tables_mut()) {
+                Some(arr) => arr,
+                None => {
+                    doc.remove("proxies");
+                    doc.insert("proxies", Item::ArrayOfTables(ArrayOfTables::new()));
+                    doc.get_mut("proxies").and_then(|v| v.as_array_of_tables_mut()).unwrap()
+                }
+            };
+
+            // Remove proxies not in new config (reverse iteration for safe removal)
+            let new_names: std::collections::HashSet<&str> = proxies.iter().map(|p| p.name.as_str()).collect();
+            let mut i = 0;
+            while i < arr.len() {
+                let name = arr.get(i).and_then(|t| t.get("name").and_then(|v| v.as_str())).unwrap_or("");
+                if !new_names.contains(name) {
+                    arr.remove(i);
+                } else {
+                    i += 1;
+                }
+            }
+
+            // Update existing, add new
+            for proxy in proxies {
+                let found = arr.iter_mut().any(|t| {
+                    if t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str()) {
+                        update_proxy_table(t, proxy);
+                        true
+                    } else {
+                        false
+                    }
+                });
+                if !found {
+                    arr.push(build_proxy_table(proxy));
+                }
+            }
+        }
+        _ => { doc.remove("proxies"); }
+    }
+}
+
+/// Update metadata comments (# @title / # @enable / # @sort) on the first key's decor.
 /// In toml_edit, top-of-file comments are stored as the prefix of the first KEY
 /// (before the key name), NOT the value (between = and value).
-fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+fn update_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     let meta = format!(
         "# @title {}\n# @enable {}\n# @sort {}\n",
         config.title, config.enable, config.sort
@@ -428,8 +510,10 @@ fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
 }
 
 /// Write a server config to file.
-/// If the file exists, parses and modifies in place (preserving formatting).
-/// If new, builds from scratch.
+/// Parses existing file and makes targeted in-place edits to preserve:
+/// - blank lines and formatting
+/// - unknown TOML fields not modeled in our structs
+/// - inline array format
 fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
     let path = server_path(id);
 
@@ -447,9 +531,10 @@ fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
         DocumentMut::new()
     };
 
-    set_frpc_fields(&mut doc, config);
-    set_meta_comments(&mut doc, config);
-    rebuild_proxies(&mut doc, config);
+    // Targeted in-place updates (order matters for formatting)
+    update_meta_comments(&mut doc, config);
+    update_server_fields(&mut doc, config);
+    update_proxies(&mut doc, config);
 
     let output = doc.to_string();
     fs::write(&path, output)
