@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useDraggable } from "vue-draggable-plus";
+import { VueDraggable } from "vue-draggable-plus";
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import ServerItem from "./ServerItem.vue";
@@ -29,15 +29,9 @@ watch(
   { deep: true }
 );
 
-const el = ref<HTMLElement | null>(null);
-
-useDraggable(el, dragList, {
-  animation: 150,
-  handle: ".drag-handle",
-  onEnd: () => {
-    emit("update:items", [...dragList.value]);
-  },
-});
+function onEnd() {
+  emit("update:items", [...dragList.value]);
+}
 
 function handleToggleExpand(id: string) {
   expandedId.value = expandedId.value === id ? null : id;
@@ -54,7 +48,12 @@ function handleDelete(id: string) {
 
 <template>
   <div class="space-y-3">
-    <div ref="el" class="space-y-3">
+    <VueDraggable
+      v-model="dragList"
+      :animation="150"
+      handle=".drag-handle"
+      @end="onEnd"
+    >
       <div v-for="item in dragList" :key="item.id" class="relative group">
         <button
           class="drag-handle absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/50 hover:text-muted-foreground transition-all cursor-grab active:cursor-grabbing"
@@ -88,7 +87,7 @@ function handleDelete(id: string) {
           @delete="handleDelete"
         />
       </div>
-    </div>
+    </VueDraggable>
 
     <button
       class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 hover:text-blue-500"
