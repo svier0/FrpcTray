@@ -40,7 +40,7 @@ async function loadProxies(serverId: string) {
       id: String(index),
       name: p.name,
       desc: p.desc || undefined,
-      url: '',
+      type: p.type,
       enabled: true,
     }));
   } catch (e) {

@@ -6,7 +6,7 @@ export interface ProxyItem {
   id: string;
   name: string;
   desc?: string;
-  url: string;
+  type?: string;
   enabled: boolean;
   icon?: string;
   color?: string;
@@ -69,12 +69,9 @@ const { t } = useI18n();
         <div
           class="h-8 w-8 flex-shrink-0 rounded-lg bg-muted flex items-center justify-center border border-border group-hover:scale-105 transition-transform duration-300"
         >
-          <div
-            class="w-5 h-5 rounded flex items-center justify-center text-xs font-semibold"
-            :style="props.item.color ? { color: props.item.color } : {}"
-          >
-            {{ props.item.name.charAt(0).toUpperCase() }}
-          </div>
+          <span class="text-xs font-bold text-muted-foreground uppercase">
+            {{ props.item.type || '?' }}
+          </span>
         </div>
 
         <div class="min-w-0 flex-1 space-y-1">
