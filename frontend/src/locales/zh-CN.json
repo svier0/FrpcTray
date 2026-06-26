@@ -66,6 +66,13 @@
       "dark": "深色",
       "system": "跟随系统"
     },
+    "homeDisplay": {
+      "title": "主页面显示",
+      "description": "选择在主页面显示的服务器",
+      "empty": "暂无服务器配置",
+      "show": "显示",
+      "hide": "隐藏"
+    },
     "about": {
       "version": "版本"
     }

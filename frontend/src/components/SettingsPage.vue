@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { SwitchRoot, SwitchThumb } from "radix-vue";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
@@ -24,6 +25,7 @@ const servers = ref<ServerItem[]>([]);
 const showDeleteDialog = ref(false);
 const deleteTargetId = ref<string | null>(null);
 const isLoading = ref(false);
+const serverVisibility = ref<Record<string, boolean>>({});
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -138,7 +140,28 @@ async function handleAddServer() {
 
 onMounted(() => {
   loadServers();
+  loadServerVisibility();
 });
+
+function loadServerVisibility() {
+  try {
+    const saved = localStorage.getItem("serverVisibility");
+    if (saved) {
+      serverVisibility.value = JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error("Failed to load server visibility:", e);
+  }
+}
+
+function toggleServerVisibility(id: string) {
+  serverVisibility.value[id] = !serverVisibility.value[id];
+  localStorage.setItem("serverVisibility", JSON.stringify(serverVisibility.value));
+}
+
+function getServerVisibility(id: string): boolean {
+  return serverVisibility.value[id] ?? true;
+}
 
 watch(theme, (newTheme) => {
   applyTheme(newTheme);
@@ -258,6 +281,65 @@ watch(language, (newLang) => {
               </svg>
               {{ t(th.labelKey) }}
             </button>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <header class="space-y-1">
+            <h3 class="text-sm font-medium">{{ t('settings.homeDisplay.title') }}</h3>
+            <p class="text-xs text-muted-foreground">{{ t('settings.homeDisplay.description') }}</p>
+          </header>
+          <div class="rounded-lg border border-border bg-background p-1">
+            <div
+              v-if="servers.length === 0"
+              class="flex items-center justify-center py-6 text-sm text-muted-foreground"
+            >
+              {{ t('settings.homeDisplay.empty') }}
+            </div>
+            <div
+              v-for="server in servers"
+              :key="server.id"
+              class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-md hover:bg-muted/50 transition-colors"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <div
+                  class="h-8 w-8 flex-shrink-0 rounded-lg bg-muted flex items-center justify-center border border-border"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    class="text-muted-foreground"
+                  >
+                    <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
+                    <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
+                    <line x1="6" x2="6.01" y1="6" y2="6" />
+                    <line x1="6" x2="6.01" y1="18" y2="18" />
+                  </svg>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-sm font-medium truncate">{{ server.title }}</h4>
+                  <p class="text-xs text-muted-foreground truncate">
+                    {{ server.serverAddr }}:{{ server.serverPort }}
+                  </p>
+                </div>
+              </div>
+              <SwitchRoot
+                :checked="getServerVisibility(server.id)"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-muted"
+                @update:checked="toggleServerVisibility(server.id)"
+              >
+                <SwitchThumb
+                  class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+                />
+              </SwitchRoot>
+            </div>
           </div>
         </section>
       </div>

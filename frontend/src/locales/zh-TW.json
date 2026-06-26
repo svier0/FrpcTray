@@ -66,6 +66,13 @@
       "dark": "深色",
       "system": "跟隨系統"
     },
+    "homeDisplay": {
+      "title": "主頁面顯示",
+      "description": "選擇在主頁面顯示的伺服器",
+      "empty": "暫無伺服器設定",
+      "show": "顯示",
+      "hide": "隱藏"
+    },
     "about": {
       "version": "版本"
     }

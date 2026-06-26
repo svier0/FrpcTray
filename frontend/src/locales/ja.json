@@ -66,6 +66,13 @@
       "dark": "ダーク",
       "system": "システムに従う"
     },
+    "homeDisplay": {
+      "title": "ホーム画面表示",
+      "description": "ホーム画面に表示するサーバーを選択",
+      "empty": "サーバー設定がありません",
+      "show": "表示",
+      "hide": "非表示"
+    },
     "about": {
       "version": "バージョン"
     }

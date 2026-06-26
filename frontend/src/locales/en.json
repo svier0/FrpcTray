@@ -66,6 +66,13 @@
       "dark": "Dark",
       "system": "System"
     },
+    "homeDisplay": {
+      "title": "Home Display",
+      "description": "Select servers to display on the home page",
+      "empty": "No server configurations",
+      "show": "Show",
+      "hide": "Hide"
+    },
     "about": {
       "version": "Version"
     }
