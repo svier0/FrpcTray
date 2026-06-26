@@ -120,14 +120,15 @@ function handleDelete() {
     >
       <div class="space-y-3">
         <div class="flex items-center gap-2">
+          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.title') }}</label>
           <input
             v-model="editData.title"
             type="text"
-            class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            class="w-1/2 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.titlePlaceholder')"
           />
           <button
-            class="inline-flex items-center justify-center rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="inline-flex items-center justify-center gap-1 rounded-lg bg-blue-500 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             @click="handleSave"
           >
             <svg
@@ -170,12 +171,14 @@ function handleDelete() {
         </div>
 
         <div class="flex items-center gap-2">
+          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.address') }}</label>
           <input
             v-model="editData.serverAddr"
             type="text"
             class="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.addressPlaceholder')"
           />
+          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.port') }}</label>
           <input
             v-model.number="editData.serverPort"
             type="number"
@@ -185,12 +188,14 @@ function handleDelete() {
         </div>
 
         <div class="flex items-center gap-2">
+          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.authMethod') }}</label>
           <input
             v-model="editData.authMethod"
             type="text"
             class="w-32 rounded-lg border border-border bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             :placeholder="t('server.form.authMethodPlaceholder')"
           />
+          <label class="text-xs text-muted-foreground whitespace-nowrap">{{ t('server.form.authToken') }}</label>
           <div class="relative flex-1">
             <input
               v-model="editData.authToken"
