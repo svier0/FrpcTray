@@ -24,17 +24,16 @@
 - ✅ 配置目录跨平台策略：Windows 用 exe 同级 conf/，macOS/Linux 用 app_data_dir()/conf/
 - ✅ 移除 bundle.resources，目录运行时自动创建
 - ✅ 前端反馈 V2 已处理：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回
+- ✅ V3 TOML 存储方案重构（2026-06-26）
+  - `toml` crate → `toml_edit` 0.22（纯 DOM API）
+  - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort`
+  - `desc` → `[[proxies]]` 上方注释，读写由 `toml_edit` DOM API 处理
+  - V2 文件自动迁移：读取兼容注释+key 双路径，写入统一 V3 格式
+  - 11 个 tauri command 签名和 API 结构完全不变
 
 ### 待办事项
-- [ ] **TOML 存储方案重构**（不污染 frpc 配置 + 保留注释）
-  - `toml` crate → `toml_edit`
-  - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort`
-  - `desc` → `[[proxies]]` 上方注释，`toml_edit` 排序时跟随
-- [ ] 等待前端确认 V3
-
-### 下一步计划
-- TOML 存储方案重构
-- 等待前端 ACK V3
+- [ ] 等待前端确认 V3 实现
+- [ ] 后续功能开发...
 
 ---
 
@@ -84,8 +83,8 @@
 ---
 
 ## 协作状态
-- **当前版本**: V2
-- **前端 ACK**: 未确认 (需检查 FRONTEND_STATUS.md)
+- **当前版本**: V3
+- **前端 ACK**: 已确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **阻塞点**: 无
 
 ---

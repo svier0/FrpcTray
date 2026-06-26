@@ -81,7 +81,7 @@ struct CreateServerInput {
     auth: Option<AuthConfig>,
 }
 
-// AuthConfig needs serde for IPC (it's embedded in ServerInfo)
+// AuthConfig serde for IPC
 impl Serialize for AuthConfig {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeStruct;
@@ -130,26 +130,27 @@ fn id_from_filename(filename: &str) -> Option<String> {
 
 // ── TOML read (DOM API) ──
 
-/// Extract metadata from V3 comments (# @title / # @enable / # @sort)
-fn extract_meta_from_comments(doc: &DocumentMut) -> (Option<String>, Option<bool>, Option<i32>) {
+/// Parse # @title / # @enable / # @sort from raw file content
+fn parse_meta_from_raw(content: &str) -> (Option<String>, Option<bool>, Option<i32>) {
     let mut title = None;
     let mut enable = None;
     let mut sort = None;
 
-    if let Some((_, item)) = doc.iter().next() {
-        if let Some(raw) = item.decor().prefix() {
-            if let Some(s) = raw.as_str() {
-                for line in s.lines() {
-                    let trimmed = line.trim();
-                    if let Some(v) = trimmed.strip_prefix("# @title ") {
-                        title = Some(v.trim().to_string());
-                    } else if let Some(v) = trimmed.strip_prefix("# @enable ") {
-                        enable = Some(v.trim().parse().unwrap_or(true));
-                    } else if let Some(v) = trimmed.strip_prefix("# @sort ") {
-                        sort = v.trim().parse::<i32>().ok();
-                    }
-                }
-            }
+    // Only scan lines before the first non-comment, non-blank line (the TOML body)
+    for line in content.lines() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        if let Some(v) = trimmed.strip_prefix("# @title ") {
+            title = Some(v.trim().to_string());
+        } else if let Some(v) = trimmed.strip_prefix("# @enable ") {
+            enable = Some(v.trim().parse().unwrap_or(true));
+        } else if let Some(v) = trimmed.strip_prefix("# @sort ") {
+            sort = v.trim().parse::<i32>().ok();
+        } else if !trimmed.starts_with('#') {
+            // Hit first non-comment line: stop scanning @ lines
+            break;
         }
     }
 
@@ -164,7 +165,7 @@ fn extract_meta_from_keys(doc: &DocumentMut) -> (Option<String>, Option<bool>, O
     (title, enable, sort)
 }
 
-/// Extract array of strings from a TOML array
+/// Extract array of strings from a TOML array value
 fn extract_string_array(table: &Table, key: &str) -> Option<Vec<String>> {
     table.get(key)
         .and_then(|v| v.as_array())
@@ -239,11 +240,15 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
     }
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("读取文件失败: {}", e))?;
+
+    // V3: extract metadata from # @ comments in raw content
+    let (ctitle, cenable, csort) = parse_meta_from_raw(&content);
+
+    // Parse TOML body
     let doc: DocumentMut = content.parse()
         .map_err(|e| format!("解析 TOML 失败: {}", e))?;
 
-    // V3 comments → V2 keys fallback
-    let (ctitle, cenable, csort) = extract_meta_from_comments(&doc);
+    // V2 fallback: extract metadata from TOML keys
     let (ktitle, kenable, ksort) = extract_meta_from_keys(&doc);
     let title = ctitle.or(ktitle).unwrap_or_default();
     let enable = cenable.or(kenable).unwrap_or(true);
@@ -284,72 +289,52 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
 
 // ── TOML write (DOM API) ──
 
-/// Set metadata comments (# @title / # @enable / # @sort) on the first key's prefix
-fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    let meta = format!("# @title {}\n# @enable {}\n# @sort {}\n",
-        config.title, config.enable, config.sort);
-
-    if let Some((_, item)) = doc.iter_mut().next() {
-        let existing = item.decor().prefix()
-            .and_then(|r| r.as_str())
-            .unwrap_or("");
-
-        // Remove old @ lines, preserve other comments
-        let filtered: Vec<&str> = existing
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                !t.starts_with("# @title ")
-                && !t.starts_with("# @enable ")
-                && !t.starts_with("# @sort ")
-            })
-            .collect();
-
-        let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
-            meta
-        } else {
-            format!("{}{}", filtered.join("\n"), meta)
-        };
-
-        item.decor_mut().set_prefix(new_prefix);
+/// Build a string array Value from string items
+fn make_string_array(items: &[String]) -> Item {
+    let mut arr = toml_edit::Array::new();
+    for s in items {
+        arr.push(s.as_str());
     }
+    arr.set_trailing_comma(true);
+    arr.set_trailing("\n");
+    value(toml_edit::Value::Array(arr))
 }
 
-/// Write frpc-native fields into the document
+/// Set frpc-native fields into the document
 fn set_frpc_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    doc.insert("serverAddr", Item::Value(value(&config.server_addr)));
-    doc.insert("serverPort", Item::Value(value(config.server_port as i64)));
+    doc.insert("serverAddr", value(&config.server_addr));
+    doc.insert("serverPort", value(config.server_port as i64));
 
-    // Auth: remove old, rebuild as [auth] table
+    // Auth: rebuild as [auth] table
     doc.remove("auth");
     if let Some(ref auth) = config.auth {
         if auth.method.is_some() || auth.token.is_some() {
             let mut auth_table = Table::new();
             auth_table.decor_mut().set_prefix("\n");
             if let Some(ref m) = auth.method {
-                auth_table.insert("method", Item::Value(value(m)));
+                auth_table.insert("method", value(m));
             }
             if let Some(ref t) = auth.token {
-                auth_table.insert("token", Item::Value(value(t)));
+                auth_table.insert("token", value(t));
             }
             doc.insert("auth", Item::Table(auth_table));
         }
     }
 
-    // Log: remove old, rebuild as [log] table
+    // Log: rebuild as [log] table
     doc.remove("log");
     if let Some(ref log) = config.log {
         if log.to.is_some() || log.level.is_some() || log.max_days.is_some() {
             let mut log_table = Table::new();
             log_table.decor_mut().set_prefix("\n");
             if let Some(ref to) = log.to {
-                log_table.insert("to", Item::Value(value(to)));
+                log_table.insert("to", value(to));
             }
             if let Some(ref level) = log.level {
-                log_table.insert("level", Item::Value(value(level)));
+                log_table.insert("level", value(level));
             }
             if let Some(max_days) = log.max_days {
-                log_table.insert("maxDays", Item::Value(value(max_days as i64)));
+                log_table.insert("maxDays", value(max_days as i64));
             }
             doc.insert("log", Item::Table(log_table));
         }
@@ -375,22 +360,20 @@ fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
         };
         table.decor_mut().set_prefix(desc_prefix);
 
-        table.insert("name", Item::Value(value(&proxy.name)));
-        table.insert("type", Item::Value(value(&proxy.proxy_type)));
+        table.insert("name", value(&proxy.name));
+        table.insert("type", value(&proxy.proxy_type));
         if let Some(ref ip) = proxy.local_ip {
-            table.insert("localIP", Item::Value(value(ip)));
+            table.insert("localIP", value(ip));
         }
-        table.insert("localPort", Item::Value(value(proxy.local_port as i64)));
+        table.insert("localPort", value(proxy.local_port as i64));
         if let Some(ref domains) = proxy.custom_domains {
             if !domains.is_empty() {
-                let vals: Vec<_> = domains.iter().map(|d| value(d.as_str())).collect();
-                table.insert("customDomains", value_array(vals));
+                table.insert("customDomains", make_string_array(domains));
             }
         }
         if let Some(ref locs) = proxy.locations {
             if !locs.is_empty() {
-                let vals: Vec<_> = locs.iter().map(|l| value(l.as_str())).collect();
-                table.insert("locations", value_array(vals));
+                table.insert("locations", make_string_array(locs));
             }
         }
 
@@ -400,16 +383,51 @@ fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     doc.insert("proxies", Item::ArrayOfTables(arr));
 }
 
-/// Create an Item::Value containing an Array from Value items
-fn value_array(vals: Vec<toml_edit::Value>) -> Item {
-    let mut array = toml_edit::Array::new();
-    for v in vals {
-        array.push(v);
+/// Set metadata comments (# @title / # @enable / # @sort) on the document root.
+/// In toml_edit, top-of-file comments are stored as the prefix decor of the first
+/// key-value entry. We set them on the first available item.
+fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    let meta = format!(
+        "# @title {}\n# @enable {}\n# @sort {}\n",
+        config.title, config.enable, config.sort
+    );
+
+    // Set on the first key's prefix decor
+    for (_, item) in doc.iter_mut() {
+        // Get existing prefix, filter out old @ lines
+        let existing = match item {
+            Item::Value(v) => v.decor().prefix()
+                .and_then(|r| r.as_str())
+                .unwrap_or(""),
+            Item::Table(t) => t.decor().prefix()
+                .and_then(|r| r.as_str())
+                .unwrap_or(""),
+            _ => "",
+        };
+
+        let filtered: Vec<&str> = existing
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                !t.starts_with("# @title ")
+                    && !t.starts_with("# @enable ")
+                    && !t.starts_with("# @sort ")
+            })
+            .collect();
+
+        let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
+            meta
+        } else {
+            format!("{}{}", filtered.join("\n"), meta)
+        };
+
+        match item {
+            Item::Value(v) => v.decor_mut().set_prefix(new_prefix),
+            Item::Table(t) => { t.decor_mut().set_prefix(new_prefix); }
+            _ => {}
+        }
+        break; // Only set on first key
     }
-    // Add trailing comma + newline for clean formatting
-    array.set_trailing_comma(true);
-    array.set_trailing("\n");
-    Item::Value(toml_edit::Value::Array(array))
 }
 
 /// Write a server config to file.
