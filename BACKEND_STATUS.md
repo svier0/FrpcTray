@@ -1,6 +1,6 @@
 # 后端联调看板
 VERSION: V3
-ACK_FRONTEND_VERSION: V3
+ACK_FRONTEND_VERSION: V2
 
 ## 📢 最新联调通知
 - ✅ V3 TOML 存储方案重构完成（2026-06-26）
