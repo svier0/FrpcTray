@@ -71,6 +71,18 @@ struct ServerInfo {
     auth: Option<AuthConfig>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct CreateServerInput {
+    title: String,
+    enable: bool,
+    sort: i32,
+    #[serde(rename = "serverAddr")]
+    server_addr: String,
+    #[serde(rename = "serverPort")]
+    server_port: u16,
+    auth: Option<AuthConfig>,
+}
+
 // ── Helper functions ──
 
 fn get_executable_dir() -> PathBuf {
@@ -170,19 +182,40 @@ fn get_server(id: String) -> Result<ServerInfo, String> {
 }
 
 #[tauri::command]
-fn create_server(server: ServerInfo) -> Result<(), String> {
-    let path = server_path(&server.id);
+fn create_server(input: CreateServerInput) -> Result<String, String> {
+    let dir = get_config_dir();
+    fs::create_dir_all(dir).map_err(|e| format!("创建配置目录失败: {}", e))?;
+
+    // Auto-generate a single-letter id (a..z)
+    let used_ids: std::collections::BTreeSet<String> = if let Ok(entries) = fs::read_dir(dir) {
+        entries
+            .flatten()
+            .filter_map(|e| {
+                let name = e.path().file_name()?.to_str()?.to_string();
+                id_from_filename(&name)
+            })
+            .collect()
+    } else {
+        std::collections::BTreeSet::new()
+    };
+
+    let id = ('a'..='z')
+        .map(|c| c.to_string())
+        .find(|c| !used_ids.contains(c))
+        .ok_or_else(|| "没有可用的单字母 ID（a..z 已用完）".to_string())?;
+
+    let path = server_path(&id);
     if path.exists() {
-        return Err(format!("服务器 '{}' 已存在", server.id));
+        return Err(format!("服务器 '{}' 已存在", id));
     }
 
     let config = FrpcConfigFile {
-        title: server.title,
-        enable: server.enable,
-        sort: server.sort,
-        server_addr: server.server_addr,
-        server_port: server.server_port,
-        auth: server.auth,
+        title: input.title,
+        enable: input.enable,
+        sort: input.sort,
+        server_addr: input.server_addr,
+        server_port: input.server_port,
+        auth: input.auth,
         log: Some(LogConfig {
             to: Some("frpc.log".to_string()),
             level: Some("info".to_string()),
@@ -190,7 +223,8 @@ fn create_server(server: ServerInfo) -> Result<(), String> {
         }),
         proxies: None,
     };
-    write_server_file(&server.id, &config)
+    write_server_file(&id, &config)?;
+    Ok(id)
 }
 
 #[tauri::command]

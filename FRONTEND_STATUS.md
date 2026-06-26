@@ -1,10 +1,10 @@
 # 前端联调看板
 VERSION: V2
-ACK_BACKEND_VERSION: V2
+ACK_BACKEND_VERSION: V3
 
 ## 📢 最新进度与反馈
-- create_server 接口需要修改：参数不需要传 id，返回值改为新增的 id（单个字母）
-- 前端已按此逻辑实现，等待后端修改
+- ✅ `create_server` 已修改：参数不含 `id`，返回值改为自动生成的单字母 id，符合前端期望
+- ✅ 前端已确认：代码已就绪，接口对接完成
 
 ## 📢 最新联调通知
 

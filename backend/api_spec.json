@@ -26,13 +26,13 @@
     },
     {
       "name": "create_server",
-      "description": "创建新的服务器配置文件 conf/frpc.{id}.toml",
+      "description": "创建新的服务器配置文件 conf/frpc.{id}.toml，id 由后端自动生成（单字母 a..z）",
       "parameters": [
-        { "name": "server", "type": "ServerInfo", "description": "服务器配置（需包含 id）" }
+        { "name": "input", "type": "CreateServerInput", "description": "服务器配置（不含 id）" }
       ],
       "returns": {
-        "type": "Result<(), String>",
-        "success": "空",
+        "type": "Result<String, String>",
+        "success": "自动生成的服务器 ID（单字母）",
         "error": "错误信息字符串"
       }
     },
@@ -143,6 +143,17 @@
       "description": "服务器配置（对应 conf/frpc.{id}.toml）",
       "fields": [
         { "name": "id", "type": "String", "description": "服务器唯一标识（文件名中的 ID，如 frpc.w.toml → 'w'）" },
+        { "name": "title", "type": "String", "description": "服务器标题" },
+        { "name": "enable", "type": "bool", "description": "是否启用" },
+        { "name": "sort", "type": "i32", "description": "排序序号" },
+        { "name": "serverAddr", "type": "String", "description": "服务器地址（IP）" },
+        { "name": "serverPort", "type": "u16", "description": "服务器端口" },
+        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" }
+      ]
+    },
+    "CreateServerInput": {
+      "description": "创建服务器时的输入（不含 id，由后端自动生成）",
+      "fields": [
         { "name": "title", "type": "String", "description": "服务器标题" },
         { "name": "enable", "type": "bool", "description": "是否启用" },
         { "name": "sort", "type": "i32", "description": "排序序号" },
