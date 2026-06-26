@@ -37,6 +37,7 @@
 ### 待办事项
 - [x] ProxyItem 添加 `enabled: bool` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
 - [x] 修复 TOML 写入格式破坏（2026-06-26）— 最小侵入式更新，保留空行/未知字段/数组格式
+- [x] 补充高频配置字段（2026-06-26）— Server: transport(protocol/tcpMux) + tls(enable)；Proxy: remotePort
 - [ ] 等待前端确认
 - [ ] 后续功能开发...
 
@@ -74,8 +75,8 @@
 - 开发时样本 TOML 放 `target/debug/conf/`
 
 ### 数据结构 (V3)
-- `ServerInfo`: id, title, enable, sort, serverAddr, serverPort, auth? {method?, token?}
-- `ProxyItem`: name, desc?, enabled, type, localIP?, localPort, customDomains?, locations?
+- `ServerInfo`: id, title, enable, sort, serverAddr, serverPort, auth? {method?, token?}, transport? {protocol?, tcpMux?}, tls? {enable?}
+- `ProxyItem`: name, desc?, enabled, type, localIP?, localPort, remotePort?, customDomains?, locations?
 - `FrpcConfigFile`: 内部 TOML 结构（含 log、proxies），仅 ServerInfo 暴露给前端
 - 所有命令返回 `Result<T, String>` 格式
 

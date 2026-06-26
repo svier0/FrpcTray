@@ -27,6 +27,18 @@ struct LogConfig {
     max_days: Option<i32>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+struct TransportConfig {
+    protocol: Option<String>,
+    #[serde(rename = "tcpMux")]
+    tcp_mux: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct TlsConfig {
+    enable: Option<bool>,
+}
+
 #[derive(Debug)]
 struct FrpcConfigFile {
     title: String,
@@ -36,6 +48,8 @@ struct FrpcConfigFile {
     server_port: u16,
     auth: Option<AuthConfig>,
     log: Option<LogConfig>,
+    transport: Option<TransportConfig>,
+    tls: Option<TlsConfig>,
     proxies: Option<Vec<ProxyItem>>,
 }
 
@@ -51,6 +65,8 @@ struct ProxyItem {
     local_ip: Option<String>,
     #[serde(rename = "localPort")]
     local_port: u16,
+    #[serde(rename = "remotePort")]
+    remote_port: Option<u16>,
     #[serde(rename = "customDomains")]
     custom_domains: Option<Vec<String>>,
     locations: Option<Vec<String>>,
@@ -71,6 +87,8 @@ struct ServerInfo {
     #[serde(rename = "serverPort")]
     server_port: u16,
     auth: Option<AuthConfig>,
+    transport: Option<TransportConfig>,
+    tls: Option<TlsConfig>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -83,6 +101,8 @@ struct CreateServerInput {
     #[serde(rename = "serverPort")]
     server_port: u16,
     auth: Option<AuthConfig>,
+    transport: Option<TransportConfig>,
+    tls: Option<TlsConfig>,
 }
 
 // AuthConfig serde for IPC
@@ -224,6 +244,9 @@ fn extract_proxies(doc: &DocumentMut) -> Option<Vec<ProxyItem>> {
         let enabled = table.get("enabled")
             .and_then(|v| v.as_bool())
             .unwrap_or(true);
+        let remote_port = table.get("remotePort")
+            .and_then(|v| v.as_integer())
+            .map(|p| p as u16);
 
         proxies.push(ProxyItem {
             name,
@@ -232,6 +255,7 @@ fn extract_proxies(doc: &DocumentMut) -> Option<Vec<ProxyItem>> {
             proxy_type,
             local_ip,
             local_port,
+            remote_port,
             custom_domains: extract_string_array(table, "customDomains"),
             locations: extract_string_array(table, "locations"),
         });
@@ -281,6 +305,15 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
         max_days: t.get("maxDays").and_then(|v| v.as_integer()).map(|i| i as i32),
     });
 
+    let transport = doc.get("transport").and_then(|v| v.as_table()).map(|t| TransportConfig {
+        protocol: t.get("protocol").and_then(|v| v.as_str()).map(String::from),
+        tcp_mux: t.get("tcpMux").and_then(|v| v.as_bool()),
+    });
+
+    let tls = doc.get("tls").and_then(|v| v.as_table()).map(|t| TlsConfig {
+        enable: t.get("enable").and_then(|v| v.as_bool()),
+    });
+
     let proxies = extract_proxies(&doc);
 
     Ok(FrpcConfigFile {
@@ -291,6 +324,8 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
         server_port,
         auth,
         log,
+        transport,
+        tls,
         proxies,
     })
 }
@@ -377,6 +412,52 @@ fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
         }
         _ => { doc.remove("log"); }
     }
+
+    // Transport: update in-place if exists, create if new, remove if clearing
+    match &config.transport {
+        Some(t) if t.protocol.is_some() || t.tcp_mux.is_some() => {
+            match doc.get_mut("transport") {
+                Some(Item::Table(tbl)) => {
+                    set_or_remove_str(tbl, "protocol", t.protocol.as_deref());
+                    match t.tcp_mux {
+                        Some(mux) => set_or_insert(tbl, "tcpMux", value(mux)),
+                        None => { tbl.remove("tcpMux"); }
+                    }
+                }
+                _ => {
+                    doc.remove("transport");
+                    let mut tbl = Table::new();
+                    tbl.decor_mut().set_prefix("\n");
+                    if let Some(ref p) = t.protocol { tbl.insert("protocol", value(p)); }
+                    if let Some(mux) = t.tcp_mux { tbl.insert("tcpMux", value(mux)); }
+                    doc.insert("transport", Item::Table(tbl));
+                }
+            }
+        }
+        _ => { doc.remove("transport"); }
+    }
+
+    // Tls: update in-place if exists, create if new, remove if clearing
+    match &config.tls {
+        Some(t) if t.enable.is_some() => {
+            match doc.get_mut("tls") {
+                Some(Item::Table(tbl)) => {
+                    match t.enable {
+                        Some(en) => set_or_insert(tbl, "enable", value(en)),
+                        None => { tbl.remove("enable"); }
+                    }
+                }
+                _ => {
+                    doc.remove("tls");
+                    let mut tbl = Table::new();
+                    tbl.decor_mut().set_prefix("\n");
+                    if let Some(en) = t.enable { tbl.insert("enable", value(en)); }
+                    doc.insert("tls", Item::Table(tbl));
+                }
+            }
+        }
+        _ => { doc.remove("tls"); }
+    }
 }
 
 /// Update a single proxy table in-place, preserving unknown fields.
@@ -409,6 +490,10 @@ fn update_proxy_table(table: &mut Table, proxy: &ProxyItem) {
     set_or_insert(table, "enabled", value(proxy.enabled));
     set_or_remove_str(table, "localIP", proxy.local_ip.as_deref());
     set_or_insert(table, "localPort", value(proxy.local_port as i64));
+    match proxy.remote_port {
+        Some(rp) => set_or_insert(table, "remotePort", value(rp as i64)),
+        None => { table.remove("remotePort"); }
+    }
 
     // Array fields
     match &proxy.custom_domains {
@@ -573,6 +658,8 @@ fn list_servers() -> Result<Vec<ServerInfo>, String> {
                     server_addr: config.server_addr,
                     server_port: config.server_port,
                     auth: config.auth,
+                    transport: config.transport,
+                    tls: config.tls,
                 });
             }
         }
@@ -593,6 +680,8 @@ fn get_server(id: String) -> Result<ServerInfo, String> {
         server_addr: config.server_addr,
         server_port: config.server_port,
         auth: config.auth,
+        transport: config.transport,
+        tls: config.tls,
     })
 }
 
@@ -631,6 +720,8 @@ fn create_server(input: CreateServerInput) -> Result<String, String> {
         server_addr: input.server_addr,
         server_port: input.server_port,
         auth: input.auth,
+        transport: input.transport,
+        tls: input.tls,
         log: Some(LogConfig {
             to: Some("frpc.log".to_string()),
             level: Some("info".to_string()),
@@ -651,6 +742,8 @@ fn update_server(server: ServerInfo) -> Result<(), String> {
     config.server_addr = server.server_addr;
     config.server_port = server.server_port;
     config.auth = server.auth;
+    config.transport = server.transport;
+    config.tls = server.tls;
     write_server_file(&server.id, &config)
 }
 

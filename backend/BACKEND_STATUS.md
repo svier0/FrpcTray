@@ -3,7 +3,11 @@ VERSION: V3
 ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
-- ✅ ProxyItem 添加 `enabled: bool` 字段（2026-06-26）：作为普通 TOML key 存储在 `[[proxies]]` 中，读取默认 true
+- ✅ 补充高频配置字段（2026-06-26）：
+  - **Server** 新增 `transport`（protocol/tcpMux）和 `tls`（enable）
+  - **Proxy** 新增 `remotePort`（tcp/udp 代理必填）
+  - **写入格式修复**：最小侵入式就地更新，保留空行/未知字段/数组格式
+  - 所有字段详见 `api_spec.json`
 - ✅ V3 TOML 存储方案重构完成（2026-06-26）
   - `toml` crate → `toml_edit` 0.22（纯 DOM API）
   - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort` 注释

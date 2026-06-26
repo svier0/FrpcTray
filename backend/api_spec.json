@@ -148,7 +148,9 @@
         { "name": "sort", "type": "i32", "description": "排序序号" },
         { "name": "serverAddr", "type": "String", "description": "服务器地址（IP）" },
         { "name": "serverPort", "type": "u16", "description": "服务器端口" },
-        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" }
+        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" },
+        { "name": "transport", "type": "TransportConfig | null", "description": "传输配置（通信协议等）" },
+        { "name": "tls", "type": "TlsConfig | null", "description": "TLS 配置" }
       ]
     },
     "CreateServerInput": {
@@ -159,7 +161,9 @@
         { "name": "sort", "type": "i32", "description": "排序序号" },
         { "name": "serverAddr", "type": "String", "description": "服务器地址（IP）" },
         { "name": "serverPort", "type": "u16", "description": "服务器端口" },
-        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" }
+        { "name": "auth", "type": "AuthConfig | null", "description": "鉴权配置" },
+        { "name": "transport", "type": "TransportConfig | null", "description": "传输配置（通信协议等）" },
+        { "name": "tls", "type": "TlsConfig | null", "description": "TLS 配置" }
       ]
     },
     "AuthConfig": {
@@ -167,6 +171,19 @@
       "fields": [
         { "name": "method", "type": "String | null", "description": "鉴权方式（如 token）" },
         { "name": "token", "type": "String | null", "description": "鉴权密钥" }
+      ]
+    },
+    "TransportConfig": {
+      "description": "传输配置（对应 [transport]）",
+      "fields": [
+        { "name": "protocol", "type": "String | null", "description": "通信协议（tcp/kcp/websocket/quic）" },
+        { "name": "tcpMux", "type": "bool | null", "description": "TCP 多路复用" }
+      ]
+    },
+    "TlsConfig": {
+      "description": "TLS 配置（对应 [tls]）",
+      "fields": [
+        { "name": "enable", "type": "bool | null", "description": "是否启用 TLS" }
       ]
     },
     "ProxyItem": {
@@ -178,6 +195,7 @@
         { "name": "type", "type": "String", "description": "代理类型（http/https/tcp/udp 等）" },
         { "name": "localIP", "type": "String | null", "description": "本地 IP" },
         { "name": "localPort", "type": "u16", "description": "本地端口" },
+        { "name": "remotePort", "type": "u16 | null", "description": "远程端口（tcp/udp 代理必填）" },
         { "name": "customDomains", "type": "Vec<String> | null", "description": "绑定域名列表" },
         { "name": "locations", "type": "Vec<String> | null", "description": "路径列表" }
       ]
