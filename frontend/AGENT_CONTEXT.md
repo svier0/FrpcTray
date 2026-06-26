@@ -48,20 +48,15 @@
 - ✅ 界面UI设计-主界面-标题栏服务器图标（显示已启用服务器ID大写字母）
 - ✅ 后端接口对接-代理列表加载（listProxies）
 - ✅ 界面UI设计-代理项显示（标题=desc，副标题=name，图标=type）
+- ✅ 后端接口对接-代理enabled开关（updateProxy）
+- ✅ 后端接口对接-代理CRUD操作（createProxy, updateProxy, deleteProxy）
+- ✅ 后端接口对接-代理排序（reorderProxies）
+- ✅ 后端接口对接-服务器排序（reorderServers）
 
 ### 待办事项
 - [ ] 界面UI设计-设置界面-内核-列表
 - [ ] 界面UI设计-设置界面-高级-列表
 - [ ] 界面UI设计-设置界面-关于-列表
-- [ ] 后端接口对接-服务器排序（拖拽排序）
-- [ ] 后端接口对接-代理CRUD操作
-
-### 需要后端支持
-- [x] ProxyItem 需要 enabled 字段：代理项需要一个 enabled 字段来控制启用/禁用状态，用于在 UI 上显示开关（已留言到FRONTEND_STATUS.md V3）
-
-### 下一步计划
-- 等待后端添加 ProxyItem enabled 字段
-- 继续完善界面UI设计（内核、高级、关于tab）
 
 ---
 
@@ -108,11 +103,11 @@
 ---
 
 ## 协作状态
-- **当前版本**: V3
+- **当前版本**: V4
 - **后端 ACK**: V3
-- **阻塞点**: 等待后端添加 ProxyItem enabled 字段
+- **阻塞点**: 无
 
 ---
 
 ## 下次启动检查清单
-1. 如无新需求，继续晚上UI设计
+1. 如无新需求，继续完善UI设计（内核、高级、关于tab）
