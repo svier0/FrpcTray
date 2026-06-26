@@ -129,7 +129,7 @@ function handleDelete() {
             />
           </div>
           <button
-            class="inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-blue-500 px-3 text-sm font-medium text-white transition-colors hover:bg-blue-600"
+            class="inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-blue-500 px-4 text-sm font-medium text-white transition-colors hover:bg-blue-600"
             @click="handleSave"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -140,7 +140,7 @@ function handleDelete() {
             {{ t('common.save') }}
           </button>
           <button
-            class="inline-flex items-center justify-center h-9 w-9 rounded-lg border border-destructive/30 bg-destructive/10 text-destructive transition-colors hover:bg-destructive/20"
+            class="inline-flex items-center justify-center gap-1 h-9 rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90"
             @click="handleDelete"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -148,6 +148,7 @@ function handleDelete() {
               <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
               <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
             </svg>
+            {{ t('common.delete') }}
           </button>
         </div>
 
