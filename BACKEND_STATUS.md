@@ -1,5 +1,6 @@
 # 后端联调看板
 VERSION: V2
+ACK_FRONTEND_VERSION: V1
 
 ## 📢 最新联调通知
 - 已根据前端反馈 V1 接口不匹配，重写为 V2（2026-06-26）
