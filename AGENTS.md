@@ -51,12 +51,15 @@ cd frontend && bun run tauri build  # Build Tauri app
 - 提交在项目目录(`backend`或`frontend`)使用 `git add . && git commit -m "..."` 而非 `git add -A`
 - 每次修改完文件都执行git提交
 
-## 会话开始 (on session start)
-- 不要一上来就扫描整个项目
-- 阅读`BUN_USAGE.md`
-- 后端阅读`backend/AGENT_CONTEXT.md`恢复上下文
-- 前端阅读`frontend/AGENT_CONTEXT.md`恢复上下文
-- 上下文恢复完成后再根据用户指示按需阅读代码
+## 会话开始 (on session start) - 必须执行
+
+**第一步：在回复用户任何消息之前，必须先执行以下操作：**
+
+1. 阅读 `BUN_USAGE.md`
+2. 前端阅读 `frontend/AGENT_CONTEXT.md`，后端阅读 `backend/AGENT_CONTEXT.md`
+3. 完成上下文恢复后，才可以回复用户
+
+**注意：用户发送任何内容（包括空消息或占位符）都必须先完成上述步骤。**
 
 ## **重要记忆**
 - `AGENT_CONTEXT.md`是你自己的上下文记忆，你需要自行维护
