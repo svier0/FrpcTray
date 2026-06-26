@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { VueDraggable } from "vue-draggable-plus";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import Sortable from "sortablejs";
 import ProxyItem from "./ProxyItem.vue";
 import type { ProxyItem as ProxyItemType } from "./ProxyItem.vue";
 
@@ -22,6 +22,8 @@ const emit = defineEmits<{
 const { t } = useI18n();
 
 const dragList = ref<ProxyItemType[]>([...props.items]);
+const listRef = ref<HTMLElement | null>(null);
+let sortable: Sortable | null = null;
 
 watch(
   () => props.items,
@@ -31,20 +33,30 @@ watch(
   { deep: true }
 );
 
-function onUpdate() {
-  emit("update:items", [...dragList.value]);
-}
+onMounted(() => {
+  nextTick(() => {
+    if (listRef.value) {
+      sortable = Sortable.create(listRef.value, {
+        animation: 150,
+        handle: ".drag-handle",
+        ghostClass: "opacity-50",
+        onEnd: () => {
+          emit("update:items", [...dragList.value]);
+        },
+      });
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  sortable?.destroy();
+  sortable = null;
+});
 </script>
 
 <template>
-  <VueDraggable
-    v-model="dragList"
-    :animation="150"
-    handle=".drag-handle"
-    ghost-class="opacity-50"
-    @update="onUpdate"
-  >
-    <div v-for="item in dragList" :key="item.id" class="mb-3">
+  <div ref="listRef" class="space-y-3">
+    <div v-for="item in dragList" :key="item.id">
       <ProxyItem
         :item="item"
         :is-active="item.id === activeId"
@@ -55,7 +67,7 @@ function onUpdate() {
         @view-logs="(id) => emit('viewLogs', id)"
       />
     </div>
-  </VueDraggable>
+  </div>
 
   <div
     v-if="dragList.length === 0"

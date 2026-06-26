@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { VueDraggable } from "vue-draggable-plus";
-import { ref, watch } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import Sortable from "sortablejs";
 import ServerItem from "./ServerItem.vue";
 import type { ServerItem as ServerItemType } from "./ServerItem.vue";
 
@@ -20,6 +20,8 @@ const { t } = useI18n();
 
 const dragList = ref<ServerItemType[]>([...props.items]);
 const expandedId = ref<string | null>(null);
+const listRef = ref<HTMLElement | null>(null);
+let sortable: Sortable | null = null;
 
 watch(
   () => props.items,
@@ -29,9 +31,25 @@ watch(
   { deep: true }
 );
 
-function onUpdate() {
-  emit("update:items", [...dragList.value]);
-}
+onMounted(() => {
+  nextTick(() => {
+    if (listRef.value) {
+      sortable = Sortable.create(listRef.value, {
+        animation: 150,
+        handle: ".drag-handle",
+        ghostClass: "opacity-50",
+        onEnd: () => {
+          emit("update:items", [...dragList.value]);
+        },
+      });
+    }
+  });
+});
+
+onBeforeUnmount(() => {
+  sortable?.destroy();
+  sortable = null;
+});
 
 function handleToggleExpand(id: string) {
   expandedId.value = expandedId.value === id ? null : id;
@@ -48,14 +66,8 @@ function handleDelete(id: string) {
 
 <template>
   <div class="space-y-3">
-    <VueDraggable
-      v-model="dragList"
-      :animation="150"
-      handle=".drag-handle"
-      ghost-class="opacity-50"
-      @update="onUpdate"
-    >
-      <div v-for="item in dragList" :key="item.id" class="relative group mb-3">
+    <div ref="listRef" class="space-y-3">
+      <div v-for="item in dragList" :key="item.id" class="relative group">
         <button
           class="drag-handle absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/50 hover:text-muted-foreground transition-all cursor-grab active:cursor-grabbing"
           :title="t('proxy.dragHandle')"
@@ -88,7 +100,7 @@ function handleDelete(id: string) {
           @delete="handleDelete"
         />
       </div>
-    </VueDraggable>
+    </div>
 
     <button
       class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 hover:text-blue-500"
