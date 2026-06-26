@@ -41,8 +41,8 @@ cd frontend && bun run tauri build  # Build Tauri app
 
 ## 协作 (Collaboration) - 必须记住
 - See `/AI_COLLABORATION_GUIDE.md` for frontend-backend collaboration protocol
-- Frontend writes to `FRONTEND_STATUS.md` only
-- Backend writes to `BACKEND_STATUS.md` only
+- Frontend writes to `frontend/FRONTEND_STATUS.md` only
+- Backend writes to `backend/BACKEND_STATUS.md` only
 - API specs in `/backend/api_spec.json`
 - 前端角色不要读写后端代码，后端角色不要读写前端代码
 - 联调看板是前后端沟通的桥梁，请不要把与对方无关的内容写入
@@ -66,3 +66,5 @@ cd frontend && bun run tauri build  # Build Tauri app
 - 每次对话结束前，如果有文件修改，在提交git之前，先更新自己的`AGENT_CONTEXT.md`(注意增量更新，不随意删除)
 - 当用户要求 更新上下文、更新记忆、保存上下文 时，更新自己的`AGENT_CONTEXT.md`
 - 自己的待办工作写到自己的`AGENT_CONTEXT.md`，不要写到前后端联调看板里
+- 所有md文件的新增，都应该询问用户
+- 所有md文件的编辑，大部分都应该使用增量更新
