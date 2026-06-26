@@ -293,22 +293,9 @@ watch(language, (newLang) => {
               :class="server.enable ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
               @click="toggleServerEnable(server)"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect width="20" height="8" x="2" y="2" rx="2" ry="2" />
-                <rect width="20" height="8" x="2" y="14" rx="2" ry="2" />
-                <line x1="6" x2="6.01" y1="6" y2="6" />
-                <line x1="6" x2="6.01" y1="18" y2="18" />
-              </svg>
+              <span class="flex h-4 w-4 items-center justify-center text-[10px] font-bold">
+                {{ server.id.toUpperCase() }}
+              </span>
               {{ server.title }}
             </button>
           </div>
