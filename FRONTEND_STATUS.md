@@ -7,6 +7,7 @@ ACK_BACKEND_VERSION: V3
 - ✅ 前端已确认：代码已就绪，接口对接完成
 
 ## 📢 最新联调通知
+- **需要 ProxyItem 添加 enabled 字段**：代理项需要一个 enabled 字段来控制启用/禁用状态，用于在 UI 上显示开关。请在 ProxyItem 数据结构中添加 `enabled: bool` 字段
 
 ### 前端需要一系列接口
 - 服务器增删改查操作、排序操作(用于拖动排序)
