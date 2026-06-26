@@ -29,7 +29,7 @@
       "createTitle": "添加代理",
       "editTitle": "编辑代理",
       "name": "代理名称",
-      "namePlaceholder": "例如：web",
+      "namePlaceholder": "字母、数字、下划线，且不可重复",
       "desc": "代理描述",
       "descPlaceholder": "例如：Web 服务",
       "type": "代理类型",

@@ -24,7 +24,25 @@
     "dragHandle": "ドラッグで並べ替え",
     "enabled": "有効",
     "disabled": "無効",
-    "viewLogs": "ログを表示"
+    "viewLogs": "ログを表示",
+    "dialog": {
+      "createTitle": "プロキシを追加",
+      "editTitle": "プロキシを編集",
+      "name": "プロキシ名",
+      "namePlaceholder": "英数字、アンダースコアのみ、重複不可",
+      "desc": "説明",
+      "descPlaceholder": "例：Webサービス",
+      "type": "プロキシタイプ",
+      "localIP": "ローカルIP",
+      "localPort": "ローカルポート",
+      "remotePort": "リモートポート",
+      "required": "必須",
+      "optional": "任意",
+      "customDomains": "カスタムドメイン",
+      "customDomainsPlaceholder": "複数ドメインはカンマ区切り",
+      "locations": "パス",
+      "locationsPlaceholder": "複数パスはカンマ区切り"
+    }
   },
   "server": {
     "title": "サーバーリスト",

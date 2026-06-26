@@ -24,7 +24,25 @@
     "dragHandle": "拖曳排序",
     "enabled": "已啟用",
     "disabled": "已停用",
-    "viewLogs": "檢視日誌"
+    "viewLogs": "檢視日誌",
+    "dialog": {
+      "createTitle": "新增代理",
+      "editTitle": "編輯代理",
+      "name": "代理名稱",
+      "namePlaceholder": "僅限字母、數字、底線，且不可重複",
+      "desc": "描述",
+      "descPlaceholder": "例如：Web 服務",
+      "type": "代理類型",
+      "localIP": "本機 IP",
+      "localPort": "本機連接埠",
+      "remotePort": "遠端連接埠",
+      "required": "必填",
+      "optional": "選填",
+      "customDomains": "綁定網域",
+      "customDomainsPlaceholder": "多個網域用逗號分隔",
+      "locations": "路徑",
+      "locationsPlaceholder": "多個路徑用逗號分隔"
+    }
   },
   "server": {
     "title": "伺服器列表",

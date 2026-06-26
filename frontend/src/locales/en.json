@@ -24,7 +24,25 @@
     "dragHandle": "Drag to reorder",
     "enabled": "Enabled",
     "disabled": "Disabled",
-    "viewLogs": "View Logs"
+    "viewLogs": "View Logs",
+    "dialog": {
+      "createTitle": "Add Proxy",
+      "editTitle": "Edit Proxy",
+      "name": "Proxy Name",
+      "namePlaceholder": "Letters, numbers, underscores only, must be unique",
+      "desc": "Description",
+      "descPlaceholder": "e.g. Web Service",
+      "type": "Proxy Type",
+      "localIP": "Local IP",
+      "localPort": "Local Port",
+      "remotePort": "Remote Port",
+      "required": "Required",
+      "optional": "Optional",
+      "customDomains": "Custom Domains",
+      "customDomainsPlaceholder": "Separate multiple domains with commas",
+      "locations": "Locations",
+      "locationsPlaceholder": "Separate multiple paths with commas"
+    }
   },
   "server": {
     "title": "Server List",
