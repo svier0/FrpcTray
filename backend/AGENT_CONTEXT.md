@@ -35,8 +35,9 @@
     - 用错导致输出 `serverAddr =# @title xxx` 而非注释在 key 上方
 
 ### 待办事项
-- [x] ProxyItem 添加 `enabled` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
-- [ ] 等待前端确认 V3 实现
+- [x] ProxyItem 添加 `enabled: bool` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
+- [x] 修复 TOML 写入格式破坏（2026-06-26）— 最小侵入式更新，保留空行/未知字段/数组格式
+- [ ] 等待前端确认
 - [ ] 后续功能开发...
 
 ---
@@ -72,9 +73,9 @@
 - 目录不存在时自动 `create_dir_all`
 - 开发时样本 TOML 放 `target/debug/conf/`
 
-### 数据结构 (V2)
+### 数据结构 (V3)
 - `ServerInfo`: id, title, enable, sort, serverAddr, serverPort, auth? {method?, token?}
-- `ProxyItem`: name, desc?, type, localIP?, localPort, customDomains?, locations?
+- `ProxyItem`: name, desc?, enabled, type, localIP?, localPort, customDomains?, locations?
 - `FrpcConfigFile`: 内部 TOML 结构（含 log、proxies），仅 ServerInfo 暴露给前端
 - 所有命令返回 `Result<T, String>` 格式
 
@@ -89,6 +90,11 @@
 - **方法弃用**: `Key::decor()`/`decor_mut()` 已弃用，替换为 `leaf_decor()`/`leaf_decor_mut()`（非 dotted key）或 `dotted_decor()`/`dotted_decor_mut()`（dotted key 如 `auth.method`）
 - **读取**: `table.decor().prefix()` 可直接在 `Table` 上用，`Table` 实现了 `TableLike` trait（不需要显式 import）
 - **数组**: `ArrayOfTables` 每项是独立 `Table`，各自有独立 decor，desc 注释通过 `table.decor_mut().set_prefix()` 设置
+- **最小侵入式写入** (2026-06-26):
+  - `set_or_insert(t, key, val)`: 用 `table.get_mut(key)` 就地更新 — 通过可变引用访问 BTreeMap 的 value，Key 及其 decor（前置空行/注释）原样保留
+  - `update_server_fields`: auth/log 就地更新，保留未知子字段
+  - `update_proxies`: 按 name 匹配已有 `[[proxies]]` 条目就地更新，保留未知字段；新增/删除按需处理
+  - `make_string_array`: 不设 trailing_comma/trailing，产出内联 `["a", "b"]` 格式
 
 ---
 
