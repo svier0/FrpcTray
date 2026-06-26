@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
+import ConfirmDialog from "./ConfirmDialog.vue";
+import { listServers, createServer, updateServer, deleteServer } from "../utils/ipc";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
@@ -17,29 +19,11 @@ const activeTab = ref<SettingsTab>("general");
 const language = ref(locale.value);
 const theme = ref<Theme>((localStorage.getItem("theme") as Theme) || "system");
 
-const servers = ref<ServerItem[]>([
-  {
-    id: "1",
-    title: "主服务器",
-    enable: true,
-    sort: 1,
-    serverAddr: "192.168.1.100",
-    serverPort: 7000,
-    auth: {
-      method: "token",
-      token: "my-secret-token",
-    },
-  },
-  {
-    id: "2",
-    title: "备用服务器",
-    enable: false,
-    sort: 2,
-    serverAddr: "10.0.0.1",
-    serverPort: 7000,
-    auth: null,
-  },
-]);
+const servers = ref<ServerItem[]>([]);
+
+const showDeleteDialog = ref(false);
+const deleteTargetId = ref<string | null>(null);
+const isLoading = ref(false);
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -70,22 +54,57 @@ function applyTheme(newTheme: Theme) {
   }
 }
 
+async function loadServers() {
+  try {
+    isLoading.value = true;
+    servers.value = await listServers();
+  } catch (e) {
+    console.error("Failed to load servers:", e);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
 function handleUpdateServers(newItems: ServerItem[]) {
   servers.value = newItems;
 }
 
-function handleSaveServer(id: string, data: ServerItem) {
-  const index = servers.value.findIndex((s) => s.id === id);
-  if (index !== -1) {
-    servers.value[index] = data;
+async function handleSaveServer(id: string, data: ServerItem) {
+  try {
+    await updateServer(data);
+    const index = servers.value.findIndex((s) => s.id === id);
+    if (index !== -1) {
+      servers.value[index] = data;
+    }
+  } catch (e) {
+    console.error("Failed to save server:", e);
   }
 }
 
 function handleDeleteServer(id: string) {
-  servers.value = servers.value.filter((s) => s.id !== id);
+  deleteTargetId.value = id;
+  showDeleteDialog.value = true;
 }
 
-function handleAddServer() {
+async function confirmDelete() {
+  if (!deleteTargetId.value) return;
+  try {
+    await deleteServer(deleteTargetId.value);
+    servers.value = servers.value.filter((s) => s.id !== deleteTargetId.value);
+  } catch (e) {
+    console.error("Failed to delete server:", e);
+  } finally {
+    showDeleteDialog.value = false;
+    deleteTargetId.value = null;
+  }
+}
+
+function cancelDelete() {
+  showDeleteDialog.value = false;
+  deleteTargetId.value = null;
+}
+
+async function handleAddServer() {
   const newServer: ServerItem = {
     id: String(Date.now()),
     title: "新服务器",
@@ -97,8 +116,17 @@ function handleAddServer() {
       method: "token",
     },
   };
-  servers.value.push(newServer);
+  try {
+    await createServer(newServer);
+    servers.value.push(newServer);
+  } catch (e) {
+    console.error("Failed to create server:", e);
+  }
 }
+
+onMounted(() => {
+  loadServers();
+});
 
 watch(theme, (newTheme) => {
   applyTheme(newTheme);
@@ -259,5 +287,13 @@ watch(language, (newLang) => {
         </section>
       </div>
     </div>
+
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      :title="t('common.confirm')"
+      :message="t('server.deleteConfirm')"
+      @confirm="confirmDelete"
+      @cancel="cancelDelete"
+    />
   </div>
 </template>
