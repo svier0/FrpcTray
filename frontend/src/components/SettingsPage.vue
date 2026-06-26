@@ -93,7 +93,9 @@ function handleAddServer() {
     sort: servers.value.length + 1,
     serverAddr: "127.0.0.1",
     serverPort: 7000,
-    auth: null,
+    auth: {
+      method: "token",
+    },
   };
   servers.value.push(newServer);
 }
