@@ -513,71 +513,33 @@ fn build_proxy_table(proxy: &ProxyItem) -> Table {
     table
 }
 
-/// Update [[proxies]] in-place: match existing by name, add new, remove deleted.
-/// Preserves unknown fields in unchanged parts of each proxy table.
+/// Rebuild [[proxies]] in config.proxies order.
+/// Clones existing tables to preserve unknown fields + decor, updates known fields,
+/// builds new tables for new proxies. This ensures the file order matches the
+/// in-memory Vec order (needed for reorder_proxies).
 fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     match &config.proxies {
         Some(proxies) if !proxies.is_empty() => {
-            // Get or create ArrayOfTables
-            let arr: &mut ArrayOfTables = match doc.get_mut("proxies").and_then(|v| v.as_array_of_tables_mut()) {
-                Some(arr) => arr,
-                None => {
-                    doc.remove("proxies");
-                    doc.insert("proxies", Item::ArrayOfTables(ArrayOfTables::new()));
-                    doc.get_mut("proxies").and_then(|v| v.as_array_of_tables_mut()).unwrap()
-                }
-            };
+            let mut arr = ArrayOfTables::new();
 
-            // Remove proxies not in new config (reverse iteration for safe removal)
-            let new_names: std::collections::HashSet<&str> = proxies.iter().map(|p| p.name.as_str()).collect();
-            let mut i = 0;
-            while i < arr.len() {
-                let name = arr.get(i).and_then(|t| t.get("name").and_then(|v| v.as_str())).unwrap_or("");
-                if !new_names.contains(name) {
-                    arr.remove(i);
-                } else {
-                    i += 1;
-                }
-            }
-
-            // Update existing, add new
             for proxy in proxies {
-                let found = arr.iter_mut().any(|t| {
-                    if t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str()) {
-                        update_proxy_table(t, proxy);
-                        true
-                    } else {
-                        false
-                    }
-                });
-                if !found {
+                // Find existing table in old doc by name, clone to preserve unknown fields
+                let existing = doc.get("proxies")
+                    .and_then(|v| v.as_array_of_tables())
+                    .and_then(|a| a.iter().find(|t| {
+                        t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str())
+                    }));
+
+                if let Some(old_table) = existing {
+                    let mut table = old_table.clone();
+                    update_proxy_table(&mut table, proxy);
+                    arr.push(table);
+                } else {
                     arr.push(build_proxy_table(proxy));
                 }
             }
 
-            // Reorder arr to match config.proxies order.
-            // Existing entries were updated in-place so their positions in arr
-            // are still the old order; new entries were appended at the end.
-            // Clone each table (preserving unknown fields + decor), then rebuild.
-            let mut reordered: Vec<Table> = Vec::with_capacity(arr.len());
-            for proxy in proxies {
-                let idx = arr.iter().position(|t| {
-                    t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str())
-                });
-                if let Some(idx) = idx {
-                    reordered.push(arr.get(idx).unwrap().clone());
-                    arr.remove(idx);
-                }
-            }
-            // Any leftover (shouldn't normally happen after the update loop)
-            while arr.len() > 0 {
-                let table = arr.get(0).unwrap().clone();
-                arr.remove(0);
-                reordered.push(table);
-            }
-            for table in reordered {
-                arr.push(table);
-            }
+            doc.insert("proxies", Item::ArrayOfTables(arr));
         }
         _ => { doc.remove("proxies"); }
     }
