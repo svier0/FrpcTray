@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { VueDraggable } from "vue-draggable-plus";
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { vDraggable } from "vue-draggable-plus";
 import ServerItem from "./ServerItem.vue";
 import type { ServerItem as ServerItemType } from "./ServerItem.vue";
 
@@ -29,7 +29,7 @@ watch(
   { deep: true }
 );
 
-function onEnd() {
+function onUpdate() {
   emit("update:items", [...dragList.value]);
 }
 
@@ -48,11 +48,9 @@ function handleDelete(id: string) {
 
 <template>
   <div class="space-y-3">
-    <VueDraggable
-      v-model="dragList"
-      :animation="150"
-      handle=".drag-handle"
-      @end="onEnd"
+    <div
+      v-draggable="[dragList, { animation: 150, handle: '.drag-handle', onUpdate }]"
+      class="space-y-3"
     >
       <div v-for="item in dragList" :key="item.id" class="relative group">
         <button
@@ -87,7 +85,7 @@ function handleDelete(id: string) {
           @delete="handleDelete"
         />
       </div>
-    </VueDraggable>
+    </div>
 
     <button
       class="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground transition-colors hover:border-blue-500/50 hover:bg-blue-500/5 hover:text-blue-500"

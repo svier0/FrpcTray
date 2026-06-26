@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { VueDraggable } from "vue-draggable-plus";
 import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { vDraggable } from "vue-draggable-plus";
 import ProxyItem from "./ProxyItem.vue";
 import type { ProxyItem as ProxyItemType } from "./ProxyItem.vue";
 
@@ -31,32 +31,28 @@ watch(
   { deep: true }
 );
 
-function onEnd() {
+function onUpdate() {
   emit("update:items", [...dragList.value]);
 }
 </script>
 
 <template>
-  <VueDraggable
-    v-model="dragList"
-    :animation="150"
-    handle=".drag-handle"
-    @end="onEnd"
+  <div
+    v-draggable="[dragList, { animation: 150, handle: '.drag-handle', onUpdate }]"
+    class="space-y-3"
   >
-    <div class="space-y-3">
-      <ProxyItem
-        v-for="item in dragList"
-        :key="item.id"
-        :item="item"
-        :is-active="item.id === activeId"
-        @update:enabled="(id, val) => emit('update:enabled', id, val)"
-        @edit="(id) => emit('edit', id)"
-        @duplicate="(id) => emit('duplicate', id)"
-        @delete="(id) => emit('delete', id)"
-        @view-logs="(id) => emit('viewLogs', id)"
-      />
-    </div>
-  </VueDraggable>
+    <ProxyItem
+      v-for="item in dragList"
+      :key="item.id"
+      :item="item"
+      :is-active="item.id === activeId"
+      @update:enabled="(id, val) => emit('update:enabled', id, val)"
+      @edit="(id) => emit('edit', id)"
+      @duplicate="(id) => emit('duplicate', id)"
+      @delete="(id) => emit('delete', id)"
+      @view-logs="(id) => emit('viewLogs', id)"
+    />
+  </div>
 
   <div
     v-if="dragList.length === 0"
