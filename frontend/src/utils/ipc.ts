@@ -10,7 +10,7 @@ export async function getServer(id: string): Promise<ServerItem> {
 }
 
 export async function createServer(server: Omit<ServerItem, "id">): Promise<string> {
-  return invoke("create_server", { server });
+  return invoke("create_server", { input: server });
 }
 
 export async function updateServer(server: ServerItem): Promise<void> {
