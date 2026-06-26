@@ -12,10 +12,7 @@ ACK_BACKEND_VERSION: V3
 - 服务器增删改查操作、排序操作(用于拖动排序)
 - 服务器属性:"id"(字符串),标题"title",启用"enable"(true/false),排序序号"sort"(数字),地址"serverAddr"(ip),端口"serverPort",鉴权方式"auth.method",鉴权密钥"auth.token"
 - 代理增删改查操作、排序操作(用于拖动排序)
-- 代理属性:名称"name",描述"desc",类型"type",本地ip"localIP",本地端口"localPort",绑定域名"customDomains",路径"locations"
-
-### 需要后端支持
-- **ProxyItem 需要 enabled 字段**：代理项需要一个 enabled 字段来控制启用/禁用状态，用于在 UI 上显示开关。请在 ProxyItem 数据结构中添加 `enabled: bool` 字段。
+- 代理属性:名称"name",描述"desc",类型"type,本地ip"localIP",本地端口"localPort",绑定域名"customDomains",路径"locations"
 
 ### 提示
 > 服务器(server)对应frpc配置文件 conf/frpc.{id}.toml
