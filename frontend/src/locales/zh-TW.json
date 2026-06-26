@@ -32,6 +32,7 @@
     "emptyHint": "點擊下方按鈕新增",
     "add": "新增伺服器",
     "deleteConfirm": "確定要刪除該伺服器嗎？此操作不可撤銷。",
+    "maxReached": "目前最大支援26個伺服器",
     "form": {
       "title": "伺服器名稱",
       "titlePlaceholder": "輸入伺服器名稱",

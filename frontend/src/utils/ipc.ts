@@ -9,7 +9,7 @@ export async function getServer(id: string): Promise<ServerItem> {
   return invoke("get_server", { id });
 }
 
-export async function createServer(server: ServerItem): Promise<void> {
+export async function createServer(server: Omit<ServerItem, "id">): Promise<string> {
   return invoke("create_server", { server });
 }
 

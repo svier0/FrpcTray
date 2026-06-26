@@ -105,8 +105,16 @@ function cancelDelete() {
 }
 
 async function handleAddServer() {
-  const newServer: ServerItem = {
-    id: String(Date.now()),
+  const usedIds = servers.value.map((s) => s.id);
+  const allLetters = "abcdefghijklmnopqrstuvwxyz".split("");
+  const nextId = allLetters.find((letter) => !usedIds.includes(letter));
+
+  if (!nextId) {
+    console.error("Maximum 26 servers reached");
+    return;
+  }
+
+  const newServerData = {
     title: "新服务器",
     enable: false,
     sort: servers.value.length + 1,
@@ -117,7 +125,11 @@ async function handleAddServer() {
     },
   };
   try {
-    await createServer(newServer);
+    const id = await createServer(newServerData);
+    const newServer: ServerItem = {
+      id,
+      ...newServerData,
+    };
     servers.value.push(newServer);
   } catch (e) {
     console.error("Failed to create server:", e);

@@ -32,6 +32,7 @@
     "emptyHint": "Click button below to add",
     "add": "Add Server",
     "deleteConfirm": "Are you sure you want to delete this server? This action cannot be undone.",
+    "maxReached": "Maximum 26 servers supported",
     "form": {
       "title": "Server Name",
       "titlePlaceholder": "Enter server name",

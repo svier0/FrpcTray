@@ -32,6 +32,7 @@
     "emptyHint": "点击下方按钮添加",
     "add": "添加服务器",
     "deleteConfirm": "确定要删除该服务器吗？此操作不可撤销。",
+    "maxReached": "当前最大支持26个服务器",
     "form": {
       "title": "服务器名称",
       "titlePlaceholder": "输入服务器名称",

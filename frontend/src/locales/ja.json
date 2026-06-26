@@ -32,6 +32,7 @@
     "emptyHint": "下のボタンで追加",
     "add": "サーバーを追加",
     "deleteConfirm": "このサーバーを削除しますか？この操作は元に戻せません。",
+    "maxReached": "最大26個のサーバーがサポートされています",
     "form": {
       "title": "サーバー名",
       "titlePlaceholder": "サーバー名を入力",
