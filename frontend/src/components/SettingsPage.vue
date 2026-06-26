@@ -290,7 +290,7 @@ watch(language, (newLang) => {
               v-for="server in servers"
               :key="server.id"
               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200"
-              :class="server.enable ? 'bg-blue-500 text-white shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
+              :class="server.enable ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
               @click="toggleServerEnable(server)"
             >
               <svg
