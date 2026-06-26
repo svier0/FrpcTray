@@ -39,6 +39,7 @@ async function loadProxies(serverId: string) {
     proxies.value = rawProxies.map((p, index) => ({
       id: String(index),
       name: p.name,
+      desc: p.desc || undefined,
       url: p.customDomains?.[0] || `${p.type}://localhost:${p.localPort}`,
       enabled: true,
     }));

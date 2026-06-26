@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 export interface ProxyItem {
   id: string;
   name: string;
+  desc?: string;
   url: string;
   enabled: boolean;
   icon?: string;
@@ -79,12 +80,12 @@ const { t } = useI18n();
         <div class="min-w-0 flex-1 space-y-1">
           <div class="flex items-center gap-2 min-h-6">
             <h3 class="text-sm font-semibold leading-none truncate">
-              {{ props.item.name }}
+              {{ props.item.desc || props.item.name }}
             </h3>
           </div>
 
           <p class="text-xs text-muted-foreground truncate">
-            {{ props.item.url }}
+            {{ props.item.name }}
           </p>
         </div>
       </div>
