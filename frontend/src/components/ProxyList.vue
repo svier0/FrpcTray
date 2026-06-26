@@ -37,6 +37,7 @@ function initSortable() {
   if (listRef.value) {
     sortable = Sortable.create(listRef.value, {
       animation: 150,
+      handle: ".drag-handle",
       ghostClass: "opacity-50",
       chosenClass: "sortable-chosen",
       forceFallback: true,
