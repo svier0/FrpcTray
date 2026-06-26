@@ -39,7 +39,13 @@ function initSortable() {
       ghostClass: "opacity-50",
       forceFallback: true,
       fallbackClass: "sortable-fallback",
-      onEnd: () => {
+      onEnd: (evt) => {
+        const oldIndex = evt.oldIndex;
+        const newIndex = evt.newIndex;
+        if (oldIndex !== undefined && newIndex !== undefined && oldIndex !== newIndex) {
+          const item = dragList.value.splice(oldIndex, 1)[0];
+          dragList.value.splice(newIndex, 0, item);
+        }
         emit("update:items", [...dragList.value]);
       },
     });
