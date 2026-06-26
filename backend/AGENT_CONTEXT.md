@@ -23,22 +23,30 @@
 - ✅ BACKEND_STATUS.md V2 已发布
 - ✅ 配置目录跨平台策略：Windows 用 exe 同级 conf/，macOS/Linux 用 app_data_dir()/conf/
 - ✅ 移除 bundle.resources，目录运行时自动创建
+- ✅ 前端反馈 V2 已处理：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回
 
 ### 待办事项
-- [ ] 等待前端对接 V2 接口
-- [ ] 根据前端反馈调整（如有）
+- [ ] **TOML 存储方案重构**（不污染 frpc 配置 + 保留注释）
+  - `toml` crate → `toml_edit`
+  - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort`
+  - `desc` → `[[proxies]]` 上方注释，`toml_edit` 排序时跟随
+- [ ] 等待前端确认 V3
 
 ### 下一步计划
-- 等待前端 ACK V2，根据反馈迭代
+- TOML 存储方案重构
+- 等待前端 ACK V3
 
 ---
 
 ## 关键决策记录
 
-### 2026-06-26
-- **决策**: 根据前端反馈重写 API 为 V2（Server/Proxy 双层模型）
-- **原因**: 前端反馈 V1 接口（9 个文件级命令 + ProxyConfig 数据结构）与其需求不匹配
-- **实现**: 11 个命令注册到 `invoke_handler`，Server 对应 `frpc.{id}.toml`，Proxy 对应 `[[proxies]]`，`sort` 字段存 TOML root，`reorder_servers` 按数组顺序分配 sort=1..N
+### 2026-06-26 (TOML 存储方案)
+- **决策**: 使用 `toml_edit` 替代 `toml` crate，tray 元数据存为注释
+- **原因**: frpc-tray 不应污染 frpc 原生配置。当前 `title`/`enable`/`sort` 作为 TOML key 注入会污染配置，`toml` crate 读写丢失注释
+- **方案**: 
+  - 换 `toml_edit`（`DocumentMut` 保留注释和格式）
+  - `title`/`enable`/`sort` 存为文件顶部 `# @title` / `# @enable` / `# @sort`
+  - `desc` = `[[proxies]]` 上方注释，`toml_edit` 保证排序时跟随
 
 ### 2026-06-26 (之前)
 - **决策**: 配置目录使用跨平台策略

@@ -8,33 +8,31 @@ use tauri::{
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use toml_edit::{DocumentMut, Item, Table, ArrayOfTables, value};
 
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
 // ── TOML file structures ──
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct AuthConfig {
     method: Option<String>,
     token: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct LogConfig {
     to: Option<String>,
     level: Option<String>,
-    #[serde(rename = "maxDays")]
     max_days: Option<i32>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 struct FrpcConfigFile {
     title: String,
     enable: bool,
     sort: i32,
-    #[serde(rename = "serverAddr")]
     server_addr: String,
-    #[serde(rename = "serverPort")]
     server_port: u16,
     auth: Option<AuthConfig>,
     log: Option<LogConfig>,
@@ -83,6 +81,29 @@ struct CreateServerInput {
     auth: Option<AuthConfig>,
 }
 
+// AuthConfig needs serde for IPC (it's embedded in ServerInfo)
+impl Serialize for AuthConfig {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeStruct;
+        let mut s = serializer.serialize_struct("AuthConfig", 2)?;
+        s.serialize_field("method", &self.method)?;
+        s.serialize_field("token", &self.token)?;
+        s.end()
+    }
+}
+
+impl<'de> Deserialize<'de> for AuthConfig {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        #[derive(Deserialize)]
+        struct AuthConfigHelper {
+            method: Option<String>,
+            token: Option<String>,
+        }
+        let h = AuthConfigHelper::deserialize(deserializer)?;
+        Ok(AuthConfig { method: h.method, token: h.token })
+    }
+}
+
 // ── Helper functions ──
 
 fn get_executable_dir() -> PathBuf {
@@ -107,6 +128,110 @@ fn id_from_filename(filename: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+// ── TOML read (DOM API) ──
+
+/// Extract metadata from V3 comments (# @title / # @enable / # @sort)
+fn extract_meta_from_comments(doc: &DocumentMut) -> (Option<String>, Option<bool>, Option<i32>) {
+    let mut title = None;
+    let mut enable = None;
+    let mut sort = None;
+
+    if let Some((_, item)) = doc.iter().next() {
+        if let Some(raw) = item.decor().prefix() {
+            if let Some(s) = raw.as_str() {
+                for line in s.lines() {
+                    let trimmed = line.trim();
+                    if let Some(v) = trimmed.strip_prefix("# @title ") {
+                        title = Some(v.trim().to_string());
+                    } else if let Some(v) = trimmed.strip_prefix("# @enable ") {
+                        enable = Some(v.trim().parse().unwrap_or(true));
+                    } else if let Some(v) = trimmed.strip_prefix("# @sort ") {
+                        sort = v.trim().parse::<i32>().ok();
+                    }
+                }
+            }
+        }
+    }
+
+    (title, enable, sort)
+}
+
+/// Extract metadata from V2 TOML keys (backward compat fallback)
+fn extract_meta_from_keys(doc: &DocumentMut) -> (Option<String>, Option<bool>, Option<i32>) {
+    let title = doc.get("title").and_then(|v| v.as_str()).map(String::from);
+    let enable = doc.get("enable").and_then(|v| v.as_bool());
+    let sort = doc.get("sort").and_then(|v| v.as_integer()).map(|i| i as i32);
+    (title, enable, sort)
+}
+
+/// Extract array of strings from a TOML array
+fn extract_string_array(table: &Table, key: &str) -> Option<Vec<String>> {
+    table.get(key)
+        .and_then(|v| v.as_array())
+        .map(|a| a.iter()
+            .filter_map(|v| v.as_str().map(String::from))
+            .collect())
+}
+
+/// Extract proxy description from comment before [[proxies]]
+fn extract_proxy_desc(table: &Table) -> Option<String> {
+    table.decor().prefix()
+        .and_then(|raw| raw.as_str())
+        .and_then(|s| {
+            s.lines()
+                .find(|l| {
+                    let t = l.trim();
+                    t.starts_with('#') && !t.starts_with("# @")
+                })
+                .map(|l| {
+                    l.trim()
+                        .strip_prefix("# ")
+                        .or_else(|| l.trim().strip_prefix('#'))
+                        .unwrap_or("")
+                        .trim()
+                        .to_string()
+                })
+                .filter(|d| !d.is_empty())
+        })
+}
+
+/// Extract proxies from a parsed TOML document
+fn extract_proxies(doc: &DocumentMut) -> Option<Vec<ProxyItem>> {
+    let arr = doc.get("proxies")?.as_array_of_tables()?;
+    let mut proxies = Vec::new();
+
+    for table in arr.iter() {
+        let desc = extract_proxy_desc(table);
+        let name = table.get("name")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
+        let proxy_type = table.get("type")
+            .and_then(|v| v.as_str())
+            .unwrap_or_default()
+            .to_string();
+        let local_ip = table.get("localIP")
+            .and_then(|v| v.as_str())
+            .map(String::from);
+        let local_port = table.get("localPort")
+            .and_then(|v| v.as_integer())
+            .unwrap_or(0) as u16;
+
+        proxies.push(ProxyItem {
+            name,
+            desc,
+            proxy_type,
+            local_ip,
+            local_port,
+            custom_domains: extract_string_array(table, "customDomains"),
+            locations: extract_string_array(table, "locations"),
+        });
+    }
+
+    if proxies.is_empty() { None } else { Some(proxies) }
+}
+
+/// Read a server file and return full config (frpc-native fields + tray metadata)
 fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
     let path = server_path(id);
     if !path.exists() {
@@ -114,15 +239,205 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
     }
     let content = fs::read_to_string(&path)
         .map_err(|e| format!("读取文件失败: {}", e))?;
-    toml::from_str(&content)
-        .map_err(|e| format!("解析 TOML 失败: {}", e))
+    let doc: DocumentMut = content.parse()
+        .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+
+    // V3 comments → V2 keys fallback
+    let (ctitle, cenable, csort) = extract_meta_from_comments(&doc);
+    let (ktitle, kenable, ksort) = extract_meta_from_keys(&doc);
+    let title = ctitle.or(ktitle).unwrap_or_default();
+    let enable = cenable.or(kenable).unwrap_or(true);
+    let sort = csort.or(ksort).unwrap_or(0);
+
+    let server_addr = doc.get("serverAddr")
+        .and_then(|v| v.as_str())
+        .ok_or_else(|| "缺少 serverAddr".to_string())?
+        .to_string();
+    let server_port = doc.get("serverPort")
+        .and_then(|v| v.as_integer())
+        .ok_or_else(|| "缺少 serverPort".to_string())? as u16;
+
+    let auth = doc.get("auth").and_then(|v| v.as_table()).map(|t| AuthConfig {
+        method: t.get("method").and_then(|v| v.as_str()).map(String::from),
+        token: t.get("token").and_then(|v| v.as_str()).map(String::from),
+    });
+
+    let log = doc.get("log").and_then(|v| v.as_table()).map(|t| LogConfig {
+        to: t.get("to").and_then(|v| v.as_str()).map(String::from),
+        level: t.get("level").and_then(|v| v.as_str()).map(String::from),
+        max_days: t.get("maxDays").and_then(|v| v.as_integer()).map(|i| i as i32),
+    });
+
+    let proxies = extract_proxies(&doc);
+
+    Ok(FrpcConfigFile {
+        title,
+        enable,
+        sort,
+        server_addr,
+        server_port,
+        auth,
+        log,
+        proxies,
+    })
 }
 
+// ── TOML write (DOM API) ──
+
+/// Set metadata comments (# @title / # @enable / # @sort) on the first key's prefix
+fn set_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    let meta = format!("# @title {}\n# @enable {}\n# @sort {}\n",
+        config.title, config.enable, config.sort);
+
+    if let Some((_, item)) = doc.iter_mut().next() {
+        let existing = item.decor().prefix()
+            .and_then(|r| r.as_str())
+            .unwrap_or("");
+
+        // Remove old @ lines, preserve other comments
+        let filtered: Vec<&str> = existing
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                !t.starts_with("# @title ")
+                && !t.starts_with("# @enable ")
+                && !t.starts_with("# @sort ")
+            })
+            .collect();
+
+        let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
+            meta
+        } else {
+            format!("{}{}", filtered.join("\n"), meta)
+        };
+
+        item.decor_mut().set_prefix(new_prefix);
+    }
+}
+
+/// Write frpc-native fields into the document
+fn set_frpc_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    doc.insert("serverAddr", Item::Value(value(&config.server_addr)));
+    doc.insert("serverPort", Item::Value(value(config.server_port as i64)));
+
+    // Auth: remove old, rebuild as [auth] table
+    doc.remove("auth");
+    if let Some(ref auth) = config.auth {
+        if auth.method.is_some() || auth.token.is_some() {
+            let mut auth_table = Table::new();
+            auth_table.decor_mut().set_prefix("\n");
+            if let Some(ref m) = auth.method {
+                auth_table.insert("method", Item::Value(value(m)));
+            }
+            if let Some(ref t) = auth.token {
+                auth_table.insert("token", Item::Value(value(t)));
+            }
+            doc.insert("auth", Item::Table(auth_table));
+        }
+    }
+
+    // Log: remove old, rebuild as [log] table
+    doc.remove("log");
+    if let Some(ref log) = config.log {
+        if log.to.is_some() || log.level.is_some() || log.max_days.is_some() {
+            let mut log_table = Table::new();
+            log_table.decor_mut().set_prefix("\n");
+            if let Some(ref to) = log.to {
+                log_table.insert("to", Item::Value(value(to)));
+            }
+            if let Some(ref level) = log.level {
+                log_table.insert("level", Item::Value(value(level)));
+            }
+            if let Some(max_days) = log.max_days {
+                log_table.insert("maxDays", Item::Value(value(max_days as i64)));
+            }
+            doc.insert("log", Item::Table(log_table));
+        }
+    }
+}
+
+/// Rebuild the [[proxies]] array with desc comments
+fn rebuild_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    doc.remove("proxies");
+
+    let Some(ref proxies) = config.proxies else { return };
+    if proxies.is_empty() { return; }
+
+    let mut arr = ArrayOfTables::new();
+
+    for proxy in proxies {
+        let mut table = Table::new();
+
+        // Set desc as comment before [[proxies]]
+        let desc_prefix = match proxy.desc {
+            Some(ref d) if !d.trim().is_empty() => format!("# {}\n", d.trim()),
+            _ => String::new(),
+        };
+        table.decor_mut().set_prefix(desc_prefix);
+
+        table.insert("name", Item::Value(value(&proxy.name)));
+        table.insert("type", Item::Value(value(&proxy.proxy_type)));
+        if let Some(ref ip) = proxy.local_ip {
+            table.insert("localIP", Item::Value(value(ip)));
+        }
+        table.insert("localPort", Item::Value(value(proxy.local_port as i64)));
+        if let Some(ref domains) = proxy.custom_domains {
+            if !domains.is_empty() {
+                let vals: Vec<_> = domains.iter().map(|d| value(d.as_str())).collect();
+                table.insert("customDomains", value_array(vals));
+            }
+        }
+        if let Some(ref locs) = proxy.locations {
+            if !locs.is_empty() {
+                let vals: Vec<_> = locs.iter().map(|l| value(l.as_str())).collect();
+                table.insert("locations", value_array(vals));
+            }
+        }
+
+        arr.push(table);
+    }
+
+    doc.insert("proxies", Item::ArrayOfTables(arr));
+}
+
+/// Create an Item::Value containing an Array from Value items
+fn value_array(vals: Vec<toml_edit::Value>) -> Item {
+    let mut array = toml_edit::Array::new();
+    for v in vals {
+        array.push(v);
+    }
+    // Add trailing comma + newline for clean formatting
+    array.set_trailing_comma(true);
+    array.set_trailing("\n");
+    Item::Value(toml_edit::Value::Array(array))
+}
+
+/// Write a server config to file.
+/// If the file exists, parses and modifies in place (preserving formatting).
+/// If new, builds from scratch.
 fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
     let path = server_path(id);
-    let content = toml::to_string(config)
-        .map_err(|e| format!("序列化 TOML 失败: {}", e))?;
-    fs::write(&path, content)
+
+    let mut doc = if path.exists() {
+        let content = fs::read_to_string(&path)
+            .map_err(|e| format!("读取文件失败: {}", e))?;
+        let mut doc: DocumentMut = content.parse()
+            .map_err(|e| format!("解析 TOML 失败: {}", e))?;
+        // Migrate: remove old V2 metadata keys
+        doc.remove("title");
+        doc.remove("enable");
+        doc.remove("sort");
+        doc
+    } else {
+        DocumentMut::new()
+    };
+
+    set_frpc_fields(&mut doc, config);
+    set_meta_comments(&mut doc, config);
+    rebuild_proxies(&mut doc, config);
+
+    let output = doc.to_string();
+    fs::write(&path, output)
         .map_err(|e| format!("写入文件失败: {}", e))
 }
 
