@@ -64,7 +64,7 @@ function setActiveTab(tab: string) {
         <button
           v-for="server in props.enabledServers"
           :key="server.id"
-          class="inline-flex items-center justify-center h-7 px-2 rounded-lg transition-colors text-xs font-medium"
+          class="inline-flex items-center justify-center h-7 px-2 rounded-lg transition-colors text-xs font-medium truncate max-w-[80px]"
           :class="props.activeTab === server.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
           @click="setActiveTab(server.id)"
         >
