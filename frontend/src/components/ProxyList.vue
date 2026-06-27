@@ -16,7 +16,6 @@ const emit = defineEmits<{
   (e: "edit", id: string): void;
   (e: "duplicate", id: string): void;
   (e: "delete", id: string): void;
-  (e: "viewLogs", id: string): void;
 }>();
 
 const { t } = useI18n();
@@ -75,7 +74,6 @@ onBeforeUnmount(() => {
         @edit="(id) => emit('edit', id)"
         @duplicate="(id) => emit('duplicate', id)"
         @delete="(id) => emit('delete', id)"
-        @view-logs="(id) => emit('viewLogs', id)"
       />
     </div>
   </div>

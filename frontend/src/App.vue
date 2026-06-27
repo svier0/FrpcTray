@@ -155,10 +155,6 @@ async function handleDelete(id: string) {
   }
 }
 
-function handleViewLogs(id: string) {
-  console.log("viewLogs", id);
-}
-
 function handleAddProxy() {
   editingProxy.value = undefined;
   proxyDialogMode.value = "create";
@@ -297,7 +293,6 @@ onMounted(() => {
           @edit="handleEdit"
           @duplicate="handleDuplicate"
           @delete="handleDelete"
-          @view-logs="handleViewLogs"
         />
       </main>
     </template>
