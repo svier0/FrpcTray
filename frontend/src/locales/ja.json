@@ -95,6 +95,10 @@
       "title": "自動起動",
       "description": "システム起動時に自動的に起動"
     },
+    "silentLaunch": {
+      "title": "サイレント起動",
+      "description": "ウィンドウを表示せずに起動（軽量モード）"
+    },
     "about": {
       "version": "バージョン",
       "appName": "frpc tray",

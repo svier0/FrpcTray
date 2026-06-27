@@ -95,6 +95,10 @@
       "title": "Auto Start",
       "description": "Start automatically when system boots"
     },
+    "silentLaunch": {
+      "title": "Silent Launch",
+      "description": "Start without showing window (lightweight mode)"
+    },
     "about": {
       "version": "Version",
       "appName": "frpc tray",

@@ -95,6 +95,10 @@
       "title": "開機自啟",
       "description": "隨系統啟動自動運行"
     },
+    "silentLaunch": {
+      "title": "靜默啟動",
+      "description": "啟動時不顯示視窗（輕量模式啟動）"
+    },
     "about": {
       "version": "版本",
       "appName": "frpc tray",
