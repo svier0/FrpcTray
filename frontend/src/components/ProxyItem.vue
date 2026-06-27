@@ -78,7 +78,7 @@ const { t } = useI18n();
             </h3>
           </div>
 
-          <span class="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span class="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-500">
             {{ props.item.type || '?' }}
           </span>
         </div>
