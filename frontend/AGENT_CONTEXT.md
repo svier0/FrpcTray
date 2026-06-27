@@ -15,18 +15,19 @@
 ## 主要约定 (Key Conventions)
 - Language: Use Chinese (zh-CN) for UI text and comments
 - Styling: Follow CC Switch design patterns (dark theme, glass morphism)
-- State: Theme and language persisted in localStorage
+- State: 配置统一存储在后端 conf/config.toml（通过 get_config/save_config 接口）
 - UI组件: 使用tailwindcss进行组件设计
+- 应用名称: FrpC Tray
 
 ---
 
 ## 当前开发状态 (截至 2026-06-27)
 
 ### 已完成
-- ✅ 界面UI设计-主界面-标题栏
-- ✅ 界面UI设计-主界面-总开关
+- ✅ 界面UI设计-主界面-标题栏（FrpC Tray）
+- ✅ 界面UI设计-主界面-总开关（默认关闭）
 - ✅ 界面UI设计-主界面-设置按钮-跳转设置页
-- ✅ 界面UI设计-主界面-服务器tab-切换
+- ✅ 界面UI设计-主界面-服务器tab-切换（显示服务器名称）
 - ✅ 界面UI设计-主界面-服务器配置项-列表
 - ✅ 界面UI设计-主界面-服务器配置项-拖动排序
 - ✅ 界面UI设计-主界面-服务器配置项-日志按钮
@@ -36,6 +37,9 @@
 - ✅ 界面UI设计-设置界面-通用-i18n语言切换
 - ✅ 界面UI设计-设置界面-通用-外观主题切换
 - ✅ 界面UI设计-设置界面-通用-主页面显示服务器选择
+- ✅ 界面UI设计-设置界面-通用-开机自启
+- ✅ 界面UI设计-设置界面-通用-静默启动
+- ✅ 界面UI设计-设置界面-通用-自动运行
 - ✅ 界面UI设计-设置界面-服务器-列表（仿CC Switch样式，可展开编辑）
 - ✅ 界面UI设计-设置界面-服务器-新增
 - ✅ 界面UI设计-设置界面-服务器-编辑
@@ -44,10 +48,8 @@
 - ✅ 后端接口对接-删除/添加/编辑调用后端
 - ✅ 后端接口对接-删除确认弹窗
 - ✅ 后端接口对接-createServer返回id
-- ✅ 界面UI设计-设置界面-通用-主页面显示服务器选择（CC Switch风格标签）
-- ✅ 界面UI设计-主界面-标题栏服务器图标（显示已启用服务器ID大写字母）
 - ✅ 后端接口对接-代理列表加载（listProxies）
-- ✅ 界面UI设计-代理项显示（标题=desc，副标题=name，图标=type）
+- ✅ 界面UI设计-代理项显示（标题=desc，type蓝色tag）
 - ✅ 后端接口对接-代理enabled开关（updateProxy）
 - ✅ 后端接口对接-代理CRUD操作（createProxy, updateProxy, deleteProxy）
 - ✅ 后端接口对接-代理排序（reorderProxies）
@@ -63,6 +65,8 @@
 - ✅ 界面UI设计-设置界面-内核-已是最新状态（绿色对勾图标）
 - ✅ 界面UI设计-设置界面-内核-最新版本获取失败（请重试按钮）
 - ✅ 界面UI设计-设置界面-高级-备份与恢复卡片（可折叠，导出备份/选择ZIP备份文件按钮）
+- ✅ 后端接口对接-备份恢复（export_backup, restore_backup）
+- ✅ 后端接口对接-应用配置（get_config, save_config）
 
 ### 待办事项
 - [ ] 界面UI设计-设置界面-高级-其他设置
@@ -110,6 +114,22 @@
 - **原因**: 用户体验更清晰
 - **实现**: 根据 current_version === '0' 判断当前是安装还是升级
 
+- **决策**: 服务器列表和通用设置移除id图标，改用服务器名称
+- **原因**: 简化UI，服务器名称更直观
+- **实现**: 移除id图标，AppHeader显示server.title
+
+- **决策**: 代理项type改为蓝色tag显示，移除图标和副标题
+- **原因**: 统一视觉风格，tag更清晰
+- **实现**: 移除type图标，用蓝色背景tag显示type
+
+- **决策**: 应用配置统一存储在后端 conf/config.toml
+- **原因**: 前后端配置同步，支持跨设备
+- **实现**: 使用 get_config/save_config 接口，config.ts 统一管理
+
+- **决策**: 应用名称改为 FrpC Tray
+- **原因**: 品牌统一
+- **实现**: 修改 AppHeader 和 i18n 翻译
+
 ---
 
 ## 技术细节备忘
@@ -129,11 +149,11 @@
 - 使用ProxyItem.vue组件：显示代理信息
 - 使用ProxyList.vue组件：支持拖拽排序的列表
 - 使用ProxyDialog.vue组件：创建/编辑代理弹窗
-- 标题显示desc字段，副标题显示name字段
-- 图标显示type字段（tcp/udp/http等）
+- 标题显示desc字段，type用蓝色tag显示
 - 代理复制：直接创建enabled=false的副本，不弹对话框
 
 ### 设置页面
+- 通用页面：语言切换、主题切换、主页面显示服务器选择、开机自启、静默启动、自动运行
 - 内核页面：frpc版本卡片（Win/amd64标签、当前版本、最新版本、升级按钮）
   - 未安装（current_version === '0'）：黄色感叹号、灰色安装按钮
   - 可升级：黄色感叹号+文字、蓝色升级按钮
@@ -142,6 +162,20 @@
   - 成功提示3秒自动清除
 - 关于页面：应用信息卡片（图标、版本号、GitHub/更新日志/检查更新按钮）
 - 高级页面：备份与恢复折叠卡片（橙色图标、导出备份/选择ZIP备份文件按钮）
+
+### 配置管理
+- 统一配置结构（存储在 conf/config.toml）：
+  ```json
+  {
+    "language": "zh-CN",
+    "theme": "system",
+    "autostart": false,
+    "silent_launch": false,
+    "auto_run": false
+  }
+  ```
+- 前端 config.ts 负责前后端字段映射（camelCase ↔ snake_case）
+- 启动时通过 get_config 加载，修改时通过 save_config 保存
 
 ### 拖拽排序实现
 - 使用SortableJS（非vue-draggable-plus）
@@ -153,7 +187,7 @@
 
 ## 协作状态
 - **当前版本**: V5
-- **后端 ACK**: V3
+- **后端 ACK**: V7
 - **阻塞点**: 无
 
 ---
@@ -162,4 +196,4 @@
 1. 如无新需求，继续完善高级tab其他设置
 2. 检查代理拖拽排序是否正常工作
 3. 检查服务器拖拽排序是否正常工作
-4. 备份与恢复功能待后端接口就绪后对接
+4. 备份与恢复功能已对接完成
