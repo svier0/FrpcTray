@@ -38,6 +38,12 @@
   - **[[proxies]] 重排**：`serialize_proxies` 字符串重建 + `strip_proxies_section` 清除旧块，绕过 toml_edit 的 ArrayOfTables 序列化 bug
   - **数组格式**：`customDomains`/`locations` 保持内联 `["a", "b"]` 格式
   - **重排验证**：`test_update_proxies_reorder` 单元测试通过（commit `1580aef`）
+- ✅ `get_frpc_version` 命令已实现并提交（2026-06-27）
+  - `FrpcVersionInfo` 结构：current_version / latest_version / can_upgrade / platform / arch
+  - `get_current_frpc_version`: 运行 `frpc -v` 解析版本
+  - `get_latest_frpc_version`: GitHub API 获取 latest release，加入 User-Agent header，复用 HTTP_CLIENT 单例
+  - `compare_versions`: 支持语义化版本比较，忽略 preview 后缀
+  - `get_platform` / `get_arch`: 编译期确定平台和架构字符串
 
 ### 待办事项
 - [ ] 等待前端确认

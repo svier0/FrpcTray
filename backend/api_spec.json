@@ -1,6 +1,6 @@
 {
   "version": "V3",
-  "lastUpdated": "2026-06-26",
+  "lastUpdated": "2026-06-27",
   "commands": [
     {
       "name": "list_servers",
@@ -136,6 +136,16 @@
         "success": "空",
         "error": "错误信息字符串"
       }
+    },
+    {
+      "name": "get_frpc_version",
+      "description": "获取 frpc 内核版本信息（当前版本/最新版本/可升级状态/平台/架构）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<FrpcVersionInfo, String>",
+        "success": "版本信息对象",
+        "error": "错误信息字符串"
+      }
     }
   ],
   "dataStructures": {
@@ -198,6 +208,16 @@
         { "name": "remotePort", "type": "u16 | null", "description": "远程端口（tcp/udp 代理必填）" },
         { "name": "customDomains", "type": "Vec<String> | null", "description": "绑定域名列表" },
         { "name": "locations", "type": "Vec<String> | null", "description": "路径列表" }
+      ]
+    },
+    "FrpcVersionInfo": {
+      "description": "frpc 内核版本信息",
+      "fields": [
+        { "name": "current_version", "type": "String", "description": "当前安装的 frpc 版本，如 '0.69.1'，未安装则为 '0'" },
+        { "name": "latest_version", "type": "String", "description": "GitHub 最新 release 版本，如 '0.69.1'，获取失败则为空字符串" },
+        { "name": "can_upgrade", "type": "bool", "description": "是否有可升级的新版本" },
+        { "name": "platform", "type": "String", "description": "当前操作系统，如 'windows'/'darwin'/'linux'" },
+        { "name": "arch", "type": "String", "description": "当前 CPU 架构，如 'amd64'/'arm64'" }
       ]
     }
   }

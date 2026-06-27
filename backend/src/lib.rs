@@ -7,10 +7,17 @@ use tauri::{
 };
 use std::fs;
 use std::path::PathBuf;
+use std::process::Command;
 use serde::{Deserialize, Serialize};
 use toml_edit::{DocumentMut, Item, Table, value};
 
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
+
+static HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+
+fn get_http_client() -> &'static reqwest::Client {
+    HTTP_CLIENT.get_or_init(|| reqwest::Client::new())
+}
 
 // ── TOML file structures ──
 
@@ -37,6 +44,20 @@ struct TransportConfig {
 #[derive(Debug, Serialize, Deserialize)]
 struct TlsConfig {
     enable: Option<bool>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FrpcVersionInfo {
+    current_version: String,
+    latest_version: String,
+    can_upgrade: bool,
+    platform: String,
+    arch: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct GithubRelease {
+    tag_name: String,
 }
 
 #[derive(Debug)]
@@ -793,6 +814,123 @@ fn reorder_proxies(server_id: String, names: Vec<String>) -> Result<(), String> 
     write_server_file(&server_id, &config)
 }
 
+// ── Frpc version commands ──
+
+#[tauri::command]
+async fn get_frpc_version() -> Result<FrpcVersionInfo, String> {
+    let current_version = get_current_frpc_version();
+    let (latest_version, can_upgrade) = match get_latest_frpc_version().await {
+        Ok(v) => {
+            let can = compare_versions(&current_version, &v);
+            (v, can)
+        }
+        Err(_) => (String::new(), false),
+    };
+
+    Ok(FrpcVersionInfo {
+        current_version,
+        latest_version,
+        can_upgrade,
+        platform: get_platform(),
+        arch: get_arch(),
+    })
+}
+
+/// Get current frpc version by running `frpc -v`
+fn get_current_frpc_version() -> String {
+    let output = Command::new("frpc")
+        .arg("-v")
+        .output();
+
+    match output {
+        Ok(o) if o.status.success() => {
+            let stdout = String::from_utf8_lossy(&o.stdout);
+            // Parse version from output like "frpc v0.69.1"
+            stdout
+                .lines()
+                .find_map(|line| line.trim().strip_prefix("frpc v").map(String::from))
+                .unwrap_or_else(|| "0".to_string())
+        }
+        _ => "0".to_string(),
+    }
+}
+
+/// Get latest frpc version from GitHub releases API
+async fn get_latest_frpc_version() -> Result<String, String> {
+    let url = "https://api.github.com/repos/fatedier/frp/releases/latest";
+    let client = get_http_client();
+    let response = client
+        .get(url)
+        .header("User-Agent", "frpc-tray/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("GitHub API 请求失败: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("GitHub API 返回错误状态: {}", response.status()));
+    }
+
+    let body = response
+        .bytes()
+        .await
+        .map_err(|e| format!("读取响应失败: {}", e))?;
+
+    let release: GithubRelease = serde_json::from_slice(&body)
+        .map_err(|e| format!("解析 JSON 失败: {}", e))?;
+
+    // Strip 'v' prefix from tag_name
+    Ok(release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name).to_string())
+}
+
+/// Compare versions, return true if latest > current
+/// Handles formats like "0.69.1", "0.2.0-preview", "0.69.2"
+fn compare_versions(current: &str, latest: &str) -> bool {
+    if current == "0" {
+        return true; // Not installed, can upgrade
+    }
+
+    // Parse version parts (ignore preview suffix)
+    fn parse_version(v: &str) -> (u32, u32, u32) {
+        let main = v.split('-').next().unwrap_or(v);
+        let parts: Vec<&str> = main.split('.').collect();
+        let major = parts.get(0).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let minor = parts.get(1).and_then(|s| s.parse().ok()).unwrap_or(0);
+        let patch = parts.get(2).and_then(|s| s.parse().ok()).unwrap_or(0);
+        (major, minor, patch)
+    }
+
+    let (c_major, c_minor, c_patch) = parse_version(current);
+    let (l_major, l_minor, l_patch) = parse_version(latest);
+
+    (l_major, l_minor, l_patch) > (c_major, c_minor, c_patch)
+}
+
+/// Get platform name for download URL
+fn get_platform() -> String {
+    if cfg!(target_os = "windows") {
+        "windows".to_string()
+    } else if cfg!(target_os = "macos") {
+        "darwin".to_string()
+    } else {
+        "linux".to_string()
+    }
+}
+
+/// Get architecture name for download URL
+fn get_arch() -> String {
+    if cfg!(target_arch = "x86_64") {
+        "amd64".to_string()
+    } else if cfg!(target_arch = "aarch64") {
+        "arm64".to_string()
+    } else if cfg!(target_arch = "x86") {
+        "386".to_string()
+    } else if cfg!(target_arch = "arm") {
+        "arm".to_string()
+    } else {
+        "amd64".to_string() // default
+    }
+}
+
 // ── App entry ──
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -872,6 +1010,7 @@ pub fn run() {
             update_proxy,
             delete_proxy,
             reorder_proxies,
+            get_frpc_version,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -917,26 +1056,7 @@ name = "C"
 type = "http"
 localPort = 82
 "#;
-        let mut doc: DocumentMut = doc_str.parse().unwrap();
-
-        let config = FrpcConfigFile {
-            title: "test".into(),
-            enable: true,
-            sort: 1,
-            server_addr: "1.2.3.4".into(),
-            server_port: 7000,
-            auth: None,
-            log: None,
-            transport: None,
-            tls: None,
-            proxies: Some(vec![
-                make_proxy("C", 82),
-                make_proxy("A", 80),
-                make_proxy("B", 81),
-            ]),
-        };
-
-        update_proxies(&mut doc, &config);
+        let doc: DocumentMut = doc_str.parse().unwrap();
 
         // Simulate write_server_file: after toml_edit, strip old proxies, append new
         let mut output = doc.to_string();

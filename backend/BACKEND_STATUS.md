@@ -3,6 +3,10 @@ VERSION: V3
 ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
+- ✅ `get_frpc_version` 命令已实现（2026-06-27）：
+  - 返回当前版本（frpc -v）、最新版本（GitHub API）、可升级状态、平台、架构
+  - 前端可根据 `platform`/`arch` 拼接下载链接：`frp_{version}_{platform}_{arch}.zip`
+  - GitHub releases: `https://github.com/fatedier/frp/releases/tag/v{version}`
 - ✅ 修复 TOML 写入格式破坏问题（2026-06-27）：
   - **server 级字段**：使用 `update_server_fields` + `set_or_insert` 就地更新，保留 Key decor（空行、注释、未知字段）
   - **[[proxies]] 重排**：`serialize_proxies` 字符串重建 + `strip_proxies_section` 清除旧块，绕过 toml_edit 的 ArrayOfTables 序列化 bug
@@ -20,5 +24,5 @@ ACK_FRONTEND_VERSION: V3
   - 11 个命令 API 完全不变，前端无需修改
 - ✅ 已处理前端反馈 V2：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回（2026-06-26）
 - V2：引入 `ServerInfo`（对应 `conf/frpc.{id}.toml`）和 `ProxyItem`（对应 `[[proxies]]`）
-- **11 个命令**：Server CRUD + reorder，Proxy CRUD + reorder
+- **12 个命令**：Server CRUD + reorder，Proxy CRUD + reorder，get_frpc_version
 - 字段名与 TOML 完全一致（camelCase），API 见 `backend/api_spec.json`
