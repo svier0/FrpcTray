@@ -363,9 +363,9 @@ watch(language, (newLang) => {
             <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ versionInfo.arch }}</span>
             <span
               v-if="versionInfo.current_version === '0'"
-              class="ml-auto inline-flex items-center rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
+              class="ml-auto inline-flex items-center text-yellow-500"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" x2="12" y1="8" y2="12"/>
                 <line x1="12" x2="12.01" y1="16" y2="16"/>
