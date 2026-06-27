@@ -66,16 +66,11 @@ async function loadProxies(serverId: string) {
 async function handleUpdateItems(newItems: ProxyItem[]) {
   proxies.value = newItems;
   if (activeTab.value) {
-    const names = newItems.map((p) => p.name);
-    console.log("[reorder] serverId:", activeTab.value, "names:", names);
     try {
-      await reorderProxies(activeTab.value, names);
-      console.log("[reorder] success");
+      await reorderProxies(activeTab.value, newItems.map((p) => p.name));
     } catch (e) {
-      console.error("[reorder] failed:", e);
+      console.error("Failed to reorder proxies:", e);
     }
-  } else {
-    console.warn("[reorder] activeTab is null, skip");
   }
 }
 
