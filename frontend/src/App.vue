@@ -240,7 +240,7 @@ onMounted(() => {
       />
 
       <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
-        <div v-if="activeTab" class="mt-2 mb-3 flex items-center justify-between">
+        <div v-if="activeTab" class="mt-3 mb-2 flex items-center justify-between">
           <div class="flex items-center gap-2">
             <button
               class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
