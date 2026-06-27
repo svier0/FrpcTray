@@ -18,6 +18,10 @@ const proxies = ref<ProxyItem[]>([]);
 const enabledServers = ref<ServerItem[]>([]);
 const isLoadingProxies = ref(false);
 
+// Mock 服务器运行状态: idle / running / error
+type ServerStatus = "idle" | "running" | "error";
+const serverStatus = ref<Record<string, ServerStatus>>({});
+
 const showProxyDialog = ref(false);
 const proxyDialogMode = ref<"create" | "edit">("create");
 const editingProxy = ref<ProxyFormData | undefined>();
@@ -197,6 +201,21 @@ function handleCloseSettings() {
   loadServers();
 }
 
+function getActiveServerStatus(): ServerStatus {
+  return serverStatus.value[activeTab.value] || "idle";
+}
+
+function toggleServerRun() {
+  const id = activeTab.value;
+  if (!id) return;
+  const current = serverStatus.value[id] || "idle";
+  serverStatus.value[id] = current === "running" ? "idle" : "running";
+}
+
+function handleViewServerLogs() {
+  console.log("view server logs", activeTab.value);
+}
+
 watch(activeTab, (newTab) => {
   if (newTab) {
     loadProxies(newTab);
@@ -215,11 +234,59 @@ onMounted(() => {
         v-model:global-enabled="globalEnabled"
         v-model:active-tab="activeTab"
         :enabled-servers="enabledServers"
+        :server-status="serverStatus"
         @open-settings="handleOpenSettings"
         @add-proxy="handleAddProxy"
       />
 
       <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
+        <div v-if="activeTab" class="mb-4 p-3 rounded-xl border border-border bg-card">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="h-2.5 w-2.5 rounded-full"
+                :class="{
+                  'bg-blue-500': getActiveServerStatus() === 'running',
+                  'bg-red-500': getActiveServerStatus() === 'error',
+                  'bg-muted-foreground/30': getActiveServerStatus() === 'idle'
+                }"
+              />
+              <span class="text-sm font-medium">
+                {{ getActiveServerStatus() === 'running' ? '运行中' : getActiveServerStatus() === 'error' ? '异常' : '已停止' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                @click="handleViewServerLogs"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                日志
+              </button>
+              <button
+                class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
+                :class="getActiveServerStatus() === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500 text-white hover:bg-blue-600'"
+                @click="toggleServerRun"
+              >
+                <svg v-if="getActiveServerStatus() !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="4" height="16" x="6" y="4"/>
+                  <rect width="4" height="16" x="14" y="4"/>
+                </svg>
+                {{ getActiveServerStatus() === 'running' ? '停止' : '启动' }}
+              </button>
+            </div>
+          </div>
+          <div v-if="getActiveServerStatus() === 'error'" class="mt-2 p-2 rounded-lg bg-red-500/10 text-red-500 text-xs">
+            连接服务器失败，请检查配置或查看日志
+          </div>
+        </div>
+
         <div v-if="isLoadingProxies" class="flex items-center justify-center h-32 text-muted-foreground">
           <p class="text-sm">加载中...</p>
         </div>

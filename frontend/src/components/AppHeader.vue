@@ -3,10 +3,13 @@ import { SwitchRoot, SwitchThumb } from "radix-vue";
 import { useI18n } from "vue-i18n";
 import type { ServerItem } from "./ServerItem.vue";
 
+type ServerStatus = "idle" | "running" | "error";
+
 const props = defineProps<{
   globalEnabled: boolean;
   activeTab: string;
   enabledServers: ServerItem[];
+  serverStatus: Record<string, ServerStatus>;
 }>();
 
 const emit = defineEmits<{
@@ -20,6 +23,13 @@ const { t } = useI18n();
 
 function setActiveTab(tab: string) {
   emit("update:activeTab", tab);
+}
+
+function getStatusColor(id: string): string {
+  const status = props.serverStatus[id] || "idle";
+  if (status === "running") return "bg-blue-500";
+  if (status === "error") return "bg-red-500";
+  return "bg-muted-foreground/30";
 }
 </script>
 
@@ -64,10 +74,14 @@ function setActiveTab(tab: string) {
         <button
           v-for="server in props.enabledServers"
           :key="server.id"
-          class="inline-flex items-center justify-center h-7 px-2 rounded-lg transition-colors text-xs font-medium truncate max-w-[80px]"
+          class="relative inline-flex items-center justify-center h-7 px-2 rounded-lg transition-colors text-xs font-medium truncate max-w-[80px]"
           :class="props.activeTab === server.id ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'"
           @click="setActiveTab(server.id)"
         >
+          <span
+            class="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full"
+            :class="getStatusColor(server.id)"
+          />
           {{ server.title }}
         </button>
       </div>
