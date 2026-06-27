@@ -130,11 +130,17 @@
 ---
 
 ## 协作状态
-- **当前版本**: V3
-- **前端 ACK**: 已确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
+- **当前版本**: V4
+- **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **阻塞点**: 无
 
 ---
+
+## ⚠️ 联调看板更新协议（必须执行）
+- 每次要修改 `BACKEND_STATUS.md` 前，先检查 `ACK_BACKEND_VERSION == VERSION`：
+  - **相等** → 清空覆盖，`VERSION` 加 1
+  - **不相等** → 说明前端未签收，**禁止修改** BACKEND_STATUS.md
+- 写完 `BACKEND_STATUS.md` 后必须同步更新 `api_spec.json` 和本文件的 `协作状态` 版本号
 
 ## 下次启动检查清单
 1. 读取 `FRONTEND_STATUS.md` 检查是否有新反馈
