@@ -1,5 +1,5 @@
 # 前端联调看板
-VERSION: V5
+FRONTEND_VERSION: V5
 ACK_BACKEND_VERSION: V3
 
 ## 📢 最新进度与反馈

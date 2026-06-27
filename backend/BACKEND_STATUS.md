@@ -1,5 +1,5 @@
 # 后端联调看板
-VERSION: V4
+BACKEND_VERSION: V4
 ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知（V4）
