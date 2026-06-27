@@ -359,9 +359,6 @@ watch(language, (newLang) => {
               :class="server.enable ? 'bg-primary text-primary-foreground shadow-sm' : 'bg-muted text-muted-foreground hover:bg-muted/80'"
               @click="toggleServerEnable(server)"
             >
-              <span class="flex h-4 w-4 items-center justify-center text-[10px] font-bold">
-                {{ server.id.toUpperCase() }}
-              </span>
               {{ server.title }}
             </button>
           </div>

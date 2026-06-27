@@ -86,14 +86,6 @@ function handleDelete() {
         class="flex flex-1 items-center gap-3 text-left transition-colors hover:bg-muted/50 -mx-1.5 px-1.5 py-1 rounded-lg"
         @click="emit('toggle-expand', props.item.id)"
       >
-        <div
-          class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-muted"
-        >
-          <span class="text-sm font-bold text-muted-foreground">
-            {{ props.item.id.toUpperCase() }}
-          </span>
-        </div>
-
         <div class="min-w-0 flex-1">
           <h3 class="text-sm font-semibold truncate">{{ props.item.title }}</h3>
           <p class="text-xs text-muted-foreground truncate">
