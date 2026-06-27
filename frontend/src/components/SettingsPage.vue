@@ -362,9 +362,25 @@ watch(language, (newLang) => {
             <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ versionInfo.platform }}</span>
             <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ versionInfo.arch }}</span>
             <span
-              v-if="versionInfo.can_upgrade"
-              class="ml-auto rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
+              v-if="versionInfo.current_version === '0'"
+              class="ml-auto inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" x2="12" y1="8" y2="12"/>
+                <line x1="12" x2="12.01" y1="16" y2="16"/>
+              </svg>
+              {{ t('settings.kernel.notInstalled') }}
+            </span>
+            <span
+              v-else-if="versionInfo.can_upgrade"
+              class="ml-auto inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" x2="12" y1="8" y2="12"/>
+                <line x1="12" x2="12.01" y1="16" y2="16"/>
+              </svg>
               {{ t('settings.kernel.updatable') }}
             </span>
             <span
@@ -378,7 +394,8 @@ watch(language, (newLang) => {
           <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('settings.kernel.currentVersion') }}</span>
-              <span class="font-medium">{{ versionInfo.current_version || '-' }}</span>
+              <span v-if="versionInfo.current_version === '0'" class="font-medium text-muted-foreground">{{ t('settings.kernel.notInstalled') }}</span>
+              <span v-else class="font-medium">{{ versionInfo.current_version }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('settings.kernel.latestVersion') }}</span>
@@ -392,7 +409,7 @@ watch(language, (newLang) => {
 
           <div class="mt-4 flex justify-end">
             <button
-              v-if="versionInfo.can_upgrade"
+              v-if="versionInfo.can_upgrade || versionInfo.current_version === '0'"
               :disabled="isUpgrading"
               class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
               @click="handleUpgrade"
@@ -406,7 +423,7 @@ watch(language, (newLang) => {
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
               </svg>
-              {{ isUpgrading ? t('settings.kernel.upgrading') : t('settings.kernel.update') }}
+              {{ isUpgrading ? t('settings.kernel.upgrading') : (versionInfo.current_version === '0' ? t('settings.kernel.install') : t('settings.kernel.update')) }}
             </button>
           </div>
         </div>
