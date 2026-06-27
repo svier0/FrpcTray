@@ -870,46 +870,92 @@ fn get_current_frpc_version() -> String {
 /// Get latest frpc version from GitHub releases API (with proxy fallback)
 async fn get_latest_frpc_version() -> Result<String, String> {
     let client = get_http_client();
-    let urls = [
+
+    // Approach 1: GitHub API (direct + proxy)
+    let api_urls = [
         "https://api.github.com/repos/fatedier/frp/releases/latest",
         "https://gh-proxy.com/https://api.github.com/repos/fatedier/frp/releases/latest",
+        "https://ghfast.top/https://api.github.com/repos/fatedier/frp/releases/latest",
     ];
-
-    let mut errors = Vec::new();
-    for url in &urls {
-        match fetch_github_release(client, url).await {
-            Ok(version) => return Ok(version),
-            Err(e) => errors.push(e),
+    for url in &api_urls {
+        let timeout = if url.contains("//gh-") { 20 } else { 10 };
+        match fetch_api_version(client, url, timeout).await {
+            Ok(v) => return Ok(v),
+            Err(e) => eprintln!("[frpc-tray] API {} 失败: {}", url, e),
         }
     }
 
-    Err(format!("获取最新版本失败: {}", errors.join("; ")))
+    // Approach 2: Redirect (follow /releases/latest → /tag/vX.Y.Z)
+    let redirect_urls = [
+        "https://github.com/fatedier/frp/releases/latest",
+        "https://gh-proxy.com/https://github.com/fatedier/frp/releases/latest",
+        "https://ghfast.top/https://github.com/fatedier/frp/releases/latest",
+    ];
+    for url in &redirect_urls {
+        let timeout = if url.contains("//gh-") { 20 } else { 15 };
+        match fetch_redirect_version(client, url, timeout).await {
+            Ok(v) => return Ok(v),
+            Err(e) => eprintln!("[frpc-tray] 重定向 {} 失败: {}", url, e),
+        }
+    }
+
+    Err("所有方式均失败，请检查网络连接".to_string())
 }
 
-async fn fetch_github_release(client: &reqwest::Client, url: &str) -> Result<String, String> {
-    let timeout = if url.contains("gh-proxy.com") { 20 } else { 10 };
+async fn fetch_api_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
     let response = client
         .get(url)
         .header("User-Agent", "frpc-tray/1.0")
-        .timeout(std::time::Duration::from_secs(timeout))
+        .timeout(std::time::Duration::from_secs(timeout_secs))
         .send()
         .await
-        .map_err(|e| format!("{} - {}", url, e))?;
+        .map_err(|e| format!("请求失败: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(format!("{} - HTTP {}", url, response.status()));
+        return Err(format!("HTTP {}", response.status()));
     }
 
     let body = response
         .bytes()
         .await
-        .map_err(|e| format!("{} - 读取响应失败: {}", url, e))?;
+        .map_err(|e| format!("读取响应失败: {}", e))?;
 
     let release: GithubRelease = serde_json::from_slice(&body)
         .map_err(|e| format!("解析 JSON 失败: {}", e))?;
 
-    // Strip 'v' prefix from tag_name
     Ok(release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name).to_string())
+}
+
+/// Fetch /releases/latest and parse version from the redirect Location header
+async fn fetch_redirect_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
+    // Build request without following redirects
+    let request = client
+        .get(url)
+        .header("User-Agent", "frpc-tray/1.0")
+        .timeout(std::time::Duration::from_secs(timeout_secs))
+        .build()
+        .map_err(|e| format!("构建请求失败: {}", e))?;
+
+    let response = client
+        .execute(request)
+        .await
+        .map_err(|e| format!("请求失败: {}", e))?;
+
+    let location = response
+        .headers()
+        .get("location")
+        .and_then(|v| v.to_str().ok())
+        .ok_or_else(|| format!("无重定向, HTTP {}", response.status()))?;
+
+    parse_version_from_location(location).ok_or_else(|| format!("无法从重定向地址解析版本: {}", location))
+}
+
+fn parse_version_from_location(location: &str) -> Option<String> {
+    location
+        .rsplit('/')
+        .next()
+        .and_then(|tag| tag.strip_prefix('v'))
+        .map(|v| v.to_string())
 }
 
 /// Compare versions, return true if latest > current
@@ -1218,5 +1264,76 @@ localPort = 82
             .collect();
 
         assert_eq!(names, vec!["C", "A", "B"], "Expected C,A,B but got {:?}", names);
+    }
+
+    // ── compare_versions tests ──
+
+    #[test]
+    fn test_compare_versions_not_installed() {
+        assert!(compare_versions("0", "0.69.1"));
+    }
+
+    #[test]
+    fn test_compare_versions_equal() {
+        assert!(!compare_versions("0.69.1", "0.69.1"));
+    }
+
+    #[test]
+    fn test_compare_versions_newer() {
+        assert!(!compare_versions("0.69.1", "0.68.0"));
+        assert!(!compare_versions("0.69.1", "0.69.0"));
+        assert!(!compare_versions("0.69.1", "0.68.9"));
+    }
+
+    #[test]
+    fn test_compare_versions_upgrade_available() {
+        assert!(compare_versions("0.68.0", "0.69.1"));
+        assert!(compare_versions("0.69.0", "0.69.1"));
+        assert!(compare_versions("0.68.9", "0.69.0"));
+    }
+
+    #[test]
+    fn test_compare_versions_with_preview_suffix() {
+        assert!(!compare_versions("0.69.1", "0.69.1-preview"));
+        assert!(compare_versions("0.68.0", "0.69.0-preview"));
+        // preview same major.minor.patch, should be equal
+        assert!(!compare_versions("0.69.0-preview", "0.69.0"));
+    }
+
+    #[test]
+    fn test_compare_versions_major_upgrade() {
+        assert!(compare_versions("0.69.1", "1.0.0"));
+        assert!(!compare_versions("1.0.0", "0.99.9"));
+    }
+
+    // ── parse_version_from_location tests ──
+
+    #[test]
+    fn test_parse_version_from_location_github() {
+        assert_eq!(
+            parse_version_from_location("https://github.com/fatedier/frp/releases/tag/v0.69.1"),
+            Some("0.69.1".to_string())
+        );
+    }
+
+    #[test]
+    fn test_parse_version_from_location_without_v_prefix() {
+        assert_eq!(
+            parse_version_from_location("https://github.com/fatedier/frp/releases/tag/0.69.1"),
+            None
+        );
+    }
+
+    #[test]
+    fn test_parse_version_from_location_empty() {
+        assert_eq!(parse_version_from_location(""), None);
+    }
+
+    #[test]
+    fn test_parse_version_from_location_no_tag() {
+        assert_eq!(
+            parse_version_from_location("https://github.com/fatedier/frp/releases/latest"),
+            None
+        );
     }
 }
