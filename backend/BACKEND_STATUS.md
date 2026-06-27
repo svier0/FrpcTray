@@ -1,6 +1,6 @@
 # 后端联调看板
 BACKEND_VERSION: V4
-ACK_FRONTEND_VERSION: V3
+ACK_FRONTEND_VERSION: V5
 
 ## 📢 最新联调通知（V4）
 - **新增 4 个命令**，共 15 个命令，详情见 `/backend/api_spec.json`：

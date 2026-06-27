@@ -62,8 +62,9 @@ cd frontend && bun run tauri build  # Build Tauri app
 **第一步：在回复用户任何消息之前，必须先执行以下操作：**
 
 1. 阅读 `BUN_USAGE.md`
-2. 前端阅读 `frontend/AGENT_CONTEXT.md`，后端阅读 `backend/AGENT_CONTEXT.md`
-3. 完成上下文恢复后，才可以回复用户
+2. 阅读 `AI_COLLABORATION_GUIDE.md`
+3. 前端阅读 `frontend/AGENT_CONTEXT.md`，后端阅读 `backend/AGENT_CONTEXT.md`
+4. 完成上下文恢复后，才可以回复用户
 
 **注意：用户发送任何内容（包括空消息或占位符）都必须先完成上述步骤。**
 
