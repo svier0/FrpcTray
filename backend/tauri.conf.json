@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "frpc-tray",
+  "productName": "FrpC Tray",
   "version": "0.1.0",
   "identifier": "com.j7yx.svier0.frpc-tray",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "frpc-tray",
+        "title": "FrpC Tray",
         "width": 800,
         "height": 540
       }
