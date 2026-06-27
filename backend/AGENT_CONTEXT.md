@@ -66,7 +66,7 @@
 ## 关键决策记录
 
 ### 2026-06-27 (版本协议教训)
-- **问题**: 新增功能后更新看板但未 bump VERSION（V3 没升到 V4），导致前端看不到通知
+- **问题**: 新增功能后更新看板但未 bump BACKEND_VERSION（V3 没升到 V4），导致前端看不到通知
 - **根因**: 协议写在 `AI_COLLABORATION_GUIDE.md` 但无硬约束，我可以绕过去
 - **解决方案**: 用户会在 `AGENTS.md` 加"禁止直接编辑状态文件，必须先核验 ACK"的强制指令
 - **教训**: 流程描述不够，必须有**编辑文件前的不可跳过检查**才能约束 AI 行为
@@ -143,8 +143,8 @@
 ---
 
 ## ⚠️ 联调看板更新协议（必须执行）
-- 每次要修改 `BACKEND_STATUS.md` 前，先检查 `ACK_BACKEND_VERSION == VERSION`：
-  - **相等** → 清空覆盖，`VERSION` 加 1
+- 每次要修改 `BACKEND_STATUS.md` 前，先检查 `ACK_BACKEND_VERSION == BACKEND_VERSION`：
+  - **相等** → 清空覆盖，`BACKEND_VERSION` 加 1
   - **不相等** → 说明前端未签收，**禁止修改** BACKEND_STATUS.md
 - 写完 `BACKEND_STATUS.md` 后必须同步更新 `api_spec.json` 和本文件的 `协作状态` 版本号
 
