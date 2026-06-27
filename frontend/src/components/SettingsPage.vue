@@ -33,8 +33,8 @@ const upgradeProgress = ref("");
 
 const isBackupExpanded = ref(false);
 const backupProgress = ref("");
-const autostart = ref(false);
-const silentLaunch = ref(false);
+const autostart = ref(localStorage.getItem("autostart") === "true");
+const silentLaunch = ref(localStorage.getItem("silentLaunch") === "true");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -211,12 +211,12 @@ async function handleRestoreBackup() {
 
 async function toggleAutostart() {
   autostart.value = !autostart.value;
-  // TODO: 对接后端接口
+  localStorage.setItem("autostart", String(autostart.value));
 }
 
 async function toggleSilentLaunch() {
   silentLaunch.value = !silentLaunch.value;
-  // TODO: 对接后端接口
+  localStorage.setItem("silentLaunch", String(silentLaunch.value));
 }
 
 async function toggleServerEnable(server: ServerItem) {
