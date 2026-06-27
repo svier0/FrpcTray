@@ -102,7 +102,7 @@
     "advanced": {
       "backup": {
         "title": "Backup & Restore",
-        "description": "Manage auto backups, view and restore database snapshots",
+        "description": "Import and export local configuration data",
         "export": "Export Backup",
         "import": "Select ZIP Backup File",
         "exporting": "Exporting...",
