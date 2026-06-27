@@ -8,7 +8,7 @@ use tauri::{
 use std::fs;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
-use toml_edit::{DocumentMut, Item, Table, ArrayOfTables, value};
+use toml_edit::{DocumentMut, Item, Table, value};
 
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
@@ -330,7 +330,89 @@ fn read_server_file(id: &str) -> Result<FrpcConfigFile, String> {
     })
 }
 
-// ── TOML write (DOM API, minimally invasive) ──
+/// Write [[proxies]] as TOML string
+fn serialize_proxies(proxies: &[ProxyItem]) -> String {
+    let mut out = String::new();
+    for (i, proxy) in proxies.iter().enumerate() {
+        if i > 0 {
+            out.push('\n');
+        }
+        if let Some(ref d) = proxy.desc {
+            if !d.trim().is_empty() {
+                out.push_str(&format!("# {}\n", d.trim()));
+            }
+        }
+        out.push_str("[[proxies]]\n");
+        out.push_str(&format!("name = \"{}\"\n", proxy.name));
+        out.push_str(&format!("type = \"{}\"\n", proxy.proxy_type));
+        out.push_str(&format!("enabled = {}\n", proxy.enabled));
+        if let Some(ref ip) = proxy.local_ip {
+            out.push_str(&format!("localIP = \"{}\"\n", ip));
+        }
+        out.push_str(&format!("localPort = {}\n", proxy.local_port));
+        if let Some(ref rp) = proxy.remote_port {
+            out.push_str(&format!("remotePort = {}\n", rp));
+        }
+        if let Some(ref domains) = proxy.custom_domains {
+            if !domains.is_empty() {
+                out.push_str(&format!("customDomains = [\"{}\"]\n", domains.join("\", \"")));
+            }
+        }
+        if let Some(ref locs) = proxy.locations {
+            if !locs.is_empty() {
+                out.push_str(&format!("locations = [\"{}\"]\n", locs.join("\", \"")));
+            }
+        }
+    }
+    out
+}
+
+/// Remove all [[proxies]] blocks from the TOML string.
+/// Finds lines starting with [[proxies]] and removes them plus all following
+/// lines that are part of the same table (indented or until next [[...]] or [...])
+fn strip_proxies_section(toml: &str) -> String {
+    let mut result = String::new();
+    let mut in_proxies = false;
+    for line in toml.lines() {
+        let trimmed = line.trim();
+        if trimmed == "[[proxies]]" {
+            in_proxies = true;
+            continue;
+        }
+        if in_proxies {
+            // End of a [[proxies]] block: next [[...]] or [...] header, or blank line
+            // followed by a new section, or EOF
+            if trimmed.starts_with("[[") || trimmed.starts_with('[') {
+                in_proxies = false;
+                result.push_str(line);
+                result.push('\n');
+            }
+            // else: skip this line (it's part of a [[proxies]] block)
+        } else {
+            result.push_str(line);
+            result.push('\n');
+        }
+    }
+    result
+}
+
+/// Rebuild [[proxies]] section in config.proxies order using string manipulation.
+/// toml_edit's key-value API (remove/insert/retain) only affects the BTreeMap index,
+/// NOT the ordered entry list that to_string() serializes. For ArrayOfTables,
+/// we must operate at the string level.
+fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    // Remove proxies from doc's key-value index (so to_string doesn't duplicate)
+    doc.retain(|key, _| key != "proxies");
+
+    // Append new proxies section to the serialized output
+    if let Some(ref proxies) = config.proxies {
+        if !proxies.is_empty() {
+            // We'll append proxies to the output after to_string()
+        }
+    }
+}
+
+// ── Helper functions for TOML write ──
 
 /// Build an inline string array (e.g. ["a", "b"])
 fn make_string_array(items: &[String]) -> Item {
@@ -357,6 +439,34 @@ fn set_or_remove_str(table: &mut Table, key: &str, val: Option<&str>) {
     match val {
         Some(v) => set_or_insert(table, key, value(v)),
         None => { table.remove(key); }
+    }
+}
+
+/// Update metadata comments (# @title / # @enable / # @sort) on the first key's decor.
+fn update_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
+    let meta = format!(
+        "# @title {}\n# @enable {}\n# @sort {}\n",
+        config.title, config.enable, config.sort
+    );
+    if let Some((mut key, _)) = doc.iter_mut().next() {
+        let existing = key.leaf_decor().prefix()
+            .and_then(|r| r.as_str())
+            .unwrap_or("");
+        let filtered: Vec<&str> = existing
+            .lines()
+            .filter(|l| {
+                let t = l.trim();
+                !t.starts_with("# @title ")
+                    && !t.starts_with("# @enable ")
+                    && !t.starts_with("# @sort ")
+            })
+            .collect();
+        let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
+            meta
+        } else {
+            format!("{}{}", filtered.join("\n"), meta)
+        };
+        key.leaf_decor_mut().set_prefix(new_prefix);
     }
 }
 
@@ -460,131 +570,9 @@ fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     }
 }
 
-/// Update a single proxy table in-place, preserving unknown fields.
-fn update_proxy_table(table: &mut Table, proxy: &ProxyItem) {
-    // Update desc comment: strip old plain-comment, keep # @ lines, prepend new desc
-    let existing_prefix = table.decor().prefix()
-        .and_then(|r| r.as_str())
-        .unwrap_or("");
-    let filtered: Vec<&str> = existing_prefix
-        .lines()
-        .filter(|l| {
-            let t = l.trim();
-            !(t.starts_with('#') && !t.starts_with("# @"))
-        })
-        .collect();
-    let desc_prefix = match proxy.desc {
-        Some(ref d) if !d.trim().is_empty() => format!("# {}\n", d.trim()),
-        _ => String::new(),
-    };
-    let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
-        desc_prefix
-    } else {
-        format!("{}{}", filtered.join("\n"), desc_prefix)
-    };
-    table.decor_mut().set_prefix(new_prefix);
-
-    // Scalar fields — set_or_insert preserves Key decor on existing keys
-    set_or_insert(table, "name", value(&proxy.name));
-    set_or_insert(table, "type", value(&proxy.proxy_type));
-    set_or_insert(table, "enabled", value(proxy.enabled));
-    set_or_remove_str(table, "localIP", proxy.local_ip.as_deref());
-    set_or_insert(table, "localPort", value(proxy.local_port as i64));
-    match proxy.remote_port {
-        Some(rp) => set_or_insert(table, "remotePort", value(rp as i64)),
-        None => { table.remove("remotePort"); }
-    }
-
-    // Array fields
-    match &proxy.custom_domains {
-        Some(domains) if !domains.is_empty() => set_or_insert(table, "customDomains", make_string_array(domains)),
-        _ => { table.remove("customDomains"); }
-    }
-    match &proxy.locations {
-        Some(locs) if !locs.is_empty() => set_or_insert(table, "locations", make_string_array(locs)),
-        _ => { table.remove("locations"); }
-    }
-}
-
-/// Create a new proxy table from a ProxyItem (no existing table to update)
-fn build_proxy_table(proxy: &ProxyItem) -> Table {
-    let mut table = Table::new();
-    update_proxy_table(&mut table, proxy);
-    table
-}
-
-/// Rebuild [[proxies]] in config.proxies order.
-/// Clones existing tables to preserve unknown fields + decor, updates known fields,
-/// builds new tables for new proxies. This ensures the file order matches the
-/// in-memory Vec order (needed for reorder_proxies).
-fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    match &config.proxies {
-        Some(proxies) if !proxies.is_empty() => {
-            let mut arr = ArrayOfTables::new();
-
-            for proxy in proxies {
-                // Find existing table in old doc by name, clone to preserve unknown fields
-                let existing = doc.get("proxies")
-                    .and_then(|v| v.as_array_of_tables())
-                    .and_then(|a| a.iter().find(|t| {
-                        t.get("name").and_then(|v| v.as_str()) == Some(proxy.name.as_str())
-                    }));
-
-                if let Some(old_table) = existing {
-                    let mut table = old_table.clone();
-                    update_proxy_table(&mut table, proxy);
-                    arr.push(table);
-                } else {
-                    arr.push(build_proxy_table(proxy));
-                }
-            }
-
-            doc.insert("proxies", Item::ArrayOfTables(arr));
-        }
-        _ => { doc.remove("proxies"); }
-    }
-}
-
-/// Update metadata comments (# @title / # @enable / # @sort) on the first key's decor.
-/// In toml_edit, top-of-file comments are stored as the prefix of the first KEY
-/// (before the key name), NOT the value (between = and value).
-fn update_meta_comments(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    let meta = format!(
-        "# @title {}\n# @enable {}\n# @sort {}\n",
-        config.title, config.enable, config.sort
-    );
-
-    // Set on the first KEY's prefix decor (top-of-file comments live before the key line)
-    if let Some((mut key, _)) = doc.iter_mut().next() {
-        let existing = key.leaf_decor().prefix()
-            .and_then(|r| r.as_str())
-            .unwrap_or("");
-
-        let filtered: Vec<&str> = existing
-            .lines()
-            .filter(|l| {
-                let t = l.trim();
-                !t.starts_with("# @title ")
-                    && !t.starts_with("# @enable ")
-                    && !t.starts_with("# @sort ")
-            })
-            .collect();
-
-        let new_prefix = if filtered.iter().all(|l| l.trim().is_empty()) {
-            meta
-        } else {
-            format!("{}{}", filtered.join("\n"), meta)
-        };
-
-        key.leaf_decor_mut().set_prefix(new_prefix);
-    }
-}
-
 /// Write a server config to file.
-/// Parses existing file and makes targeted in-place edits to preserve:
-/// - blank lines and formatting
-/// - unknown TOML fields not modeled in our structs
-/// - inline array format
+/// Uses toml_edit for server-level fields (preserves formatting),
+/// string manipulation for [[proxies]] (bypasses toml_edit serialization bug).
 fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
     let path = server_path(id);
 
@@ -593,7 +581,6 @@ fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
             .map_err(|e| format!("读取文件失败: {}", e))?;
         let mut doc: DocumentMut = content.parse()
             .map_err(|e| format!("解析 TOML 失败: {}", e))?;
-        // Migrate: remove old V2 metadata keys
         doc.remove("title");
         doc.remove("enable");
         doc.remove("sort");
@@ -602,12 +589,27 @@ fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
         DocumentMut::new()
     };
 
-    // Targeted in-place updates (order matters for formatting)
     update_meta_comments(&mut doc, config);
     update_server_fields(&mut doc, config);
-    update_proxies(&mut doc, config);
+    // Remove old proxies from doc (key-value index)
+    doc.retain(|key, _| key != "proxies");
 
-    let output = doc.to_string();
+    let mut output = doc.to_string();
+    // Strip any lingering [[proxies]] blocks that to_string() may have included
+    // (they're in the ordered entry list, not the key-value index)
+    output = strip_proxies_section(&output);
+    // Append new proxies
+    if let Some(ref proxies) = config.proxies {
+        if !proxies.is_empty() {
+            if !output.ends_with('\n') {
+                output.push('\n');
+            }
+            output.push('\n');
+            output.push_str(&serialize_proxies(proxies));
+        }
+    }
+    output.push('\n');
+
     fs::write(&path, output)
         .map_err(|e| format!("写入文件失败: {}", e))
 }
@@ -900,4 +902,90 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn make_proxy(name: &str, port: u16) -> ProxyItem {
+        ProxyItem {
+            name: name.into(),
+            desc: None,
+            enabled: true,
+            proxy_type: "http".into(),
+            local_ip: None,
+            local_port: port,
+            remote_port: None,
+            custom_domains: None,
+            locations: None,
+        }
+    }
+
+    #[test]
+    fn test_update_proxies_reorder() {
+        // Build a TOML doc with proxies in order A, B, C
+        let doc_str = r#"
+serverAddr = "1.2.3.4"
+serverPort = 7000
+
+[[proxies]]
+name = "A"
+type = "http"
+localPort = 80
+
+[[proxies]]
+name = "B"
+type = "http"
+localPort = 81
+
+[[proxies]]
+name = "C"
+type = "http"
+localPort = 82
+"#;
+        let mut doc: DocumentMut = doc_str.parse().unwrap();
+
+        let config = FrpcConfigFile {
+            title: "test".into(),
+            enable: true,
+            sort: 1,
+            server_addr: "1.2.3.4".into(),
+            server_port: 7000,
+            auth: None,
+            log: None,
+            transport: None,
+            tls: None,
+            proxies: Some(vec![
+                make_proxy("C", 82),
+                make_proxy("A", 80),
+                make_proxy("B", 81),
+            ]),
+        };
+
+        update_proxies(&mut doc, &config);
+
+        // Simulate write_server_file: after toml_edit, strip old proxies, append new
+        let mut output = doc.to_string();
+        output = strip_proxies_section(&output);
+        if !output.ends_with('\n') { output.push('\n'); }
+        output.push('\n');
+        output.push_str(&serialize_proxies(&[
+            make_proxy("C", 82),
+            make_proxy("A", 80),
+            make_proxy("B", 81),
+        ]));
+        output.push('\n');
+
+        println!("OUTPUT:\n{}", output);
+
+        // Extract proxy names in order
+        let names: Vec<&str> = output
+            .lines()
+            .filter(|l| l.trim().starts_with("name = "))
+            .map(|l| l.trim().trim_start_matches("name = \"").trim_end_matches('"'))
+            .collect();
+
+        assert_eq!(names, vec!["C", "A", "B"], "Expected C,A,B but got {:?}", names);
+    }
 }
