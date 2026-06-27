@@ -7,6 +7,7 @@ import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
 import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc, exportBackup, restoreBackup } from "../utils/ipc";
 import type { FrpcVersionInfo } from "../utils/ipc";
+import { appConfig, updateConfig } from "../utils/config";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
@@ -18,8 +19,8 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 
 const activeTab = ref<SettingsTab>("general");
-const language = ref(locale.value);
-const theme = ref<Theme>((localStorage.getItem("theme") as Theme) || "system");
+const language = ref(appConfig.value.language);
+const theme = ref<Theme>(appConfig.value.theme);
 
 const servers = ref<ServerItem[]>([]);
 
@@ -33,9 +34,9 @@ const upgradeProgress = ref("");
 
 const isBackupExpanded = ref(false);
 const backupProgress = ref("");
-const autostart = ref(localStorage.getItem("autostart") === "true");
-const silentLaunch = ref(localStorage.getItem("silentLaunch") === "true");
-const autoRun = ref(localStorage.getItem("autoRun") === "true");
+const autostart = ref(appConfig.value.autostart);
+const silentLaunch = ref(appConfig.value.silentLaunch);
+const autoRun = ref(appConfig.value.autoRun);
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -212,17 +213,17 @@ async function handleRestoreBackup() {
 
 async function toggleAutostart() {
   autostart.value = !autostart.value;
-  localStorage.setItem("autostart", String(autostart.value));
+  updateConfig({ autostart: autostart.value });
 }
 
 async function toggleSilentLaunch() {
   silentLaunch.value = !silentLaunch.value;
-  localStorage.setItem("silentLaunch", String(silentLaunch.value));
+  updateConfig({ silentLaunch: silentLaunch.value });
 }
 
 async function toggleAutoRun() {
   autoRun.value = !autoRun.value;
-  localStorage.setItem("autoRun", String(autoRun.value));
+  updateConfig({ autoRun: autoRun.value });
 }
 
 async function toggleServerEnable(server: ServerItem) {
@@ -240,12 +241,12 @@ async function toggleServerEnable(server: ServerItem) {
 
 watch(theme, (newTheme) => {
   applyTheme(newTheme);
-  localStorage.setItem("theme", newTheme);
+  updateConfig({ theme: newTheme });
 });
 
 watch(language, (newLang) => {
   locale.value = newLang;
-  localStorage.setItem("language", newLang);
+  updateConfig({ language: newLang });
 });
 </script>
 
