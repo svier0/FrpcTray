@@ -399,6 +399,8 @@ watch(language, (newLang) => {
           </div>
         </section>
       </div>
+
+      <div v-else-if="activeTab === 'server'" class="space-y-6">
         <ServerList
           :items="servers"
           @update:items="handleUpdateServers"
