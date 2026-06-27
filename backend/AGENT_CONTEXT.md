@@ -42,6 +42,7 @@
   - `FrpcVersionInfo` 结构：current_version / latest_version / can_upgrade / platform / arch
   - `get_current_frpc_version`: 运行 `frpc -v` 解析版本
   - `get_latest_frpc_version`: GitHub API 获取 latest release，加入 User-Agent header，复用 HTTP_CLIENT 单例
+  - 代理回退策略：直连超时 10s 失败后自动走 `gh-proxy.com`
   - `compare_versions`: 支持语义化版本比较，忽略 preview 后缀
   - `get_platform` / `get_arch`: 编译期确定平台和架构字符串
 - ✅ `upgrade_frpc` 命令已实现（2026-06-27）
@@ -50,6 +51,7 @@
   - 内存解压，提取 frpc/frpc.exe 到 bin 目录（先写 tmp 再 rename）
   - Unix 设置 755 可执行权限
   - 依赖: `zip` v2, `reqwest` stream feature, `futures-util`
+  - 代理回退策略：直连超时 30s 失败后自动走 `gh-proxy.com`
 - ✅ `BIN_DIR` 重构（2026-06-27）：frpc 存放路径从 exe 同级改为 `bin/` 目录
   - Windows: `<exe_dir>/bin/`
   - macOS/Linux: `<app_data_dir>/bin/`

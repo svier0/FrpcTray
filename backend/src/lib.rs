@@ -867,19 +867,35 @@ fn get_current_frpc_version() -> String {
     }
 }
 
-/// Get latest frpc version from GitHub releases API
+/// Get latest frpc version from GitHub releases API (with proxy fallback)
 async fn get_latest_frpc_version() -> Result<String, String> {
-    let url = "https://api.github.com/repos/fatedier/frp/releases/latest";
     let client = get_http_client();
+    let urls = [
+        "https://api.github.com/repos/fatedier/frp/releases/latest",
+        "https://gh-proxy.com/https://api.github.com/repos/fatedier/frp/releases/latest",
+    ];
+
+    for url in &urls {
+        let result = fetch_github_release(client, url).await;
+        if let Ok(version) = result {
+            return Ok(version);
+        }
+    }
+
+    Err("GitHub API 直连和代理均请求失败".to_string())
+}
+
+async fn fetch_github_release(client: &reqwest::Client, url: &str) -> Result<String, String> {
     let response = client
         .get(url)
         .header("User-Agent", "frpc-tray/1.0")
+        .timeout(std::time::Duration::from_secs(10))
         .send()
         .await
-        .map_err(|e| format!("GitHub API 请求失败: {}", e))?;
+        .map_err(|e| format!("请求失败: {}", e))?;
 
     if !response.status().is_success() {
-        return Err(format!("GitHub API 返回错误状态: {}", response.status()));
+        return Err(format!("返回错误状态: {}", response.status()));
     }
 
     let body = response
@@ -945,34 +961,46 @@ fn get_arch() -> String {
 
 // ── Frpc upgrade command ──
 
-#[tauri::command]
-async fn upgrade_frpc(version: String) -> Result<(), String> {
-    let platform = get_platform();
-    let arch = get_arch();
-    let url = format!(
-        "https://github.com/fatedier/frp/releases/download/v{version}/frp_{version}_{platform}_{arch}.zip",
-        version = version,
-        platform = platform,
-        arch = arch
-    );
-
-    // Download
-    let client = get_http_client();
+async fn download_zip(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, String> {
     let response = client
-        .get(&url)
+        .get(url)
         .header("User-Agent", "frpc-tray/1.0")
+        .timeout(std::time::Duration::from_secs(30))
         .send()
         .await
-        .map_err(|e| format!("下载失败: {}", e))?;
+        .map_err(|e| format!("下载请求失败: {}", e))?;
 
     if !response.status().is_success() {
         return Err(format!("下载返回错误状态: {}", response.status()));
     }
 
-    let body = response
+    response
         .bytes()
         .await
-        .map_err(|e| format!("读取下载数据失败: {}", e))?;
+        .map(|b| b.to_vec())
+        .map_err(|e| format!("读取下载数据失败: {}", e))
+}
+
+#[tauri::command]
+async fn upgrade_frpc(version: String) -> Result<(), String> {
+    let platform = get_platform();
+    let arch = get_arch();
+    let path = format!("v{version}/frp_{version}_{platform}_{arch}.zip", version = version, platform = platform, arch = arch);
+    let urls = [
+        format!("https://github.com/fatedier/frp/releases/download/{}", path),
+        format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
+    ];
+
+    let client = get_http_client();
+    let mut body = None;
+    for url in &urls {
+        let result = download_zip(client, url).await;
+        match result {
+            Ok(b) => { body = Some(b); break; }
+            Err(_) => continue,
+        }
+    }
+    let body = body.ok_or_else(|| "直连和代理均下载失败".to_string())?;
 
     // Extract zip from memory
     let cursor = std::io::Cursor::new(body.to_vec());
