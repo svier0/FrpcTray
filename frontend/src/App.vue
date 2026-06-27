@@ -9,7 +9,7 @@ import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
 import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies } from "./utils/ipc";
 
-const globalEnabled = ref(true);
+const globalEnabled = ref(false);
 const activeTab = ref<string>("");
 const activeProxyId = ref<string | undefined>();
 const showSettings = ref(false);
