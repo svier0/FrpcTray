@@ -240,50 +240,48 @@ onMounted(() => {
       />
 
       <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">
-        <div v-if="activeTab" class="mb-4 p-3 rounded-xl border border-border bg-card">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div
-                class="h-2.5 w-2.5 rounded-full"
-                :class="{
-                  'bg-blue-500': getActiveServerStatus() === 'running',
-                  'bg-red-500': getActiveServerStatus() === 'error',
-                  'bg-muted-foreground/30': getActiveServerStatus() === 'idle'
-                }"
-              />
-              <span class="text-sm font-medium">
-                {{ getActiveServerStatus() === 'running' ? '运行中' : getActiveServerStatus() === 'error' ? '异常' : '已停止' }}
-              </span>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                @click="handleViewServerLogs"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                </svg>
-                日志
-              </button>
-              <button
-                class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
-                :class="getActiveServerStatus() === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500 text-white hover:bg-blue-600'"
-                @click="toggleServerRun"
-              >
-                <svg v-if="getActiveServerStatus() !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <rect width="4" height="16" x="6" y="4"/>
-                  <rect width="4" height="16" x="14" y="4"/>
-                </svg>
-                {{ getActiveServerStatus() === 'running' ? '停止' : '启动' }}
-              </button>
-            </div>
+        <div v-if="activeTab" class="mb-3 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <button
+              class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
+              :class="getActiveServerStatus() === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'"
+              @click="toggleServerRun"
+            >
+              <svg v-if="getActiveServerStatus() !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="4" height="16" x="6" y="4"/>
+                <rect width="4" height="16" x="14" y="4"/>
+              </svg>
+              {{ getActiveServerStatus() === 'running' ? '停止' : '启动' }}
+            </button>
+            <div
+              class="h-2 w-2 rounded-full"
+              :class="{
+                'bg-blue-500': getActiveServerStatus() === 'running',
+                'bg-red-500': getActiveServerStatus() === 'error',
+                'bg-muted-foreground/30': getActiveServerStatus() === 'idle'
+              }"
+            />
+            <span class="text-xs text-muted-foreground">
+              {{ getActiveServerStatus() === 'running' ? '运行中' : getActiveServerStatus() === 'error' ? '异常' : '已停止' }}
+            </span>
           </div>
-          <div v-if="getActiveServerStatus() === 'error'" class="mt-2 p-2 rounded-lg bg-red-500/10 text-red-500 text-xs">
-            连接服务器失败，请检查配置或查看日志
+          <div class="flex items-center gap-2">
+            <span v-if="getActiveServerStatus() === 'error'" class="text-xs text-red-500">
+              连接失败
+            </span>
+            <button
+              class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              @click="handleViewServerLogs"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              日志
+            </button>
           </div>
         </div>
 
