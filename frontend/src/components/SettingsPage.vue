@@ -155,6 +155,7 @@ onMounted(() => {
 async function loadVersionInfo() {
   try {
     versionInfo.value = await getFrpcVersion();
+    console.log("get_frpc_version response:", JSON.parse(JSON.stringify(versionInfo.value)));
   } catch (e) {
     console.error("Failed to load version info:", e);
   }
