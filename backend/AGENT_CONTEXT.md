@@ -12,7 +12,7 @@
 
 ---
 
-## 当前开发状态 (截至 2026-06-26)
+## 当前开发状态 (截至 2026-06-27)
 
 ### 已完成
 - ✅ V1 TOML 文件管理 (9 个命令) → 已被 V2 替代
@@ -58,7 +58,7 @@
   - `get_current_frpc_version` 改为从 `BIN_DIR` 读取
 
 ### 待办事项
-- [ ] 等待前端确认
+- [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
 - [ ] 后续功能开发...
 
 ---
@@ -136,7 +136,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V4
+- **当前版本**: V5
 - **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **阻塞点**: 无

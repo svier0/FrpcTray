@@ -1,5 +1,5 @@
 {
-  "version": "V3",
+  "version": "V5",
   "lastUpdated": "2026-06-27",
   "commands": [
     {
@@ -157,6 +157,26 @@
         "type": "Result<(), String>",
         "success": "空（成功替换）",
         "error": "错误信息字符串（下载失败/解压失败/未找到 frpc 可执行文件/替换失败）"
+      }
+    },
+    {
+      "name": "export_backup",
+      "description": "导出配置备份（弹出保存对话框，将 conf 目录所有 .toml 文件打包为 zip）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<String, String>",
+        "success": "保存的文件路径（如 'C:\\Users\\xxx\\frpc-260627120000.zip'）",
+        "error": "错误信息字符串（用户取消/创建文件失败/读取目录失败等）"
+      }
+    },
+    {
+      "name": "restore_backup",
+      "description": "导入配置备份（弹出打开对话框，选择 zip 文件，解压所有 .toml 到 conf 目录，覆盖同名文件）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空（成功恢复）",
+        "error": "错误信息字符串（用户取消/打开文件失败/解压失败等）"
       }
     }
   ],
