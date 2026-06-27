@@ -1,12 +1,18 @@
 # 后端联调看板
-BACKEND_VERSION: V6
+BACKEND_VERSION: V7
 ACK_FRONTEND_VERSION: V5
 
-## 📢 最新联调通知（V6）
-- **`get_frpc_version` 版本号获取逻辑变更**：
-  - 旧：从 GitHub API (`api.github.com/repos/fatedier/frp/releases/latest`) 获取
-  - 新：从 scoop 仓库获取（优先 GitHub raw，超时走 gitee 镜像）
-    - `https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json`
-    - `https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json`
-  - 只取 `version` 字段，不再依赖 GitHub API（避免速率限制）
-- 下载逻辑不变：`upgrade_frpc` 仍走 GitHub Releases + gh-proxy.com 代理回退
+## 📢 最新联调通知（V7）
+- **新增 2 个配置命令**，共 17 个命令：
+  - `get_config`：读取 `conf/config.toml`，文件不存在返回默认值
+  - `save_config(config)`：写入 `conf/config.toml`
+- **AppConfig 结构**：
+  ```toml
+  language = "zh-CN"
+  theme = "system"
+  autostart = false
+  silent_launch = false
+  auto_run = false
+  ```
+- 前端不调用保存按钮不生成配置文件
+- 详见 `/backend/api_spec.json`

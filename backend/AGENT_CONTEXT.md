@@ -59,6 +59,7 @@
 ### 待办事项
 - [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
 - [x] get_frpc_version 版本号获取改为 scoop 仓库
+- [x] 新增 get_config/save_config 应用配置命令
 - [ ] 后续功能开发...
 
 ---
@@ -136,7 +137,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V6
+- **当前版本**: V7
 - **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **阻塞点**: 无

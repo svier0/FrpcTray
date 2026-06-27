@@ -29,6 +29,7 @@ tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 zip = "2"
 futures-util = "0.3"
 chrono = "0.4"
+toml = "0.8"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

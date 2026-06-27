@@ -1,5 +1,5 @@
 {
-  "version": "V6",
+  "version": "V7",
   "lastUpdated": "2026-06-27",
   "commands": [
     {
@@ -178,6 +178,28 @@
         "success": "空（成功恢复）",
         "error": "错误信息字符串（用户取消/打开文件失败/解压失败等）"
       }
+    },
+    {
+      "name": "get_config",
+      "description": "获取应用配置（读取 conf/config.toml，不存在则返回默认值）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<AppConfig, String>",
+        "success": "应用配置对象",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "save_config",
+      "description": "保存应用配置到 conf/config.toml",
+      "parameters": [
+        { "name": "config", "type": "AppConfig", "description": "应用配置对象" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
     }
   ],
   "dataStructures": {
@@ -250,6 +272,16 @@
         { "name": "can_upgrade", "type": "bool", "description": "是否有可升级的新版本" },
         { "name": "platform", "type": "String", "description": "当前操作系统，如 'windows'/'darwin'/'linux'" },
         { "name": "arch", "type": "String", "description": "当前 CPU 架构，如 'amd64'/'arm64'" }
+      ]
+    },
+    "AppConfig": {
+      "description": "应用配置（对应 conf/config.toml）",
+      "fields": [
+        { "name": "language", "type": "String", "description": "界面语言，默认 'zh-CN'" },
+        { "name": "theme", "type": "String", "description": "主题模式（system/light/dark），默认 'system'" },
+        { "name": "autostart", "type": "bool", "description": "开机自启动，默认 false" },
+        { "name": "silent_launch", "type": "bool", "description": "静默启动（不显示主窗口），默认 false" },
+        { "name": "auto_run", "type": "bool", "description": "自动运行代理，默认 false" }
       ]
     }
   }

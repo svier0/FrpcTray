@@ -1158,6 +1158,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
  "tokio",
+ "toml 0.8.2",
  "toml-test",
  "toml_edit 0.22.27",
  "zip",

@@ -57,6 +57,40 @@ struct FrpcVersionInfo {
     arch: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct AppConfig {
+    #[serde(default = "default_language")]
+    language: String,
+    #[serde(default = "default_theme")]
+    theme: String,
+    #[serde(default)]
+    autostart: bool,
+    #[serde(default)]
+    silent_launch: bool,
+    #[serde(default)]
+    auto_run: bool,
+}
+
+fn default_language() -> String {
+    "zh-CN".to_string()
+}
+
+fn default_theme() -> String {
+    "system".to_string()
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            language: default_language(),
+            theme: default_theme(),
+            autostart: false,
+            silent_launch: false,
+            auto_run: false,
+        }
+    }
+}
+
 #[derive(Debug)]
 struct FrpcConfigFile {
     title: String,
@@ -1169,6 +1203,40 @@ async fn restore_backup(app: tauri::AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+// ── App config commands ──
+
+#[tauri::command]
+async fn get_config() -> Result<AppConfig, String> {
+    let dir = get_config_dir();
+    let path = dir.join("config.toml");
+
+    if !path.exists() {
+        return Ok(AppConfig::default());
+    }
+
+    let content = fs::read_to_string(&path)
+        .map_err(|e| format!("读取配置文件失败: {}", e))?;
+
+    let config: AppConfig = toml::from_str(&content)
+        .map_err(|e| format!("解析配置文件失败: {}", e))?;
+
+    Ok(config)
+}
+
+#[tauri::command]
+async fn save_config(config: AppConfig) -> Result<(), String> {
+    let dir = get_config_dir();
+    let path = dir.join("config.toml");
+
+    let content = toml::to_string_pretty(&config)
+        .map_err(|e| format!("序列化配置失败: {}", e))?;
+
+    fs::write(&path, content)
+        .map_err(|e| format!("写入配置文件失败: {}", e))?;
+
+    Ok(())
+}
+
 // ── App entry ──
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1264,6 +1332,8 @@ pub fn run() {
             upgrade_frpc,
             export_backup,
             restore_backup,
+            get_config,
+            save_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
