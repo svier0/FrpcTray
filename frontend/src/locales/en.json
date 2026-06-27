@@ -99,6 +99,10 @@
       "title": "Silent Launch",
       "description": "Start without showing window (lightweight mode)"
     },
+    "autoRun": {
+      "title": "Auto Run",
+      "description": "Start proxies automatically on launch"
+    },
     "about": {
       "version": "Version",
       "appName": "frpc tray",

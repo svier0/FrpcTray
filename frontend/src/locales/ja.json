@@ -99,6 +99,10 @@
       "title": "サイレント起動",
       "description": "ウィンドウを表示せずに起動（軽量モード）"
     },
+    "autoRun": {
+      "title": "自動実行",
+      "description": "起動時にプロキシを自動的に開始"
+    },
     "about": {
       "version": "バージョン",
       "appName": "frpc tray",

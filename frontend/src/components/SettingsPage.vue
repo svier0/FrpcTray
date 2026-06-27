@@ -35,6 +35,7 @@ const isBackupExpanded = ref(false);
 const backupProgress = ref("");
 const autostart = ref(localStorage.getItem("autostart") === "true");
 const silentLaunch = ref(localStorage.getItem("silentLaunch") === "true");
+const autoRun = ref(localStorage.getItem("autoRun") === "true");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -217,6 +218,11 @@ async function toggleAutostart() {
 async function toggleSilentLaunch() {
   silentLaunch.value = !silentLaunch.value;
   localStorage.setItem("silentLaunch", String(silentLaunch.value));
+}
+
+async function toggleAutoRun() {
+  autoRun.value = !autoRun.value;
+  localStorage.setItem("autoRun", String(autoRun.value));
 }
 
 async function toggleServerEnable(server: ServerItem) {
@@ -425,6 +431,33 @@ watch(language, (newLang) => {
                 :checked="silentLaunch"
                 class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
                 @update:checked="toggleSilentLaunch"
+              >
+                <SwitchThumb
+                  class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+                />
+              </SwitchRoot>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-medium">{{ t('settings.autoRun.title') }}</h3>
+                  <p class="text-xs text-muted-foreground">{{ t('settings.autoRun.description') }}</p>
+                </div>
+              </div>
+              <SwitchRoot
+                :checked="autoRun"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
+                @update:checked="toggleAutoRun"
               >
                 <SwitchThumb
                   class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"

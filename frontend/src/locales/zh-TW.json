@@ -99,6 +99,10 @@
       "title": "靜默啟動",
       "description": "啟動時不顯示視窗（輕量模式啟動）"
     },
+    "autoRun": {
+      "title": "自動運行",
+      "description": "啟動時自動開始運行代理"
+    },
     "about": {
       "version": "版本",
       "appName": "frpc tray",
