@@ -72,3 +72,11 @@ export async function getFrpcVersion(): Promise<FrpcVersionInfo> {
 export async function upgradeFrpc(version: string): Promise<void> {
   return invoke("upgrade_frpc", { version });
 }
+
+export async function exportBackup(): Promise<string> {
+  return invoke("export_backup");
+}
+
+export async function restoreBackup(): Promise<void> {
+  return invoke("restore_backup");
+}

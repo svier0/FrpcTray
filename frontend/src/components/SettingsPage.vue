@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
-import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc } from "../utils/ipc";
+import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc, exportBackup, restoreBackup } from "../utils/ipc";
 import type { FrpcVersionInfo } from "../utils/ipc";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
@@ -31,6 +31,7 @@ const isUpgrading = ref(false);
 const upgradeProgress = ref("");
 
 const isBackupExpanded = ref(false);
+const backupProgress = ref("");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -178,6 +179,30 @@ async function handleUpgrade() {
     upgradeProgress.value = isInstall ? t('settings.kernel.installFailed') : t('settings.kernel.upgradeFailed');
   } finally {
     isUpgrading.value = false;
+  }
+}
+
+async function handleExportBackup() {
+  try {
+    backupProgress.value = t('settings.advanced.backup.exporting');
+    await exportBackup();
+    backupProgress.value = t('settings.advanced.backup.exportSuccess');
+    setTimeout(() => { backupProgress.value = ''; }, 3000);
+  } catch (e) {
+    console.error("Failed to export backup:", e);
+    backupProgress.value = t('settings.advanced.backup.exportFailed');
+  }
+}
+
+async function handleRestoreBackup() {
+  try {
+    backupProgress.value = t('settings.advanced.backup.restoring');
+    await restoreBackup();
+    backupProgress.value = t('settings.advanced.backup.restoreSuccess');
+    setTimeout(() => { backupProgress.value = ''; }, 3000);
+  } catch (e) {
+    console.error("Failed to restore backup:", e);
+    backupProgress.value = t('settings.advanced.backup.restoreFailed');
   }
 }
 
@@ -472,7 +497,7 @@ watch(language, (newLang) => {
 
           <div v-if="isBackupExpanded" class="px-5 pb-5 pt-2 border-t border-border">
             <div class="flex gap-3">
-              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="handleExportBackup">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -480,13 +505,16 @@ watch(language, (newLang) => {
                 </svg>
                 {{ t('settings.advanced.backup.export') }}
               </button>
-              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90" @click="handleRestoreBackup">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
                   <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
                 </svg>
                 {{ t('settings.advanced.backup.import') }}
               </button>
+            </div>
+            <div v-if="backupProgress" class="mt-3 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+              {{ backupProgress }}
             </div>
           </div>
         </div>

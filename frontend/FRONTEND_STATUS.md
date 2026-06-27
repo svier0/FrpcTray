@@ -1,6 +1,6 @@
 # 前端联调看板
 FRONTEND_VERSION: V5
-ACK_BACKEND_VERSION: V3
+ACK_BACKEND_VERSION: V5
 
 ## 📢 最新进度与反馈
 - ✅ 已完成代理 CRUD 操作对接（创建/编辑/删除）
@@ -14,6 +14,7 @@ ACK_BACKEND_VERSION: V3
 - ✅ 拖拽手柄样式统一：服务器和代理列表手柄都在卡片内部
 - ✅ 内核更新接口对接：get_frpc_version、upgrade_frpc
 - ✅ 未安装状态：显示黄色感叹号，按钮显示安装
+- ✅ 备份与恢复接口对接：export_backup、restore_backup
 
 ## 📢 最新联调通知
-- 已对接内核更新接口，测试升级功能
+- 已对接备份恢复接口（export_backup、restore_backup）
