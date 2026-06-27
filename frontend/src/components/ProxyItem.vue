@@ -71,14 +71,6 @@ const { t } = useI18n();
           </svg>
         </button>
 
-        <div
-          class="h-8 w-8 flex-shrink-0 rounded-lg bg-muted flex items-center justify-center border border-border group-hover:scale-105 transition-transform duration-300"
-        >
-          <span class="text-xs font-bold text-muted-foreground uppercase">
-            {{ props.item.type || '?' }}
-          </span>
-        </div>
-
         <div class="min-w-0 flex-1 space-y-1">
           <div class="flex items-center gap-2 min-h-6">
             <h3 class="text-sm font-semibold leading-none truncate">
@@ -86,9 +78,9 @@ const { t } = useI18n();
             </h3>
           </div>
 
-          <p class="text-xs text-muted-foreground truncate">
-            {{ props.item.name }}
-          </p>
+          <span class="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {{ props.item.type || '?' }}
+          </span>
         </div>
       </div>
 
