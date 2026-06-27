@@ -3,6 +3,11 @@ VERSION: V3
 ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
+- ✅ `export_backup` / `restore_backup` 命令已实现（2026-06-27）：
+  - `export_backup`: 弹出保存对话框 → 将 conf 目录所有文件打包为 `frpc-{YYMMDDHHmmss}.zip`
+  - `restore_backup`: 弹出打开对话框 → 选择 zip → 解压 .toml 文件还原到 conf 目录
+  - 依赖 `tauri-plugin-dialog` v2 + `chrono`
+- ✅ 窗口尺寸调整为 800×540（2026-06-27）
 - ✅ `upgrade_frpc` 命令已实现（2026-06-27）：
   - 参数 `version`（如 "0.69.1"）→ 下载对应平台架构的 zip → 解压 → 替换 bin 目录 frpc
   - 先写 tmp 后 rename，Unix 设置可执行权限
@@ -28,5 +33,5 @@ ACK_FRONTEND_VERSION: V3
   - 11 个命令 API 完全不变，前端无需修改
 - ✅ 已处理前端反馈 V2：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回（2026-06-26）
 - V2：引入 `ServerInfo`（对应 `conf/frpc.{id}.toml`）和 `ProxyItem`（对应 `[[proxies]]`）
-- **13 个命令**：Server CRUD + reorder，Proxy CRUD + reorder，get_frpc_version，upgrade_frpc
+- **15 个命令**：Server CRUD + reorder，Proxy CRUD + reorder，get_frpc_version，upgrade_frpc，export_backup，restore_backup
 - 字段名与 TOML 完全一致（camelCase），API 见 `backend/api_spec.json`
