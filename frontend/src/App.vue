@@ -116,21 +116,26 @@ function handleEdit(id: string) {
   }
 }
 
-function handleDuplicate(id: string) {
+async function handleDuplicate(id: string) {
   const source = proxies.value.find((p) => p.id === id);
-  if (source) {
-    editingProxy.value = {
-      name: `${source.name} copy`,
-      desc: source.desc || "",
-      type: source.type || "tcp",
-      localIP: source.localIP || "127.0.0.1",
-      localPort: source.localPort || 8080,
-      remotePort: source.remotePort || null,
-      customDomains: source.customDomains ? source.customDomains.join(", ") : "",
-      locations: source.locations ? source.locations.join(", ") : "",
-    };
-    proxyDialogMode.value = "create";
-    showProxyDialog.value = true;
+  if (source && activeTab.value) {
+    const newName = `${source.name}_copy`;
+    try {
+      await createProxy(activeTab.value, {
+        name: newName,
+        desc: source.desc,
+        enabled: false,
+        type: source.type || "tcp",
+        localIP: source.localIP,
+        localPort: source.localPort || 0,
+        remotePort: source.remotePort,
+        customDomains: source.customDomains,
+        locations: source.locations,
+      });
+      await loadProxies(activeTab.value);
+    } catch (e) {
+      console.error("Failed to duplicate proxy:", e);
+    }
   }
 }
 
