@@ -38,7 +38,10 @@ cd frontend && bun run tauri build  # Build Tauri app
 ## 目录隔离 (Directory isolation) - 必须记住
 - 前端角色，只能写`/frontend/`目录，禁止修改`/backend/`目录
 - 后端角色，只能写`/backend/`目录，禁止修改`/frontend/`目录
-- 前后端角色都禁止直接修改根目录的任何文件，根目录由用户维护
+- **根目录文件禁止编辑 - 绝对禁止**
+  根目录所有文件（`/*`）只有用户能编辑
+  Agent 禁止对根目录文件执行任何操作：禁止写入、禁止编辑、禁止提出编辑建议
+  违反此规则等于越权
 
 ## 协作 (Collaboration) - 必须记住
 - 前后端协作协议具体内容查看 `/AI_COLLABORATION_GUIDE.md`
