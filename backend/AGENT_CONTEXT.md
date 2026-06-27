@@ -26,25 +26,36 @@
 - ✅ 前端反馈 V2 已处理：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回
 - ✅ V3 TOML 存储方案重构（2026-06-26）
   - `toml` crate → `toml_edit` 0.22（纯 DOM API）
-  - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort`
+  - `title`/`enable`/`sort` → 文件顶部 `# @title` / `# @enable` / `# @sort` 注释
   - `desc` → `[[proxies]]` 上方注释，读写由 `toml_edit` DOM API 处理
   - V2 文件自动迁移：读取兼容注释+key 双路径，写入统一 V3 格式
   - 11 个 tauri command 签名和 API 结构完全不变
   - 🐛 修复 `set_meta_comments` 注释位置错误：`Value.decor_mut()` → `Key.leaf_decor_mut()`（`5969f60`）
     - toml_edit 中 `Key.decor` = key 之前的注释，`Value.decor` = `=` 和值之间的空白
     - 用错导致输出 `serverAddr =# @title xxx` 而非注释在 key 上方
+- ✅ 🐛 修复 TOML 写入格式破坏问题（2026-06-27）
+  - **server 级字段**：`update_server_fields` 使用 `get_mut()` 就地更新，保留 Key decor（空行、注释、未知字段）
+  - **[[proxies]] 重排**：`serialize_proxies` 字符串重建 + `strip_proxies_section` 清除旧块，绕过 toml_edit 的 ArrayOfTables 序列化 bug
+  - **数组格式**：`customDomains`/`locations` 保持内联 `["a", "b"]` 格式
+  - **重排验证**：`test_update_proxies_reorder` 单元测试通过（commit `1580aef`）
 
 ### 待办事项
-- [x] ProxyItem 添加 `enabled: bool` 字段（2026-06-26）— 作为普通 TOML key 存储，读写默认 true
-- [x] 修复 TOML 写入格式破坏（2026-06-26）— 最小侵入式更新，保留空行/未知字段/数组格式
-- [x] 补充高频配置字段（2026-06-26）— Server: transport(protocol/tcpMux) + tls(enable)；Proxy: remotePort
-- [x] 🐛 修复 reorder_proxies 不生效（2026-06-27）— `update_proxies` 只按 name 更新字段，从未重排 `[[proxies]]` 数组顺序。修复：更新后 clone+remove+push 重建数组顺序
 - [ ] 等待前端确认
 - [ ] 后续功能开发...
 
 ---
 
 ## 关键决策记录
+
+### 2026-06-27 (TOML 写入格式修复)
+- **问题**: `update_proxies` 只按 name 更新字段，从未重排 `[[proxies]]` 数组顺序；toml_edit 的 ArrayOfTables 序列化 bug 导致顺序无法通过 DOM API 控制
+- **决策**: server 级字段用 toml_edit 就地更新，`[[proxies]]` 用字符串操作重建
+- **原因**: toml_edit 的 `ArrayOfTables::to_string()` 序列化使用 BTreeMap 遍历（按键排序），无法保持插入顺序；必须绕过 DOM API
+- **实现**:
+  - `update_server_fields`: `get_mut("key")` 就地更新，保留 Key decor（空行、注释、未知字段）
+  - `serialize_proxies`: 按内存顺序手动拼接 TOML 字符串，产出内联数组格式
+  - `strip_proxies_section`: 正则式清除旧的 `[[proxies]]` 块
+  - `write_server_file`: toml_edit 序列化 → 剥除旧 proxies → 追加新 proxies 字符串
 
 ### 2026-06-26 (TOML 存储方案)
 - **决策**: 使用 `toml_edit` 替代 `toml` crate，tray 元数据存为注释
