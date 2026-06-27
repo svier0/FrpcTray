@@ -105,7 +105,7 @@
     },
     "about": {
       "version": "Version",
-      "appName": "frpc tray",
+      "appName": "FrpC Tray",
       "appDescription": "frpc process proxy management tool",
       "description": "View version information and update status.",
       "changelog": "Changelog",

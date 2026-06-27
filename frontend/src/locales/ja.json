@@ -105,7 +105,7 @@
     },
     "about": {
       "version": "バージョン",
-      "appName": "frpc tray",
+      "appName": "FrpC Tray",
       "appDescription": "frpc プロセスプロキシ管理ツール",
       "description": "バージョン情報と更新状態を確認します。",
       "changelog": "更新履歴",

@@ -105,7 +105,7 @@
     },
     "about": {
       "version": "版本",
-      "appName": "frpc tray",
+      "appName": "FrpC Tray",
       "appDescription": "frpc 進程代理管理工具",
       "description": "查看版本資訊與更新狀態。",
       "changelog": "更新日誌",
