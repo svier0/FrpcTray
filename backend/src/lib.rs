@@ -830,7 +830,10 @@ async fn get_frpc_version() -> Result<FrpcVersionInfo, String> {
             let can = compare_versions(&current_version, &v);
             (v, can)
         }
-        Err(_) => (String::new(), false),
+        Err(e) => {
+            eprintln!("[frpc-tray] {}", e);
+            (String::new(), false)
+        },
     };
 
     Ok(FrpcVersionInfo {
@@ -887,31 +890,16 @@ fn parse_frpc_version_output(output: &str) -> String {
 async fn get_latest_frpc_version() -> Result<String, String> {
     let client = get_http_client();
 
-    // Approach 1: GitHub API (direct + proxy)
-    let api_urls = [
+    let urls = [
         "https://api.github.com/repos/fatedier/frp/releases/latest",
         "https://gh-proxy.com/https://api.github.com/repos/fatedier/frp/releases/latest",
         "https://ghfast.top/https://api.github.com/repos/fatedier/frp/releases/latest",
     ];
-    for url in &api_urls {
+    for url in &urls {
         let timeout = if url.contains("//gh-") { 20 } else { 10 };
         match fetch_api_version(client, url, timeout).await {
             Ok(v) => return Ok(v),
-            Err(e) => eprintln!("[frpc-tray] API {} 失败: {}", url, e),
-        }
-    }
-
-    // Approach 2: Redirect (follow /releases/latest → /tag/vX.Y.Z)
-    let redirect_urls = [
-        "https://github.com/fatedier/frp/releases/latest",
-        "https://gh-proxy.com/https://github.com/fatedier/frp/releases/latest",
-        "https://ghfast.top/https://github.com/fatedier/frp/releases/latest",
-    ];
-    for url in &redirect_urls {
-        let timeout = if url.contains("//gh-") { 20 } else { 15 };
-        match fetch_redirect_version(client, url, timeout).await {
-            Ok(v) => return Ok(v),
-            Err(e) => eprintln!("[frpc-tray] 重定向 {} 失败: {}", url, e),
+            Err(e) => eprintln!("[frpc-tray] {} 失败: {}", url, e),
         }
     }
 
@@ -942,30 +930,7 @@ async fn fetch_api_version(client: &reqwest::Client, url: &str, timeout_secs: u6
     Ok(release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name).to_string())
 }
 
-/// Fetch /releases/latest and parse version from the redirect Location header
-async fn fetch_redirect_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
-    // Build request without following redirects
-    let request = client
-        .get(url)
-        .header("User-Agent", "frpc-tray/1.0")
-        .timeout(std::time::Duration::from_secs(timeout_secs))
-        .build()
-        .map_err(|e| format!("构建请求失败: {}", e))?;
-
-    let response = client
-        .execute(request)
-        .await
-        .map_err(|e| format!("请求失败: {}", e))?;
-
-    let location = response
-        .headers()
-        .get("location")
-        .and_then(|v| v.to_str().ok())
-        .ok_or_else(|| format!("无重定向, HTTP {}", response.status()))?;
-
-    parse_version_from_location(location).ok_or_else(|| format!("无法从重定向地址解析版本: {}", location))
-}
-
+#[allow(dead_code)]
 fn parse_version_from_location(location: &str) -> Option<String> {
     location
         .rsplit('/')
