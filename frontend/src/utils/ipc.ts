@@ -80,3 +80,19 @@ export async function exportBackup(): Promise<string> {
 export async function restoreBackup(): Promise<void> {
   return invoke("restore_backup");
 }
+
+export interface AppConfig {
+  language: string;
+  theme: string;
+  autostart: boolean;
+  silent_launch: boolean;
+  auto_run: boolean;
+}
+
+export async function getConfig(): Promise<AppConfig> {
+  return invoke("get_config");
+}
+
+export async function saveConfig(config: AppConfig): Promise<void> {
+  return invoke("save_config", { config });
+}

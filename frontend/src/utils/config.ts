@@ -1,16 +1,15 @@
 import { ref, watch } from "vue";
+import { getConfig, saveConfig as saveConfigToBackend } from "./ipc";
 
 type Theme = "light" | "dark" | "system";
 
-interface AppConfig {
+export interface AppConfig {
   language: string;
   theme: Theme;
   autostart: boolean;
   silentLaunch: boolean;
   autoRun: boolean;
 }
-
-const STORAGE_KEY = "app_config";
 
 const defaultConfig: AppConfig = {
   language: "zh-CN",
@@ -20,25 +19,48 @@ const defaultConfig: AppConfig = {
   autoRun: false,
 };
 
-function loadConfig(): AppConfig {
+function toBackendConfig(config: AppConfig) {
+  return {
+    language: config.language,
+    theme: config.theme,
+    autostart: config.autostart,
+    silent_launch: config.silentLaunch,
+    auto_run: config.autoRun,
+  };
+}
+
+function fromBackendConfig(data: any): AppConfig {
+  return {
+    language: data.language || defaultConfig.language,
+    theme: data.theme || defaultConfig.theme,
+    autostart: data.autostart ?? defaultConfig.autostart,
+    silentLaunch: data.silent_launch ?? defaultConfig.silentLaunch,
+    autoRun: data.auto_run ?? defaultConfig.autoRun,
+  };
+}
+
+export const appConfig = ref<AppConfig>({ ...defaultConfig });
+export const configLoaded = ref(false);
+
+export async function loadConfig() {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      return { ...defaultConfig, ...JSON.parse(raw) };
-    }
-  } catch {}
-  return { ...defaultConfig };
+    const backendConfig = await getConfig();
+    appConfig.value = fromBackendConfig(backendConfig);
+  } catch (e) {
+    console.error("Failed to load config from backend:", e);
+    appConfig.value = { ...defaultConfig };
+  } finally {
+    configLoaded.value = true;
+  }
 }
 
-function saveConfig(config: AppConfig) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-}
-
-export const appConfig = ref<AppConfig>(loadConfig());
-
-export function updateConfig(patch: Partial<AppConfig>) {
+export async function updateConfig(patch: Partial<AppConfig>) {
   Object.assign(appConfig.value, patch);
-  saveConfig(appConfig.value);
+  try {
+    await saveConfigToBackend(toBackendConfig(appConfig.value));
+  } catch (e) {
+    console.error("Failed to save config to backend:", e);
+  }
 }
 
 export function initConfigWatchers() {
