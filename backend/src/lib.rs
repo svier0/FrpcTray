@@ -931,6 +931,86 @@ fn get_arch() -> String {
     }
 }
 
+// ── Frpc upgrade command ──
+
+#[tauri::command]
+async fn upgrade_frpc(version: String) -> Result<(), String> {
+    let platform = get_platform();
+    let arch = get_arch();
+    let url = format!(
+        "https://github.com/fatedier/frp/releases/download/v{version}/frp_{version}_{platform}_{arch}.zip",
+        version = version,
+        platform = platform,
+        arch = arch
+    );
+
+    // Download
+    let client = get_http_client();
+    let response = client
+        .get(&url)
+        .header("User-Agent", "frpc-tray/1.0")
+        .send()
+        .await
+        .map_err(|e| format!("下载失败: {}", e))?;
+
+    if !response.status().is_success() {
+        return Err(format!("下载返回错误状态: {}", response.status()));
+    }
+
+    let body = response
+        .bytes()
+        .await
+        .map_err(|e| format!("读取下载数据失败: {}", e))?;
+
+    // Extract zip from memory
+    let cursor = std::io::Cursor::new(body.to_vec());
+    let mut archive = zip::ZipArchive::new(cursor)
+        .map_err(|e| format!("解压失败: {}", e))?;
+
+    let frpc_name = if cfg!(target_os = "windows") { "frpc.exe" } else { "frpc" };
+    let exe_dir = get_executable_dir();
+    let dest_path = exe_dir.join(frpc_name);
+
+    // Find and extract frpc binary
+    let mut found = false;
+    for i in 0..archive.len() {
+        let mut entry = archive.by_index(i)
+            .map_err(|e| format!("读取压缩包条目失败: {}", e))?;
+        let entry_name = entry.name().to_string();
+
+        if entry_name.ends_with(frpc_name) && entry_name.contains("frp_") {
+            // Write to temp file first, then rename (atomic on same filesystem)
+            let temp_path = exe_dir.join(format!("{}.tmp", frpc_name));
+            {
+                let mut temp_file = fs::File::create(&temp_path)
+                    .map_err(|e| format!("创建临时文件失败: {}", e))?;
+                std::io::copy(&mut entry, &mut temp_file)
+                    .map_err(|e| format!("写入临时文件失败: {}", e))?;
+            }
+
+            // Set executable permission on Unix
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                fs::set_permissions(&temp_path, std::fs::Permissions::from_mode(0o755))
+                    .map_err(|e| format!("设置可执行权限失败: {}", e))?;
+            }
+
+            fs::rename(&temp_path, &dest_path)
+                .map_err(|e| format!("替换 frpc 失败: {}", e))?;
+
+            found = true;
+            break;
+        }
+    }
+
+    if !found {
+        return Err(format!("在压缩包中未找到 {}", frpc_name));
+    }
+
+    Ok(())
+}
+
 // ── App entry ──
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -1011,6 +1091,7 @@ pub fn run() {
             delete_proxy,
             reorder_proxies,
             get_frpc_version,
+            upgrade_frpc,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

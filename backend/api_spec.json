@@ -146,6 +146,18 @@
         "success": "版本信息对象",
         "error": "错误信息字符串"
       }
+    },
+    {
+      "name": "upgrade_frpc",
+      "description": "下载并升级/安装 frpc 内核（从 GitHub Releases 下载对应平台架构的 zip，解压并替换可执行文件）",
+      "parameters": [
+        { "name": "version", "type": "String", "description": "要下载的版本号，如 '0.69.1'（不含 v 前缀）" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空（成功替换）",
+        "error": "错误信息字符串（下载失败/解压失败/未找到 frpc 可执行文件/替换失败）"
+      }
     }
   ],
   "dataStructures": {

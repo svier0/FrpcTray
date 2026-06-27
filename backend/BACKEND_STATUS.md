@@ -3,6 +3,9 @@ VERSION: V3
 ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
+- ✅ `upgrade_frpc` 命令已实现（2026-06-27）：
+  - 参数 `version`（如 "0.69.1"）→ 下载对应平台架构的 zip → 解压 → 替换 exe 同级 frpc
+  - 先写 tmp 后 rename，Unix 设置可执行权限
 - ✅ `get_frpc_version` 命令已实现（2026-06-27）：
   - 返回当前版本（frpc -v）、最新版本（GitHub API）、可升级状态、平台、架构
   - 前端可根据 `platform`/`arch` 拼接下载链接：`frp_{version}_{platform}_{arch}.zip`
@@ -24,5 +27,5 @@ ACK_FRONTEND_VERSION: V3
   - 11 个命令 API 完全不变，前端无需修改
 - ✅ 已处理前端反馈 V2：`create_server` 参数去掉 `id`，后端自动生成单字母 id 并返回（2026-06-26）
 - V2：引入 `ServerInfo`（对应 `conf/frpc.{id}.toml`）和 `ProxyItem`（对应 `[[proxies]]`）
-- **12 个命令**：Server CRUD + reorder，Proxy CRUD + reorder，get_frpc_version
+- **13 个命令**：Server CRUD + reorder，Proxy CRUD + reorder，get_frpc_version，upgrade_frpc
 - 字段名与 TOML 完全一致（camelCase），API 见 `backend/api_spec.json`

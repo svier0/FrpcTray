@@ -44,6 +44,12 @@
   - `get_latest_frpc_version`: GitHub API 获取 latest release，加入 User-Agent header，复用 HTTP_CLIENT 单例
   - `compare_versions`: 支持语义化版本比较，忽略 preview 后缀
   - `get_platform` / `get_arch`: 编译期确定平台和架构字符串
+- ✅ `upgrade_frpc` 命令已实现（2026-06-27）
+  - 参数 `version`: 版本号，如 "0.69.1"
+  - 从 GitHub Releases 下载 `frp_{version}_{platform}_{arch}.zip`
+  - 内存解压，提取 frpc/frpc.exe 到 exe 同级目录（先写 tmp 再 rename）
+  - Unix 设置 755 可执行权限
+  - 依赖: `zip` v2, `reqwest` stream feature, `futures-util`
 
 ### 待办事项
 - [ ] 等待前端确认
