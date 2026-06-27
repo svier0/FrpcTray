@@ -92,7 +92,12 @@
       "hide": "非表示"
     },
     "about": {
-      "version": "バージョン"
+      "version": "バージョン",
+      "appName": "frpc tray",
+      "appDescription": "frpc プロセスプロキシ管理ツール",
+      "description": "バージョン情報と更新状態を確認します。",
+      "changelog": "更新履歴",
+      "checkUpdate": "更新を確認"
     }
   }
 }

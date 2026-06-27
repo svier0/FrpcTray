@@ -92,7 +92,12 @@
       "hide": "Hide"
     },
     "about": {
-      "version": "Version"
+      "version": "Version",
+      "appName": "frpc tray",
+      "appDescription": "frpc process proxy management tool",
+      "description": "View version information and update status.",
+      "changelog": "Changelog",
+      "checkUpdate": "Check for Updates"
     }
   }
 }

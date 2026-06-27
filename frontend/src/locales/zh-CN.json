@@ -92,7 +92,12 @@
       "hide": "隐藏"
     },
     "about": {
-      "version": "版本"
+      "version": "版本",
+      "appName": "frpc tray",
+      "appDescription": "frpc 进程代理管理工具",
+      "description": "查看版本信息与更新状态。",
+      "changelog": "更新日志",
+      "checkUpdate": "检查更新"
     }
   }
 }
