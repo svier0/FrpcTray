@@ -170,6 +170,7 @@ async function handleUpgrade() {
     await upgradeFrpc(versionInfo.value.latest_version);
     upgradeProgress.value = isInstall ? t('settings.kernel.installSuccess') : t('settings.kernel.upgradeSuccess');
     await loadVersionInfo();
+    setTimeout(() => { upgradeProgress.value = ''; }, 3000);
   } catch (e) {
     console.error("Failed to upgrade frpc:", e);
     upgradeProgress.value = isInstall ? t('settings.kernel.installFailed') : t('settings.kernel.upgradeFailed');
