@@ -396,34 +396,7 @@ fn strip_proxies_section(toml: &str) -> String {
     result
 }
 
-/// Rebuild [[proxies]] section in config.proxies order using string manipulation.
-/// toml_edit's key-value API (remove/insert/retain) only affects the BTreeMap index,
-/// NOT the ordered entry list that to_string() serializes. For ArrayOfTables,
-/// we must operate at the string level.
-fn update_proxies(doc: &mut DocumentMut, config: &FrpcConfigFile) {
-    // Remove proxies from doc's key-value index (so to_string doesn't duplicate)
-    doc.retain(|key, _| key != "proxies");
-
-    // Append new proxies section to the serialized output
-    if let Some(ref proxies) = config.proxies {
-        if !proxies.is_empty() {
-            // We'll append proxies to the output after to_string()
-        }
-    }
-}
-
 // ── Helper functions for TOML write ──
-
-/// Build an inline string array (e.g. ["a", "b"])
-fn make_string_array(items: &[String]) -> Item {
-    let mut arr = toml_edit::Array::new();
-    for s in items {
-        arr.push(s.as_str());
-    }
-    value(toml_edit::Value::Array(arr))
-}
-
-/// Update or insert a scalar field in a table, preserving Key decor for existing keys.
 /// Uses get_mut() which accesses the Item via mutable reference into the BTreeMap,
 /// so the Key (and its prefix decor: blank lines, comments) is untouched.
 fn set_or_insert(table: &mut Table, key: &str, val: Item) {
