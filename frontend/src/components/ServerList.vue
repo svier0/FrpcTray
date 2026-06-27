@@ -77,31 +77,7 @@ function handleDelete(id: string) {
 <template>
   <div class="space-y-3">
     <div ref="listRef" class="space-y-3">
-      <div v-for="item in dragList" :key="item.id" class="flex items-center gap-2 pl-4">
-        <button
-          class="drag-handle flex-shrink-0 p-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
-          :title="t('proxy.dragHandle')"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="9" cy="5" r="1" />
-            <circle cx="9" cy="12" r="1" />
-            <circle cx="9" cy="19" r="1" />
-            <circle cx="15" cy="5" r="1" />
-            <circle cx="15" cy="12" r="1" />
-            <circle cx="15" cy="19" r="1" />
-          </svg>
-        </button>
-
+      <div v-for="item in dragList" :key="item.id">
         <ServerItem
           :item="item"
           :is-expanded="expandedId === item.id"

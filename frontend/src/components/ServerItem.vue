@@ -64,41 +64,60 @@ function handleDelete() {
       'border-blue-500/60 shadow-sm shadow-blue-500/10': isExpanded,
     }"
   >
-    <button
-      class="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50"
-      @click="emit('toggle-expand', props.item.id)"
+    <div
+      class="flex items-center gap-3 p-4"
     >
-      <div
-        class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-muted"
+      <button
+        class="drag-handle flex-shrink-0 cursor-grab active:cursor-grabbing p-1.5 -ml-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+        :title="t('proxy.dragHandle')"
+        @click.stop
       >
-        <span class="text-sm font-bold text-muted-foreground">
-          {{ props.item.id.toUpperCase() }}
-        </span>
-      </div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="5" r="1" />
+          <circle cx="9" cy="12" r="1" />
+          <circle cx="9" cy="19" r="1" />
+          <circle cx="15" cy="5" r="1" />
+          <circle cx="15" cy="12" r="1" />
+          <circle cx="15" cy="19" r="1" />
+        </svg>
+      </button>
 
-      <div class="min-w-0 flex-1">
-        <h3 class="text-sm font-semibold truncate">{{ props.item.title }}</h3>
-        <p class="text-xs text-muted-foreground truncate">
-          {{ props.item.serverAddr }}:{{ props.item.serverPort }}
-        </p>
-      </div>
-
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="flex-shrink-0 text-muted-foreground transition-transform duration-200"
-        :class="{ 'rotate-180': isExpanded }"
+      <button
+        class="flex flex-1 items-center gap-3 text-left transition-colors hover:bg-muted/50 -mx-1.5 px-1.5 py-1 rounded-lg"
+        @click="emit('toggle-expand', props.item.id)"
       >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
-    </button>
+        <div
+          class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-border bg-muted"
+        >
+          <span class="text-sm font-bold text-muted-foreground">
+            {{ props.item.id.toUpperCase() }}
+          </span>
+        </div>
+
+        <div class="min-w-0 flex-1">
+          <h3 class="text-sm font-semibold truncate">{{ props.item.title }}</h3>
+          <p class="text-xs text-muted-foreground truncate">
+            {{ props.item.serverAddr }}:{{ props.item.serverPort }}
+          </p>
+        </div>
+
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="flex-shrink-0 text-muted-foreground transition-transform duration-200"
+          :class="{ 'rotate-180': isExpanded }"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+    </div>
 
     <div
       v-show="isExpanded"
