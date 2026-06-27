@@ -8,6 +8,10 @@ ACK_BACKEND_VERSION: V3
 - ✅ 已完成服务器排序功能对接（reorderServers）
 - ✅ 已对接 ProxyItem enabled 字段到 UI 开关
 - ✅ 创建 ProxyDialog.vue 组件，支持代理创建/编辑表单
+- ✅ 代理复制功能优化：直接创建enabled=false的副本
+- ✅ 内核页面卡片：frpc版本信息、Win/amd64标签、升级按钮
+- ✅ 关于页面卡片：应用图标、版本号、GitHub/更新日志/检查更新按钮
+- ✅ 拖拽手柄样式统一：服务器和代理列表手柄都在卡片内部
 
 ## 📢 最新联调通知
 - 无新的联调需求

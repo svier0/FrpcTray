@@ -6,7 +6,7 @@
 
 ## 项目概述
 - **项目名称**: frpc-tray
-- **前端技术栈** Vue 3, TypeScript, Tailwind CSS v4, Radix Vue, vue-i18n, vue-draggable-plus
+- **前端技术栈** Vue 3, TypeScript, Tailwind CSS v4, Radix Vue, vue-i18n
 - **后端技术栈** Rust, Tauri 2
 - **包管理器** bun (not npm)
 - **目录结构**: 前端在 `/frontend`, 后端在 `/backend`
@@ -16,11 +16,11 @@
 - Language: Use Chinese (zh-CN) for UI text and comments
 - Styling: Follow CC Switch design patterns (dark theme, glass morphism)
 - State: Theme and language persisted in localStorage
-- UI组件: 使用radix-vue和tailwindcss进行组件设计
+- UI组件: 使用tailwindcss进行组件设计
 
 ---
 
-## 当前开发状态 (截至 2026-06-26)
+## 当前开发状态 (截至 2026-06-27)
 
 ### 已完成
 - ✅ 界面UI设计-主界面-标题栏
@@ -52,11 +52,13 @@
 - ✅ 后端接口对接-代理CRUD操作（createProxy, updateProxy, deleteProxy）
 - ✅ 后端接口对接-代理排序（reorderProxies）
 - ✅ 后端接口对接-服务器排序（reorderServers）
+- ✅ 界面UI设计-代理项-ProxyItem组件（拖拽手柄、复制、编辑、删除按钮）
+- ✅ 界面UI设计-代理项-ProxyDialog弹窗（创建/编辑代理）
+- ✅ 界面UI设计-设置界面-内核-卡片（frpc版本信息、Win/amd64标签、升级按钮）
+- ✅ 界面UI设计-设置界面-关于-卡片（应用图标、版本号、GitHub/更新日志/检查更新按钮）
 
 ### 待办事项
-- [ ] 界面UI设计-设置界面-内核-列表
 - [ ] 界面UI设计-设置界面-高级-列表
-- [ ] 界面UI设计-设置界面-关于-列表
 
 ---
 
@@ -67,12 +69,25 @@
 - **原因**: 先以UI设计为主，然后逐步对接后端
 - **实现**: 暂时使用`localStorage`进行持久化存储
 
+### 2026-06-27
+- **决策**: 代理复制按钮直接提交，不弹对话框
+- **原因**: 复制逻辑应该和新增不同，直接创建enabled=false的副本
+- **实现**: handleDuplicate直接调用createProxy，不打开ProxyDialog
+
+- **决策**: 拖拽手柄使用SortableJS的forceFallback模式
+- **原因**: Tauri webview拦截HTML5 Drag API，导致拖拽无法正常工作
+- **实现**: SortableJS配置forceFallback:true，使用JS模拟拖拽
+
+- **决策**: 服务器列表和代理列表的拖拽手柄样式统一
+- **原因**: 之前服务器手柄在卡片外（absolute定位），代理手柄在卡片内
+- **实现**: 将服务器手柄移入ServerItem组件内部，与ProxyItem布局一致
+
 ---
 
 ## 技术细节备忘
 
 ### UI风格
-- 使用radix-vue和tailwindcss进行组件设计
+- 使用tailwindcss进行组件设计
 - Styling: Follow CC Switch design patterns (dark theme, glass morphism)
 
 ### 服务器列表UI
@@ -82,23 +97,23 @@
 - 新增服务器时鉴权方式默认填入"token"
 - 最多支持26个服务器（id为a-z单个字母）
 
-### 主页面显示设置
-- 在设置-通用tab中，外观主题下方新增"主页面显示"区域
-- 使用CC Switch风格的标签切换，点击标签切换服务器在主页面的显示状态
-- 点击标签调用updateServer接口修改enable状态
-- 选中状态（enable=true）：蓝色背景白色文字
-- 未选中状态（enable=false）：灰色背景灰色文字
-
-### 主界面服务器图标
-- 主界面右上角显示已启用服务器的图标（ID大写字母）
-- 点击服务器图标切换当前查看的服务器
-- 自动加载对应服务器的代理列表
-
 ### 代理列表UI
 - 使用ProxyItem.vue组件：显示代理信息
+- 使用ProxyList.vue组件：支持拖拽排序的列表
+- 使用ProxyDialog.vue组件：创建/编辑代理弹窗
 - 标题显示desc字段，副标题显示name字段
 - 图标显示type字段（tcp/udp/http等）
-- 从后端listProxies接口加载数据
+- 代理复制：直接创建enabled=false的副本，不弹对话框
+
+### 设置页面
+- 内核页面：frpc版本卡片（Win/amd64标签、当前版本、最新版本、升级按钮）
+- 关于页面：应用信息卡片（图标、版本号、GitHub/更新日志/检查更新按钮）
+
+### 拖拽排序实现
+- 使用SortableJS（非vue-draggable-plus）
+- 配置forceFallback:true绕过Tauri webview限制
+- onEnd事件中手动splice数组并emit新顺序
+- 拖拽手柄使用.drag-handle类选择器
 
 ---
 
@@ -110,4 +125,6 @@
 ---
 
 ## 下次启动检查清单
-1. 如无新需求，继续完善UI设计（内核、高级、关于tab）
+1. 如无新需求，继续完善UI设计（高级tab）
+2. 检查代理拖拽排序是否正常工作
+3. 检查服务器拖拽排序是否正常工作
