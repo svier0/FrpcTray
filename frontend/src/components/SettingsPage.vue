@@ -418,7 +418,8 @@ watch(language, (newLang) => {
             <button
               v-if="versionInfo && (versionInfo.can_upgrade || versionInfo.current_version === '0')"
               :disabled="isUpgrading"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/50 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="versionInfo.current_version === '0' ? 'border border-border hover:bg-muted/50' : 'bg-primary text-primary-foreground hover:bg-primary/90'"
               @click="handleUpgrade"
             >
               <svg v-if="!isUpgrading && versionInfo.current_version === '0'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
