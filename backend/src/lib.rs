@@ -13,6 +13,8 @@ use toml_edit::{DocumentMut, Item, Table, value};
 
 static CONFIG_DIR: OnceLock<PathBuf> = OnceLock::new();
 
+static BIN_DIR: OnceLock<PathBuf> = OnceLock::new();
+
 static HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 fn get_http_client() -> &'static reqwest::Client {
@@ -160,6 +162,10 @@ fn get_executable_dir() -> PathBuf {
 
 fn get_config_dir() -> &'static PathBuf {
     CONFIG_DIR.get().expect("get_config_dir called before setup")
+}
+
+fn get_bin_dir() -> &'static PathBuf {
+    BIN_DIR.get().expect("get_bin_dir called before setup")
 }
 
 fn server_path(id: &str) -> PathBuf {
@@ -836,9 +842,15 @@ async fn get_frpc_version() -> Result<FrpcVersionInfo, String> {
     })
 }
 
-/// Get current frpc version by running `frpc -v`
+/// Get current frpc version by running frpc from bin directory
 fn get_current_frpc_version() -> String {
-    let output = Command::new("frpc")
+    let frpc_path = get_bin_dir().join(if cfg!(target_os = "windows") { "frpc.exe" } else { "frpc" });
+
+    if !frpc_path.exists() {
+        return "0".to_string();
+    }
+
+    let output = Command::new(&frpc_path)
         .arg("-v")
         .output();
 
@@ -968,8 +980,10 @@ async fn upgrade_frpc(version: String) -> Result<(), String> {
         .map_err(|e| format!("解压失败: {}", e))?;
 
     let frpc_name = if cfg!(target_os = "windows") { "frpc.exe" } else { "frpc" };
-    let exe_dir = get_executable_dir();
-    let dest_path = exe_dir.join(frpc_name);
+    let bin_dir = get_bin_dir();
+    fs::create_dir_all(bin_dir)
+        .map_err(|e| format!("创建 bin 目录失败: {}", e))?;
+    let dest_path = bin_dir.join(frpc_name);
 
     // Find and extract frpc binary
     let mut found = false;
@@ -980,7 +994,7 @@ async fn upgrade_frpc(version: String) -> Result<(), String> {
 
         if entry_name.ends_with(frpc_name) && entry_name.contains("frp_") {
             // Write to temp file first, then rename (atomic on same filesystem)
-            let temp_path = exe_dir.join(format!("{}.tmp", frpc_name));
+            let temp_path = bin_dir.join(format!("{}.tmp", frpc_name));
             {
                 let mut temp_file = fs::File::create(&temp_path)
                     .map_err(|e| format!("创建临时文件失败: {}", e))?;
@@ -1028,6 +1042,17 @@ pub fn run() {
             fs::create_dir_all(&config_dir)
                 .expect("无法创建配置目录");
             let _ = CONFIG_DIR.set(config_dir);
+
+            let bin_dir: PathBuf = if cfg!(target_os = "windows") {
+                get_executable_dir().join("bin")
+            } else {
+                app.path().app_data_dir()
+                    .unwrap_or_else(|_| get_executable_dir())
+                    .join("bin")
+            };
+            fs::create_dir_all(&bin_dir)
+                .expect("无法创建 bin 目录");
+            let _ = BIN_DIR.set(bin_dir);
 
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
             let light = MenuItemBuilder::with_id("light", "轻量模式").build(app)?;

@@ -4,8 +4,9 @@ ACK_FRONTEND_VERSION: V3
 
 ## 📢 最新联调通知
 - ✅ `upgrade_frpc` 命令已实现（2026-06-27）：
-  - 参数 `version`（如 "0.69.1"）→ 下载对应平台架构的 zip → 解压 → 替换 exe 同级 frpc
+  - 参数 `version`（如 "0.69.1"）→ 下载对应平台架构的 zip → 解压 → 替换 bin 目录 frpc
   - 先写 tmp 后 rename，Unix 设置可执行权限
+  - frpc 存放路径：Windows `<exe_dir>/bin/`，其他平台 `<app_data_dir>/bin/`
 - ✅ `get_frpc_version` 命令已实现（2026-06-27）：
   - 返回当前版本（frpc -v）、最新版本（GitHub API）、可升级状态、平台、架构
   - 前端可根据 `platform`/`arch` 拼接下载链接：`frp_{version}_{platform}_{arch}.zip`

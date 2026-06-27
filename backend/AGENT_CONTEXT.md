@@ -47,9 +47,13 @@
 - ✅ `upgrade_frpc` 命令已实现（2026-06-27）
   - 参数 `version`: 版本号，如 "0.69.1"
   - 从 GitHub Releases 下载 `frp_{version}_{platform}_{arch}.zip`
-  - 内存解压，提取 frpc/frpc.exe 到 exe 同级目录（先写 tmp 再 rename）
+  - 内存解压，提取 frpc/frpc.exe 到 bin 目录（先写 tmp 再 rename）
   - Unix 设置 755 可执行权限
   - 依赖: `zip` v2, `reqwest` stream feature, `futures-util`
+- ✅ `BIN_DIR` 重构（2026-06-27）：frpc 存放路径从 exe 同级改为 `bin/` 目录
+  - Windows: `<exe_dir>/bin/`
+  - macOS/Linux: `<app_data_dir>/bin/`
+  - `get_current_frpc_version` 改为从 `BIN_DIR` 读取
 
 ### 待办事项
 - [ ] 等待前端确认
