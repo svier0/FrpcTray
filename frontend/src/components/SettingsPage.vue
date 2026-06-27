@@ -349,13 +349,6 @@ watch(language, (newLang) => {
       </div>
 
       <div v-else-if="activeTab === 'kernel'" class="space-y-6">
-        <section class="space-y-3">
-          <header class="space-y-1">
-            <h3 class="text-sm font-medium">{{ t('settings.tabs.kernel') }}</h3>
-            <p class="text-xs text-muted-foreground">{{ t('settings.kernel.description') }}</p>
-          </header>
-        </section>
-
         <div v-if="versionInfo" class="rounded-xl border border-border bg-card p-5">
           <div class="flex items-center gap-3 mb-4">
             <h3 class="text-base font-semibold">frpc</h3>
