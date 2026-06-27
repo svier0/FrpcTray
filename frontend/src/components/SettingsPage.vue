@@ -392,7 +392,16 @@ watch(language, (newLang) => {
             </div>
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('settings.kernel.latestVersion') }}</span>
-              <span class="font-medium">{{ versionInfo.latest_version || '-' }}</span>
+              <span v-if="versionInfo.latest_version" class="font-medium">{{ versionInfo.latest_version }}</span>
+              <button v-else class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors" @click="loadVersionInfo">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <path d="M3 3v5h5"/>
+                  <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                  <path d="M16 16h5v5"/>
+                </svg>
+                {{ t('settings.kernel.retry') }}
+              </button>
             </div>
           </div>
 

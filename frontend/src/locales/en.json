@@ -115,6 +115,7 @@
       "installing": "Installing...",
       "installSuccess": "Install successful",
       "installFailed": "Install failed",
+      "retry": "Retry",
       "loading": "Loading..."
     }
   }

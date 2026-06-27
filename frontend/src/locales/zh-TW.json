@@ -115,6 +115,7 @@
       "installing": "安裝中...",
       "installSuccess": "安裝成功",
       "installFailed": "安裝失敗",
+      "retry": "請重試",
       "loading": "載入中..."
     }
   }
