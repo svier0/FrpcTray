@@ -162,15 +162,16 @@ async function loadVersionInfo() {
 
 async function handleUpgrade() {
   if (!versionInfo.value || isUpgrading.value) return;
+  const isInstall = versionInfo.value.current_version === '0';
   try {
     isUpgrading.value = true;
-    upgradeProgress.value = t('settings.kernel.upgrading');
+    upgradeProgress.value = isInstall ? t('settings.kernel.installing') : t('settings.kernel.upgrading');
     await upgradeFrpc(versionInfo.value.latest_version);
-    upgradeProgress.value = t('settings.kernel.upgradeSuccess');
+    upgradeProgress.value = isInstall ? t('settings.kernel.installSuccess') : t('settings.kernel.upgradeSuccess');
     await loadVersionInfo();
   } catch (e) {
     console.error("Failed to upgrade frpc:", e);
-    upgradeProgress.value = t('settings.kernel.upgradeFailed');
+    upgradeProgress.value = isInstall ? t('settings.kernel.installFailed') : t('settings.kernel.upgradeFailed');
   } finally {
     isUpgrading.value = false;
   }
@@ -420,7 +421,7 @@ watch(language, (newLang) => {
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
               </svg>
-              {{ isUpgrading ? t('settings.kernel.upgrading') : (versionInfo.current_version === '0' ? t('settings.kernel.install') : t('settings.kernel.update')) }}
+              {{ isUpgrading ? (versionInfo.current_version === '0' ? t('settings.kernel.installing') : t('settings.kernel.upgrading')) : (versionInfo.current_version === '0' ? t('settings.kernel.install') : t('settings.kernel.update')) }}
             </button>
           </div>
         </div>

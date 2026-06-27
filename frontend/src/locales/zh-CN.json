@@ -112,6 +112,9 @@
       "upgrading": "升级中...",
       "upgradeSuccess": "升级成功",
       "upgradeFailed": "升级失败",
+      "installing": "安装中...",
+      "installSuccess": "安装成功",
+      "installFailed": "安装失败",
       "loading": "加载中..."
     }
   }

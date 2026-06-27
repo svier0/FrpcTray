@@ -112,6 +112,9 @@
       "upgrading": "Upgrading...",
       "upgradeSuccess": "Upgrade successful",
       "upgradeFailed": "Upgrade failed",
+      "installing": "Installing...",
+      "installSuccess": "Install successful",
+      "installFailed": "Install failed",
       "loading": "Loading..."
     }
   }
