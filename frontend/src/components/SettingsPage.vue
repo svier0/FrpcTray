@@ -30,6 +30,8 @@ const versionInfo = ref<FrpcVersionInfo | null>(null);
 const isUpgrading = ref(false);
 const upgradeProgress = ref("");
 
+const isBackupExpanded = ref(false);
+
 const languages = [
   { value: "zh-CN", label: "简体中文" },
   { value: "zh-TW", label: "繁體中文" },
@@ -443,12 +445,51 @@ watch(language, (newLang) => {
       </div>
 
       <div v-else-if="activeTab === 'advanced'" class="space-y-6">
-        <section class="space-y-3">
-          <header class="space-y-1">
-            <h3 class="text-sm font-medium">{{ t('settings.tabs.advanced') }}</h3>
-            <p class="text-xs text-muted-foreground">Advanced settings coming soon.</p>
-          </header>
-        </section>
+        <div class="rounded-xl border border-border bg-card overflow-hidden">
+          <button
+            class="flex items-center w-full px-5 py-4 text-left hover:bg-muted/30 transition-colors"
+            @click="isBackupExpanded = !isBackupExpanded"
+          >
+            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <ellipse cx="12" cy="5" rx="9" ry="3"/>
+                <path d="M3 5v14a9 3 0 0 0 18 0V5"/>
+                <path d="M3 12a9 3 0 0 0 18 0"/>
+              </svg>
+            </div>
+            <div class="ml-3 flex-1">
+              <h3 class="text-sm font-medium">{{ t('settings.advanced.backup.title') }}</h3>
+              <p class="text-xs text-muted-foreground">{{ t('settings.advanced.backup.description') }}</p>
+            </div>
+            <svg
+              xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-muted-foreground transition-transform duration-200"
+              :class="isBackupExpanded ? 'rotate-180' : ''"
+            >
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+
+          <div v-if="isBackupExpanded" class="px-5 pb-5 pt-2 border-t border-border">
+            <div class="flex gap-3">
+              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" x2="12" y1="15" y2="3"/>
+                </svg>
+                {{ t('settings.advanced.backup.export') }}
+              </button>
+              <button class="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/>
+                  <path d="M14 2v4a2 2 0 0 0 2 2h4"/>
+                </svg>
+                {{ t('settings.advanced.backup.import') }}
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="activeTab === 'about'" class="space-y-6">

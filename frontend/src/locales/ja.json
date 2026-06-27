@@ -99,6 +99,14 @@
       "changelog": "更新履歴",
       "checkUpdate": "更新を確認"
     },
+    "advanced": {
+      "backup": {
+        "title": "バックアップと復元",
+        "description": "自動バックアップの管理、データベーススナップショットの表示と復元",
+        "export": "バックアップをエクスポート",
+        "import": "ZIPバックアップファイルを選択"
+      }
+    },
     "kernel": {
       "description": "frpc カーネルバージョン管理",
       "currentVersion": "現在のバージョン",

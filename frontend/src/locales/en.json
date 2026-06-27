@@ -99,6 +99,14 @@
       "changelog": "Changelog",
       "checkUpdate": "Check for Updates"
     },
+    "advanced": {
+      "backup": {
+        "title": "Backup & Restore",
+        "description": "Manage auto backups, view and restore database snapshots",
+        "export": "Export Backup",
+        "import": "Select ZIP Backup File"
+      }
+    },
     "kernel": {
       "description": "frpc kernel version management",
       "currentVersion": "Current Version",

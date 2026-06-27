@@ -99,6 +99,14 @@
       "changelog": "更新日誌",
       "checkUpdate": "檢查更新"
     },
+    "advanced": {
+      "backup": {
+        "title": "備份與還原",
+        "description": "管理自動備份，查看和還原資料庫快照",
+        "export": "匯出備份",
+        "import": "選擇 ZIP 備份檔案"
+      }
+    },
     "kernel": {
       "description": "frpc 核心版本管理",
       "currentVersion": "當前版本",
