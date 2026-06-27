@@ -91,6 +91,10 @@
       "show": "顯示",
       "hide": "隱藏"
     },
+    "autostart": {
+      "title": "開機自啟",
+      "description": "隨系統啟動自動運行"
+    },
     "about": {
       "version": "版本",
       "appName": "frpc tray",

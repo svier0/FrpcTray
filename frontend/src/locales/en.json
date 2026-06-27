@@ -91,6 +91,10 @@
       "show": "Show",
       "hide": "Hide"
     },
+    "autostart": {
+      "title": "Auto Start",
+      "description": "Start automatically when system boots"
+    },
     "about": {
       "version": "Version",
       "appName": "frpc tray",

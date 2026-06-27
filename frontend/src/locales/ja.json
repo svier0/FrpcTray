@@ -91,6 +91,10 @@
       "show": "表示",
       "hide": "非表示"
     },
+    "autostart": {
+      "title": "自動起動",
+      "description": "システム起動時に自動的に起動"
+    },
     "about": {
       "version": "バージョン",
       "appName": "frpc tray",

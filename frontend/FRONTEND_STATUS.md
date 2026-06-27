@@ -15,6 +15,7 @@ ACK_BACKEND_VERSION: V5
 - ✅ 内核更新接口对接：get_frpc_version、upgrade_frpc
 - ✅ 未安装状态：显示黄色感叹号，按钮显示安装
 - ✅ 备份与恢复接口对接：export_backup、restore_backup
+- ✅ 代理项type标签改为蓝色tag显示
 
-## 📢 最新联调通知
-- 已对接备份恢复接口（export_backup、restore_backup）
+## 📢 需求反馈
+- 需要后端提供开机自启接口（get_autostart / set_autostart）
