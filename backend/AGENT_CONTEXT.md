@@ -41,8 +41,7 @@
 - ✅ `get_frpc_version` 命令已实现并提交（2026-06-27）
   - `FrpcVersionInfo` 结构：current_version / latest_version / can_upgrade / platform / arch
   - `get_current_frpc_version`: 运行 `frpc -v` 解析版本
-  - `get_latest_frpc_version`: GitHub API 获取 latest release，加入 User-Agent header，复用 HTTP_CLIENT 单例
-  - 代理回退策略：直连超时 10s 失败后自动走 `gh-proxy.com`
+  - `get_latest_frpc_version`: 从 scoop 仓库获取版本号（GitHub raw 优先，gitee 镜像回退），不再依赖 GitHub API（避免速率限制）
   - `compare_versions`: 支持语义化版本比较，忽略 preview 后缀
   - `get_platform` / `get_arch`: 编译期确定平台和架构字符串
 - ✅ `upgrade_frpc` 命令已实现（2026-06-27）
@@ -59,6 +58,7 @@
 
 ### 待办事项
 - [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
+- [x] get_frpc_version 版本号获取改为 scoop 仓库
 - [ ] 后续功能开发...
 
 ---
@@ -136,7 +136,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V5
+- **当前版本**: V6
 - **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **阻塞点**: 无

@@ -57,11 +57,6 @@ struct FrpcVersionInfo {
     arch: String,
 }
 
-#[derive(Debug, Deserialize)]
-struct GithubRelease {
-    tag_name: String,
-}
-
 #[derive(Debug)]
 struct FrpcConfigFile {
     title: String,
@@ -890,14 +885,13 @@ fn parse_frpc_version_output(output: &str) -> String {
 async fn get_latest_frpc_version() -> Result<String, String> {
     let client = get_http_client();
 
+    // 从 scoop 仓库获取版本号（GitHub raw 优先，gitee 回退）
     let urls = [
-        "https://api.github.com/repos/fatedier/frp/releases/latest",
-        "https://gh-proxy.com/https://api.github.com/repos/fatedier/frp/releases/latest",
-        "https://ghfast.top/https://api.github.com/repos/fatedier/frp/releases/latest",
+        "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
+        "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
     ];
     for url in &urls {
-        let timeout = if url.contains("//gh-") { 20 } else { 10 };
-        match fetch_api_version(client, url, timeout).await {
+        match fetch_scoop_version(client, url, 10).await {
             Ok(v) => return Ok(v),
             Err(e) => eprintln!("[frpc-tray] {} 失败: {}", url, e),
         }
@@ -906,7 +900,7 @@ async fn get_latest_frpc_version() -> Result<String, String> {
     Err("所有方式均失败，请检查网络连接".to_string())
 }
 
-async fn fetch_api_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
+async fn fetch_scoop_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
     let response = client
         .get(url)
         .header("User-Agent", "frpc-tray/1.0")
@@ -924,10 +918,13 @@ async fn fetch_api_version(client: &reqwest::Client, url: &str, timeout_secs: u6
         .await
         .map_err(|e| format!("读取响应失败: {}", e))?;
 
-    let release: GithubRelease = serde_json::from_slice(&body)
+    let scoop_json: serde_json::Value = serde_json::from_slice(&body)
         .map_err(|e| format!("解析 JSON 失败: {}", e))?;
 
-    Ok(release.tag_name.strip_prefix('v').unwrap_or(&release.tag_name).to_string())
+    scoop_json["version"]
+        .as_str()
+        .map(|v| v.to_string())
+        .ok_or_else(|| "版本号字段缺失".to_string())
 }
 
 #[allow(dead_code)]

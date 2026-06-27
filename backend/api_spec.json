@@ -1,5 +1,5 @@
 {
-  "version": "V5",
+  "version": "V6",
   "lastUpdated": "2026-06-27",
   "commands": [
     {
@@ -139,7 +139,7 @@
     },
     {
       "name": "get_frpc_version",
-      "description": "获取 frpc 内核版本信息（当前版本/最新版本/可升级状态/平台/架构）",
+      "description": "获取 frpc 内核版本信息（当前版本/最新版本/可升级状态/平台/架构）。最新版本从 scoop 仓库获取（GitHub raw 优先，gitee 镜像回退）",
       "parameters": [],
       "returns": {
         "type": "Result<FrpcVersionInfo, String>",
