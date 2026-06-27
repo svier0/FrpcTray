@@ -53,6 +53,7 @@ ACK_BACKEND_VERSION: V1 表示已经看过后端V1版本的面板内容
 3. BACKEND_VERSION大于ACK_BACKEND_VERSION: 表示后端Agent有新留言给前端Agent
 4. 如果对方没有给自己留言，则忽略`/frontend/FRONTEND_STATUS.md`和`/backend/BACKEND_STATUS.md`
 5. 如果对方有新的留言，需要处理对方的反馈
+6. 每次对话都需要查看协作留言
 
 ### 给协作Agent留言：
 1. 首先查看对方阅读状态
@@ -67,7 +68,7 @@ ACK_BACKEND_VERSION: V1 表示已经看过后端V1版本的面板内容
 
 ### 🤖 后端 Agent 执行逻辑：
 1.  **业务开发（绝对自由）：** 你可以连续、无限制地开发后端业务代码，并将所有新接口的详细定义同步写进 `/backend/api_spec.json`。你的代码开发不受前端进度影响。
-2.  **看板对齐：** 每次启动或写完一个阶段，FRONTEND_VERSION大于ACK_FRONTEND_VERSION时，处理`/frontend/FRONTEND_STATUS.md`中前端留言内容，并设置ACK_FRONTEND_VERSION=FRONTEND_VERSION。
+2.  **看板对齐：** **每次**启动或写完一个阶段，FRONTEND_VERSION大于ACK_FRONTEND_VERSION时，处理`/frontend/FRONTEND_STATUS.md`中前端留言内容，并设置ACK_FRONTEND_VERSION=FRONTEND_VERSION。
 3.  **更新看板（严格卡关）：** 当你准备更新 `/frontend/BACKEND_STATUS.md` 喊话前端时，检查前端的 `ACK_BACKEND_VERSION`和自己的BACKEND_VERSION。
     * **如果相等：** 说明前端已经处理完你上一版的通知。请**清空并覆盖** `BACKEND_STATUS.md`，发布新的 `BACKEND_VERSION: V[下一数字]`，一口气写明你最近积压的所有新功能动态。
     * **如果不相等：** 说明前端还没上线，或者还在处理你上一版的通知。**增量更新 BACKEND_STATUS.md**。待前端上线签收一并处理。
@@ -75,9 +76,11 @@ ACK_BACKEND_VERSION: V1 表示已经看过后端V1版本的面板内容
 
 ### 🤖 前端 Agent 执行逻辑：
 1.  **业务开发（绝对自由）：** 你可以连续、无限制地进行前端UI代码的设计开发。你的UI开发不受后端进度影响。
-2.  **看板对齐：** 每次启动或写完一个阶段，BACKEND_VERSION大于ACK_BACKEND_VERSION时，处理`/backend/BACKEND_STATUS.md`中后端留言内容。直接去阅读 `/backend/api_spec.json` 查阅最新的接口技术细节。并设置ACK_BACKEND_VERSION=BACKEND_VERSION。
+2.  **看板对齐：** **每次**每次启动或写完一个阶段，BACKEND_VERSION大于ACK_BACKEND_VERSION时，处理`/backend/BACKEND_STATUS.md`中后端留言内容。直接去阅读 `/backend/api_spec.json` 查阅最新的接口技术细节。并设置ACK_BACKEND_VERSION=BACKEND_VERSION。
 3.  **业务联调：** 按照顺序，逐步对接后端更新的功能。
 4.  **签字放行：** 当你把后端某一版通知里的功能对接完毕后，**清空并覆盖** `FRONTEND_STATUS.md`，将 `ACK_BACKEND_VERSION` 修改为已对齐的后端版本号。这等于通知后端：“我已经追上你的进度了，你可以刷新看板了”。
+
+### **每次启动或写完一个阶段** 都必须进行看板对齐
 
 ---
 
