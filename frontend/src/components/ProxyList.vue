@@ -66,7 +66,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div ref="listRef" class="space-y-3">
+  <div ref="listRef" class="space-y-3 pt-4">
     <div v-for="item in dragList" :key="item.id" class="sortable-item">
       <ProxyItem
         :item="item"

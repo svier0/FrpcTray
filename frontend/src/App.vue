@@ -221,7 +221,6 @@ onMounted(() => {
         <ProxyList
           v-else
           :items="proxies"
-          class="pt-4"
           :active-id="activeProxyId"
           @update:items="handleUpdateItems"
           @update:enabled="handleUpdateEnabled"
