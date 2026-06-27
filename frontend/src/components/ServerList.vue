@@ -77,9 +77,9 @@ function handleDelete(id: string) {
 <template>
   <div class="space-y-3">
     <div ref="listRef" class="space-y-3">
-      <div v-for="item in dragList" :key="item.id" class="relative group">
+      <div v-for="item in dragList" :key="item.id" class="flex items-center gap-2 pl-4">
         <button
-          class="drag-handle absolute -left-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1 text-muted-foreground/50 hover:text-muted-foreground transition-all cursor-grab active:cursor-grabbing"
+          class="drag-handle flex-shrink-0 p-1.5 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
           :title="t('proxy.dragHandle')"
         >
           <svg
