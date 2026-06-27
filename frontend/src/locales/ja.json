@@ -104,7 +104,13 @@
         "title": "バックアップと復元",
         "description": "自動バックアップの管理、データベーススナップショットの表示と復元",
         "export": "バックアップをエクスポート",
-        "import": "ZIPバックアップファイルを選択"
+        "import": "ZIPバックアップファイルを選択",
+        "exporting": "エクスポート中...",
+        "exportSuccess": "エクスポート成功",
+        "exportFailed": "エクスポート失敗",
+        "restoring": "復元中...",
+        "restoreSuccess": "復元成功",
+        "restoreFailed": "復元失敗"
       }
     },
     "kernel": {

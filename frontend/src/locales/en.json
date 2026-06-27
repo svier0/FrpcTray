@@ -104,7 +104,13 @@
         "title": "Backup & Restore",
         "description": "Manage auto backups, view and restore database snapshots",
         "export": "Export Backup",
-        "import": "Select ZIP Backup File"
+        "import": "Select ZIP Backup File",
+        "exporting": "Exporting...",
+        "exportSuccess": "Export successful",
+        "exportFailed": "Export failed",
+        "restoring": "Restoring...",
+        "restoreSuccess": "Restore successful",
+        "restoreFailed": "Restore failed"
       }
     },
     "kernel": {

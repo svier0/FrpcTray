@@ -104,7 +104,13 @@
         "title": "备份与恢复",
         "description": "管理自动备份，查看和恢复数据库快照",
         "export": "导出备份",
-        "import": "选择 ZIP 备份文件"
+        "import": "选择 ZIP 备份文件",
+        "exporting": "正在导出...",
+        "exportSuccess": "导出成功",
+        "exportFailed": "导出失败",
+        "restoring": "正在恢复...",
+        "restoreSuccess": "恢复成功",
+        "restoreFailed": "恢复失败"
       }
     },
     "kernel": {
