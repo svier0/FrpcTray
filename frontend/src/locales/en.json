@@ -104,10 +104,15 @@
       "currentVersion": "Current Version",
       "latestVersion": "Latest Version",
       "updatable": "Updatable",
+      "latest": "Latest",
       "installed": "Installed",
       "notInstalled": "Not Installed",
       "update": "Update",
-      "install": "Install"
+      "install": "Install",
+      "upgrading": "Upgrading...",
+      "upgradeSuccess": "Upgrade successful",
+      "upgradeFailed": "Upgrade failed",
+      "loading": "Loading..."
     }
   }
 }

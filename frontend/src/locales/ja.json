@@ -104,10 +104,15 @@
       "currentVersion": "現在のバージョン",
       "latestVersion": "最新バージョン",
       "updatable": "アップデート可能",
+      "latest": "最新です",
       "installed": "インストール済み",
       "notInstalled": "未インストール",
       "update": "アップデート",
-      "install": "インストール"
+      "install": "インストール",
+      "upgrading": "アップデート中...",
+      "upgradeSuccess": "アップデート成功",
+      "upgradeFailed": "アップデート失敗",
+      "loading": "読み込み中..."
     }
   }
 }

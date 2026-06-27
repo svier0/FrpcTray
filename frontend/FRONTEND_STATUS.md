@@ -1,5 +1,5 @@
 # 前端联调看板
-VERSION: V4
+VERSION: V5
 ACK_BACKEND_VERSION: V3
 
 ## 📢 最新进度与反馈
@@ -12,6 +12,7 @@ ACK_BACKEND_VERSION: V3
 - ✅ 内核页面卡片：frpc版本信息、Win/amd64标签、升级按钮
 - ✅ 关于页面卡片：应用图标、版本号、GitHub/更新日志/检查更新按钮
 - ✅ 拖拽手柄样式统一：服务器和代理列表手柄都在卡片内部
+- ✅ 内核更新接口对接：get_frpc_version、upgrade_frpc
 
 ## 📢 最新联调通知
-- 无新的联调需求
+- 已对接内核更新接口，测试升级功能

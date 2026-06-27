@@ -104,10 +104,15 @@
       "currentVersion": "當前版本",
       "latestVersion": "最新版本",
       "updatable": "可升級",
+      "latest": "已是最新",
       "installed": "已安裝",
       "notInstalled": "未安裝",
       "update": "升級",
-      "install": "安裝"
+      "install": "安裝",
+      "upgrading": "升級中...",
+      "upgradeSuccess": "升級成功",
+      "upgradeFailed": "升級失敗",
+      "loading": "載入中..."
     }
   }
 }

@@ -4,7 +4,8 @@ import { useI18n } from "vue-i18n";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
-import { listServers, createServer, updateServer, deleteServer, reorderServers } from "../utils/ipc";
+import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc } from "../utils/ipc";
+import type { FrpcVersionInfo } from "../utils/ipc";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
 type Theme = "light" | "dark" | "system";
@@ -24,6 +25,10 @@ const servers = ref<ServerItem[]>([]);
 const showDeleteDialog = ref(false);
 const deleteTargetId = ref<string | null>(null);
 const isLoading = ref(false);
+
+const versionInfo = ref<FrpcVersionInfo | null>(null);
+const isUpgrading = ref(false);
+const upgradeProgress = ref("");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -144,7 +149,32 @@ async function handleAddServer() {
 
 onMounted(() => {
   loadServers();
+  loadVersionInfo();
 });
+
+async function loadVersionInfo() {
+  try {
+    versionInfo.value = await getFrpcVersion();
+  } catch (e) {
+    console.error("Failed to load version info:", e);
+  }
+}
+
+async function handleUpgrade() {
+  if (!versionInfo.value || isUpgrading.value) return;
+  try {
+    isUpgrading.value = true;
+    upgradeProgress.value = t('settings.kernel.upgrading');
+    await upgradeFrpc(versionInfo.value.latest_version);
+    upgradeProgress.value = t('settings.kernel.upgradeSuccess');
+    await loadVersionInfo();
+  } catch (e) {
+    console.error("Failed to upgrade frpc:", e);
+    upgradeProgress.value = t('settings.kernel.upgradeFailed');
+  } finally {
+    isUpgrading.value = false;
+  }
+}
 
 async function toggleServerEnable(server: ServerItem) {
   const updatedServer = { ...server, enable: !server.enable };
@@ -326,37 +356,64 @@ watch(language, (newLang) => {
           </header>
         </section>
 
-        <div class="rounded-xl border border-border bg-card p-5">
+        <div v-if="versionInfo" class="rounded-xl border border-border bg-card p-5">
           <div class="flex items-center gap-3 mb-4">
             <h3 class="text-base font-semibold">frpc</h3>
-            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Win</span>
-            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">amd64</span>
-            <span class="ml-auto rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500">
+            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ versionInfo.platform }}</span>
+            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">{{ versionInfo.arch }}</span>
+            <span
+              v-if="versionInfo.can_upgrade"
+              class="ml-auto rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
+            >
               {{ t('settings.kernel.updatable') }}
+            </span>
+            <span
+              v-else
+              class="ml-auto rounded-full bg-green-500/10 px-2.5 py-0.5 text-xs font-medium text-green-500"
+            >
+              {{ t('settings.kernel.latest') }}
             </span>
           </div>
 
           <div class="space-y-2 text-sm">
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('settings.kernel.currentVersion') }}</span>
-              <span class="font-medium">0.61.0</span>
+              <span class="font-medium">{{ versionInfo.current_version || '-' }}</span>
             </div>
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('settings.kernel.latestVersion') }}</span>
-              <span class="font-medium">0.61.1</span>
+              <span class="font-medium">{{ versionInfo.latest_version || '-' }}</span>
             </div>
           </div>
 
+          <div v-if="upgradeProgress" class="mt-4 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
+            {{ upgradeProgress }}
+          </div>
+
           <div class="mt-4 flex justify-end">
-            <button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button
+              v-if="versionInfo.can_upgrade"
+              :disabled="isUpgrading"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              @click="handleUpgrade"
+            >
+              <svg v-if="!isUpgrading" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                 <path d="M3 3v5h5"/>
                 <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
                 <path d="M16 16h5v5"/>
               </svg>
-              {{ t('settings.kernel.update') }}
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin">
+                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+              </svg>
+              {{ isUpgrading ? t('settings.kernel.upgrading') : t('settings.kernel.update') }}
             </button>
+          </div>
+        </div>
+
+        <div v-else class="rounded-xl border border-border bg-card p-5">
+          <div class="flex items-center justify-center h-20 text-sm text-muted-foreground">
+            {{ t('settings.kernel.loading') }}
           </div>
         </div>
       </div>

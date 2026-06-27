@@ -56,3 +56,19 @@ export async function deleteProxy(serverId: string, name: string): Promise<void>
 export async function reorderProxies(serverId: string, names: string[]): Promise<void> {
   return invoke("reorder_proxies", { serverId, names });
 }
+
+export interface FrpcVersionInfo {
+  current_version: string;
+  latest_version: string;
+  can_upgrade: boolean;
+  platform: string;
+  arch: string;
+}
+
+export async function getFrpcVersion(): Promise<FrpcVersionInfo> {
+  return invoke("get_frpc_version");
+}
+
+export async function upgradeFrpc(version: string): Promise<void> {
+  return invoke("upgrade_frpc", { version });
+}
