@@ -322,9 +322,43 @@ watch(language, (newLang) => {
         <section class="space-y-3">
           <header class="space-y-1">
             <h3 class="text-sm font-medium">{{ t('settings.tabs.kernel') }}</h3>
-            <p class="text-xs text-muted-foreground">Kernel settings coming soon.</p>
+            <p class="text-xs text-muted-foreground">{{ t('settings.kernel.description') }}</p>
           </header>
         </section>
+
+        <div class="rounded-xl border border-border bg-card p-5">
+          <div class="flex items-center gap-3 mb-4">
+            <h3 class="text-base font-semibold">frpc</h3>
+            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">Win</span>
+            <span class="rounded bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">amd64</span>
+            <span class="ml-auto rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500">
+              {{ t('settings.kernel.updatable') }}
+            </span>
+          </div>
+
+          <div class="space-y-2 text-sm">
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">{{ t('settings.kernel.currentVersion') }}</span>
+              <span class="font-medium">0.61.0</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">{{ t('settings.kernel.latestVersion') }}</span>
+              <span class="font-medium">0.61.1</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex justify-end">
+            <button class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                <path d="M3 3v5h5"/>
+                <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                <path d="M16 16h5v5"/>
+              </svg>
+              {{ t('settings.kernel.update') }}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div v-else-if="activeTab === 'advanced'" class="space-y-6">

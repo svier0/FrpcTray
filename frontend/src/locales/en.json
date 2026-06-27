@@ -98,6 +98,16 @@
       "description": "View version information and update status.",
       "changelog": "Changelog",
       "checkUpdate": "Check for Updates"
+    },
+    "kernel": {
+      "description": "frpc kernel version management",
+      "currentVersion": "Current Version",
+      "latestVersion": "Latest Version",
+      "updatable": "Updatable",
+      "installed": "Installed",
+      "notInstalled": "Not Installed",
+      "update": "Update",
+      "install": "Install"
     }
   }
 }

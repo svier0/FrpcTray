@@ -98,6 +98,16 @@
       "description": "バージョン情報と更新状態を確認します。",
       "changelog": "更新履歴",
       "checkUpdate": "更新を確認"
+    },
+    "kernel": {
+      "description": "frpc カーネルバージョン管理",
+      "currentVersion": "現在のバージョン",
+      "latestVersion": "最新バージョン",
+      "updatable": "アップデート可能",
+      "installed": "インストール済み",
+      "notInstalled": "未インストール",
+      "update": "アップデート",
+      "install": "インストール"
     }
   }
 }
