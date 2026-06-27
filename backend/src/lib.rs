@@ -857,14 +857,30 @@ fn get_current_frpc_version() -> String {
     match output {
         Ok(o) if o.status.success() => {
             let stdout = String::from_utf8_lossy(&o.stdout);
-            // Parse version from output like "frpc v0.69.1"
-            stdout
-                .lines()
-                .find_map(|line| line.trim().strip_prefix("frpc v").map(String::from))
-                .unwrap_or_else(|| "0".to_string())
+            parse_frpc_version_output(&stdout)
         }
         _ => "0".to_string(),
     }
+}
+
+fn parse_frpc_version_output(output: &str) -> String {
+    output
+        .lines()
+        .find_map(|line| {
+            let line = line.trim();
+            line.strip_prefix("frpc v")
+                .or_else(|| line.strip_prefix("frpc "))
+                .or_else(|| {
+                    let first = line.split_whitespace().next()?;
+                    if first.chars().all(|c| c.is_ascii_digit() || c == '.') {
+                        Some(first)
+                    } else {
+                        None
+                    }
+                })
+                .map(String::from)
+        })
+        .unwrap_or_else(|| "0".to_string())
 }
 
 /// Get latest frpc version from GitHub releases API (with proxy fallback)
@@ -1335,5 +1351,32 @@ localPort = 82
             parse_version_from_location("https://github.com/fatedier/frp/releases/latest"),
             None
         );
+    }
+
+    // ── parse_frpc_version_output tests ──
+
+    #[test]
+    fn test_parse_frpc_output_with_v_prefix() {
+        assert_eq!(parse_frpc_version_output("frpc v0.69.1\n"), "0.69.1");
+    }
+
+    #[test]
+    fn test_parse_frpc_output_without_v() {
+        assert_eq!(parse_frpc_version_output("frpc 0.69.1\n"), "0.69.1");
+    }
+
+    #[test]
+    fn test_parse_frpc_output_raw_version() {
+        assert_eq!(parse_frpc_version_output("0.69.1\n"), "0.69.1");
+    }
+
+    #[test]
+    fn test_parse_frpc_output_empty() {
+        assert_eq!(parse_frpc_version_output(""), "0");
+    }
+
+    #[test]
+    fn test_parse_frpc_output_garbage() {
+        assert_eq!(parse_frpc_version_output("some error\n"), "0");
     }
 }
