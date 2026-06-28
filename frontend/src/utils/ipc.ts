@@ -126,10 +126,14 @@ export async function getAllFrpcStatus(): Promise<FrpcRunningStatus[]> {
 }
 
 const errorPatterns: Array<{ regex: RegExp; template: string }> = [
-  { regex: /proxy name "([^"]+)" is already in use/i, template: "proxy name {0} is already in use" },
-  { regex: /proxy "([^"]+)" already exists/i, template: "proxy {0} already exists" },
-  { regex: /port (\d+) already in use/i, template: "port {0} already in use" },
-  { regex: /listen error: port (\d+) already in use/i, template: "listen error: port {0} already in use" },
+  { regex: /Unknown config field "([^"]+)"/i, template: 'Unknown config field "{name}"' },
+  { regex: /Proxy name "([^"]+)" already in use/i, template: 'Proxy name "{name}" already in use' },
+  { regex: /Port (\d+) already in use/i, template: "Port {port} already in use" },
+  { regex: /Port (\d+) unavailable/i, template: "Port {port} unavailable" },
+  { regex: /Config parse error: (.+)/i, template: "Config parse error: {detail}" },
+  { regex: /TLS certificate verification failed: (.+)/i, template: "TLS certificate verification failed: {reason}" },
+  { regex: /TLS error: (.+)/i, template: "TLS error: {detail}" },
+  { regex: /Health check failed: (.+)/i, template: "Health check failed: {detail}" },
 ];
 
 export function translateError(error: string | null): string {
@@ -140,10 +144,14 @@ export function translateError(error: string | null): string {
   for (const { regex, template } of errorPatterns) {
     const match = error.match(regex);
     if (match) {
-      const args = match.slice(1);
-      let result = t(`error.${template}`, { defaultMessage: template });
-      args.forEach((arg, i) => {
-        result = result.replace(`{${i}}`, arg);
+      const keys: Record<string, string> = {};
+      if (match[1]) {
+        const placeholder = template.match(/\{(\w+)\}/)?.[1];
+        if (placeholder) keys[placeholder] = match[1];
+      }
+      let result = t(`error.${template}`, { defaultMessage: template, ...keys });
+      Object.entries(keys).forEach(([k, v]) => {
+        result = result.replace(`{${k}}`, v);
       });
       return result;
     }
