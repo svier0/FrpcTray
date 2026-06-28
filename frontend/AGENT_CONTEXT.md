@@ -14,9 +14,9 @@
 
 ## 主要约定 (Key Conventions)
 - Language: Use Chinese (zh-CN) for UI text and comments
-- Styling: Follow CC Switch design patterns (dark theme, glass morphism)
+- Styling: dark theme, glass morphism
 - State: 配置统一存储在后端 conf/config.toml（通过 get_config/save_config 接口）
-- UI组件: 使用tailwindcss进行组件设计
+- UI组件: 使用radix-vue+tailwindcss进行组件设计
 - 应用名称: FrpC Tray
 
 ---

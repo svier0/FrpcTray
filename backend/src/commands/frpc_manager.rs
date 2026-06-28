@@ -204,53 +204,86 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
 
-        if let Some(stdout) = child.stdout.take() {
-            let mut reader = tokio::io::BufReader::new(stdout);
-            let mut line = String::new();
-            let deadline = tokio::time::sleep(Duration::from_secs(10));
-            tokio::pin!(deadline);
+        let mut stdout_reader = child.stdout.take().map(tokio::io::BufReader::new);
+        let mut stderr_reader = child.stderr.take().map(tokio::io::BufReader::new);
+        let mut stdout_line = String::new();
+        let mut stderr_line = String::new();
+        let deadline = tokio::time::sleep(Duration::from_secs(10));
+        tokio::pin!(deadline);
 
-            loop {
-                tokio::select! {
-                    result = reader.read_line(&mut line) => {
-                        match result {
-                            Ok(0) => break,
-                            Ok(_) => {
-                                let trimmed = line.trim();
-                                eprintln!("[frpc] {}", trimmed);
-                                let lower = trimmed.to_lowercase();
-                                if lower.contains("login to server success") {
-                                    login_ok = true;
-                                    break;
-                                }
-                                if lower.contains("frpc service") && lower.contains("stopped") {
-                                    break;
-                                }
-                                if error_line.is_none() && !trimmed.is_empty() {
-                                    error_line = Some(line.clone());
-                                }
-                                line.clear();
+        loop {
+            let stdout_fut = async {
+                match &mut stdout_reader {
+                    Some(r) => r.read_line(&mut stdout_line).await,
+                    None => std::future::pending().await,
+                }
+            };
+            let stderr_fut = async {
+                match &mut stderr_reader {
+                    Some(r) => r.read_line(&mut stderr_line).await,
+                    None => std::future::pending().await,
+                }
+            };
+            tokio::select! {
+                result = stdout_fut => {
+                    match result {
+                        Ok(0) => {
+                            stdout_reader = None;
+                            if stdout_reader.is_none() && stderr_reader.is_none() { break; }
+                        }
+                        Ok(_) => {
+                            let trimmed = stdout_line.trim();
+                            let lower = trimmed.to_lowercase();
+                            if lower.contains("login to server success") {
+                                login_ok = true;
+                                break;
                             }
-                            Err(_) => break,
+                            if lower.contains("frpc service") && lower.contains("stopped") {
+                                break;
+                            }
+                            if error_line.is_none() && !trimmed.is_empty() {
+                                error_line = Some(stdout_line.clone());
+                            }
+                            stdout_line.clear();
+                        }
+                        Err(_) => {
+                            stdout_reader = None;
+                            if stdout_reader.is_none() && stderr_reader.is_none() { break; }
                         }
                     }
-                    _ = kill_rx.changed() => {
-                        if *kill_rx.borrow() {
-                            let _ = child.kill().await;
-                            let _ = child.wait().await;
-                            break;
+                }
+                result = stderr_fut => {
+                    match result {
+                        Ok(0) => {
+                            stderr_reader = None;
+                            if stdout_reader.is_none() && stderr_reader.is_none() { break; }
+                        }
+                        Ok(_) => {
+                            let trimmed = stderr_line.trim();
+                            if error_line.is_none() && !trimmed.is_empty() {
+                                error_line = Some(stderr_line.clone());
+                            }
+                            stderr_line.clear();
+                        }
+                        Err(_) => {
+                            stderr_reader = None;
+                            if stdout_reader.is_none() && stderr_reader.is_none() { break; }
                         }
                     }
-                    _ = &mut deadline => {
+                }
+                _ = kill_rx.changed() => {
+                    if *kill_rx.borrow() {
                         let _ = child.kill().await;
                         let _ = child.wait().await;
                         break;
                     }
                 }
+                _ = &mut deadline => {
+                    let _ = child.kill().await;
+                    let _ = child.wait().await;
+                    break;
+                }
             }
-        } else {
-            eprintln!("[frpc-tray] stdout is None, frpc output not available");
-            login_ok = true;
         }
 
         if login_ok {
