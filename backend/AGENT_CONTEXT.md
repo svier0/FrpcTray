@@ -125,6 +125,12 @@
 - `reorder_proxies(server_id, names)` 重排 `[[proxies]]` 数组顺序
 - `update_server` 保留原有 log/proxies，只覆盖 server 级字段
 
+### 进程管理架构
+- `FrpcManager` 存储 `HashMap<String, ProcessEntry>`，其中 `ProcessEntry` 含 `pid` + `kill_tx`(oneshot channel)
+- `spawn_monitor` 独占 `tokio::process::Child`，用 `select!` 等待进程退出或 kill 信号
+- `stop_frpc` 发 kill 信号 + 移除 map 条目即返回，不抢锁
+- 调试用 `show_frpc_console` 配置可显示 frpc 命令行窗口
+
 ### toml_edit 注意事项
 - **Key.decor vs Value.decor**: `Key.leaf_decor().prefix()` = key 之前的注释（用这个放 `# @` 元数据），`Value.decor().prefix()` = `=` 和值之间的空白（不是放注释的地方）
 - **方法弃用**: `Key::decor()`/`decor_mut()` 已弃用，替换为 `leaf_decor()`/`leaf_decor_mut()`（非 dotted key）或 `dotted_decor()`/`dotted_decor_mut()`（dotted key 如 `auth.method`）
@@ -139,9 +145,9 @@
 ---
 
 ## 协作状态
-- **当前版本**: V12
-- **前端 ACK**: 已确认 V11 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V11)
-- **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
+- **当前版本**: V13
+- **前端 ACK**: 已确认 V12 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V12)
+- **我的 ACK**: 已确认前端 V6 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V6)
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 
 ---

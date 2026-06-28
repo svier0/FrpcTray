@@ -1,12 +1,13 @@
 # 后端联调看板
-BACKEND_VERSION: V12
-ACK_FRONTEND_VERSION: V5
+BACKEND_VERSION: V13
+ACK_FRONTEND_VERSION: V6
 
-## 📢 最新联调通知（V12）
-- **错误消息智能摘要**（最终方案）：`summarize_frpc_error()` 模式匹配 + 变量抽取
-  - 固定摘要：`Login to server failed`、`Connection refused` 等
-  - 动态提取（保留变量）：`Unknown config field "{name}"`、`Proxy name "{name}" already in use`、`Port {port} already in use`、`Config parse error: {detail}` 等
-  - 完整列表含占位符见 `api_spec.json` → `events[0].errorCodes.values`
-  - 未知错误保底显示原始行（截断 120 字符），无输出时为 `null`
-
-- ⚠️ **更新注意**：V11 描述有误（之前说变量错误走原始行回退），实际是**抽取变量**。前端 i18n 翻译请以 `api_spec.json` 的 errorCodes 为准，带 `{xxx}` 的占位符不变。
+## 📢 最新联调通知（V13）
+- **进程管理架构重构**：用 oneshot channel 替代 `Arc<Mutex<Child>>`，stop 不再阻塞
+  - monitor 独占 child，`select!` 等进程退出或 kill 信号
+  - stop 发信号即返回，不再抢锁
+- **新增 AppConfig.show_frpc_console**（调试用）
+  - `true`：启动 frpc 时显示独立命令行窗口，stdout/stderr 继承
+  - `false`（默认）：后台运行，stdout/stderr 管道捕获
+  - Windows 使用 `CREATE_NEW_CONSOLE` 创建新窗口
+  - `api_spec.json` → `dataStructures.AppConfig.fields` 已更新

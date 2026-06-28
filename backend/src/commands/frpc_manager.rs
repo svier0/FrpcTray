@@ -300,13 +300,33 @@ pub async fn start_frpc(
     let log_dir = get_config_dir().parent().unwrap().join("log");
     let _ = std::fs::create_dir_all(&log_dir);
 
-    let child = tokio::process::Command::new(&bin)
-        .arg("-c")
-        .arg(&config_file)
-        .current_dir(get_config_dir())
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
+    let mut cmd = tokio::process::Command::new(&bin);
+    cmd.arg("-c")
+       .arg(&config_file)
+       .current_dir(get_config_dir());
+
+    // Check if frpc console should be shown
+    let config_path = get_config_dir().join("config.toml");
+    let show_console = std::fs::read_to_string(&config_path)
+        .ok()
+        .and_then(|s| toml::from_str::<AppConfig>(&s).ok())
+        .map(|c| c.show_frpc_console)
+        .unwrap_or(false);
+
+    if show_console {
+        cmd.stdout(std::process::Stdio::inherit())
+           .stderr(std::process::Stdio::inherit());
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.as_std_mut().creation_flags(0x00000010); // CREATE_NEW_CONSOLE
+        }
+    } else {
+        cmd.stdout(std::process::Stdio::piped())
+           .stderr(std::process::Stdio::piped());
+    }
+
+    let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
 
     let pid = child.id();

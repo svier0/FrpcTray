@@ -105,6 +105,8 @@ pub struct AppConfig {
     pub silent_launch: bool,
     #[serde(default)]
     pub auto_run: bool,
+    #[serde(default)]
+    pub show_frpc_console: bool,
 }
 
 fn default_language() -> String {
@@ -123,6 +125,7 @@ impl Default for AppConfig {
             autostart: false,
             silent_launch: false,
             auto_run: false,
+            show_frpc_console: false,
         }
     }
 }
