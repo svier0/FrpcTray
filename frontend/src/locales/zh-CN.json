@@ -142,7 +142,11 @@
       "installSuccess": "安装成功",
       "installFailed": "安装失败",
       "retry": "请重试",
-      "loading": "加载中..."
+      "loading": "加载中...",
+      "githubProxy": {
+        "title": "启用 GitHub 代理",
+        "description": "下载 frpc 时通过代理加速访问 GitHub"
+      }
     }
   },
   "error": {

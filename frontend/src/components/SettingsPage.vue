@@ -37,6 +37,7 @@ const backupProgress = ref("");
 const autostart = ref(appConfig.value.autostart);
 const silentLaunch = ref(appConfig.value.silentLaunch);
 const autoRun = ref(appConfig.value.autoRun);
+const useGithubProxy = ref(appConfig.value.useGithubProxy ?? true);
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -224,6 +225,11 @@ async function toggleSilentLaunch() {
 async function toggleAutoRun() {
   autoRun.value = !autoRun.value;
   updateConfig({ autoRun: autoRun.value });
+}
+
+async function toggleGithubProxy() {
+  useGithubProxy.value = !useGithubProxy.value;
+  updateConfig({ useGithubProxy: useGithubProxy.value });
 }
 
 async function toggleServerEnable(server: ServerItem) {
@@ -568,9 +574,23 @@ watch(language, (newLang) => {
             </button>
           </div>
         </div>
-      </div>
 
-      <div v-else-if="activeTab === 'advanced'" class="space-y-6">
+        <div class="rounded-xl border border-border bg-card p-5">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <h3 class="text-sm font-medium">{{ t('settings.kernel.githubProxy.title') }}</h3>
+              <p class="text-xs text-muted-foreground">{{ t('settings.kernel.githubProxy.description') }}</p>
+            </div>
+            <SwitchRoot
+              :checked="useGithubProxy"
+              @update:checked="toggleGithubProxy"
+              class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-blue-500 data-[state=unchecked]:bg-input"
+            >
+              <SwitchThumb class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0" />
+            </SwitchRoot>
+          </div>
+        </div>
+      </div>
         <div class="rounded-xl border border-border bg-card overflow-hidden">
           <button
             class="flex items-center w-full px-5 py-4 text-left hover:bg-muted/30 transition-colors"

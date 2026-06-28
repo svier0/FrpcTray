@@ -142,7 +142,11 @@
       "installSuccess": "Install successful",
       "installFailed": "Install failed",
       "retry": "Retry",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "githubProxy": {
+        "title": "Enable GitHub Proxy",
+        "description": "Use proxy to accelerate GitHub access when downloading frpc"
+      }
     }
   },
   "error": {

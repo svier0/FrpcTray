@@ -9,6 +9,7 @@ export interface AppConfig {
   autostart: boolean;
   silentLaunch: boolean;
   autoRun: boolean;
+  useGithubProxy: boolean;
 }
 
 const defaultConfig: AppConfig = {
@@ -17,6 +18,7 @@ const defaultConfig: AppConfig = {
   autostart: false,
   silentLaunch: false,
   autoRun: false,
+  useGithubProxy: true,
 };
 
 function toBackendConfig(config: AppConfig) {
@@ -26,6 +28,7 @@ function toBackendConfig(config: AppConfig) {
     autostart: config.autostart,
     silent_launch: config.silentLaunch,
     auto_run: config.autoRun,
+    use_github_proxy: config.useGithubProxy,
   };
 }
 
@@ -36,6 +39,7 @@ function fromBackendConfig(data: any): AppConfig {
     autostart: data.autostart ?? defaultConfig.autostart,
     silentLaunch: data.silent_launch ?? defaultConfig.silentLaunch,
     autoRun: data.auto_run ?? defaultConfig.autoRun,
+    useGithubProxy: data.use_github_proxy ?? defaultConfig.useGithubProxy,
   };
 }
 
