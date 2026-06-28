@@ -138,9 +138,7 @@ const errorPatterns: Array<{ regex: RegExp; template: string }> = [
 
 export function translateError(error: string | null): string {
   if (!error) return "";
-  const t = i18n.global.t;
-  const exact = t(`error.${error}`, { defaultMessage: "" });
-  if (exact && exact !== `error.${error}`) return exact;
+  const { t, te } = i18n.global;
   for (const { regex, template } of errorPatterns) {
     const match = error.match(regex);
     if (match) {
@@ -149,12 +147,15 @@ export function translateError(error: string | null): string {
         const placeholder = template.match(/\{(\w+)\}/)?.[1];
         if (placeholder) keys[placeholder] = match[1];
       }
-      let result = t(`error.${template}`, { defaultMessage: template, ...keys });
-      Object.entries(keys).forEach(([k, v]) => {
-        result = result.replace(`{${k}}`, v);
-      });
-      return result;
+      if (te(`error.${template}`)) {
+        let result = t(`error.${template}`, keys);
+        Object.entries(keys).forEach(([k, v]) => {
+          result = result.replace(`{${k}}`, v);
+        });
+        return result;
+      }
     }
   }
+  if (te(`error.${error}`)) return t(`error.${error}`);
   return error;
 }
