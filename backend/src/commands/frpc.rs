@@ -75,7 +75,8 @@ async fn get_latest_frpc_version() -> Result<String, String> {
     } else {
         "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json"
     };
-    match fetch_scoop_version(client, url, 10).await {
+    let timeout = if cfg.use_github_proxy { 10 } else { 2 };
+    match fetch_scoop_version(client, url, timeout).await {
         Ok(v) => Ok(v),
         Err(e) => {
             let label = if cfg.use_github_proxy { "镜像" } else { "GitHub" };
@@ -112,7 +113,7 @@ async fn fetch_scoop_version(client: &reqwest::Client, url: &str, timeout_secs: 
 }
 
 async fn download_zip(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, String> {
-    let timeout = if url.contains("gh-proxy.com") || url.contains("ghfast.top") { 60 } else { 30 };
+    let timeout = if url.contains("gh-proxy.com") || url.contains("ghfast.top") { 60 } else { 2 };
     let response = client
         .get(url)
         .header("User-Agent", "frpc-tray/1.0")
