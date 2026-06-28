@@ -21,147 +21,58 @@
 
 ---
 
-## 当前开发状态 (截至 2026-06-27)
+## 当前开发状态 (截至 2026-06-28)
 
 ### 已完成
-- ✅ 界面UI设计-主界面-标题栏（FrpC Tray）
-- ✅ 界面UI设计-主界面-总开关（默认关闭）
-- ✅ 界面UI设计-主界面-设置按钮-跳转设置页
-- ✅ 界面UI设计-主界面-服务器tab-切换（显示服务器名称）
-- ✅ 界面UI设计-主界面-服务器配置项-列表
-- ✅ 界面UI设计-主界面-服务器配置项-拖动排序
-- ✅ 界面UI设计-主界面-服务器配置项-日志按钮
-- ✅ 界面UI设计-主界面-服务器配置项-编辑按钮
-- ✅ 界面UI设计-主界面-服务器配置项-复制按钮
-- ✅ 界面UI设计-主界面-服务器配置项-删除按钮
-- ✅ 界面UI设计-设置界面-通用-i18n语言切换
-- ✅ 界面UI设计-设置界面-通用-外观主题切换
-- ✅ 界面UI设计-设置界面-通用-主页面显示服务器选择
-- ✅ 界面UI设计-设置界面-通用-开机自启
-- ✅ 界面UI设计-设置界面-通用-静默启动
-- ✅ 界面UI设计-设置界面-通用-自动运行
-- ✅ 界面UI设计-设置界面-服务器-列表（仿CC Switch样式，可展开编辑）
-- ✅ 界面UI设计-设置界面-服务器-新增
-- ✅ 界面UI设计-设置界面-服务器-编辑
-- ✅ 界面UI设计-设置界面-服务器-删除（带确认弹窗）
-- ✅ 后端接口对接-启动时加载服务器列表
-- ✅ 后端接口对接-删除/添加/编辑调用后端
-- ✅ 后端接口对接-删除确认弹窗
-- ✅ 后端接口对接-createServer返回id
-- ✅ 后端接口对接-代理列表加载（listProxies）
-- ✅ 界面UI设计-代理项显示（标题=desc，type蓝色tag）
-- ✅ 后端接口对接-代理enabled开关（updateProxy）
-- ✅ 后端接口对接-代理CRUD操作（createProxy, updateProxy, deleteProxy）
-- ✅ 后端接口对接-代理排序（reorderProxies）
-- ✅ 后端接口对接-服务器排序（reorderServers）
-- ✅ 界面UI设计-代理项-ProxyItem组件（拖拽手柄、复制、编辑、删除按钮）
-- ✅ 界面UI设计-代理项-ProxyDialog弹窗（创建/编辑代理）
-- ✅ 界面UI设计-设置界面-内核-卡片（frpc版本信息、Win/amd64标签、升级按钮）
-- ✅ 界面UI设计-设置界面-关于-卡片（应用图标、版本号、GitHub/更新日志/检查更新按钮）
-- ✅ 后端接口对接-内核版本信息（get_frpc_version）
-- ✅ 后端接口对接-内核升级（upgrade_frpc）
-- ✅ 界面UI设计-设置界面-内核-未安装状态（黄色感叹号、安装按钮）
-- ✅ 界面UI设计-设置界面-内核-升级状态（升级中/升级成功提示，3秒自动清除）
-- ✅ 界面UI设计-设置界面-内核-已是最新状态（绿色对勾图标）
-- ✅ 界面UI设计-设置界面-内核-最新版本获取失败（请重试按钮）
-- ✅ 界面UI设计-设置界面-高级-备份与恢复卡片（可折叠，导出备份/选择ZIP备份文件按钮）
-- ✅ 后端接口对接-备份恢复（export_backup, restore_backup）
-- ✅ 后端接口对接-应用配置（get_config, save_config）
+- ✅ 主界面：标题栏、总开关（默认关闭）、设置按钮、服务器tab
+- ✅ 服务器列表：CRUD、拖拽排序、重命名（无id图标，显示服务器名称）
+- ✅ 代理列表：CRUD、拖拽排序、enabled开关、type蓝色tag（无图标、无副标题）
+- ✅ ProxyDialog：创建/编辑代理表单，locations仅http类型显示
+- ✅ 设置-通用：语言、主题、主页面显示、开机自启、静默启动、自动运行
+- ✅ 设置-内核：frpc版本卡片、安装/升级、状态指示器、GitHub代理开关
+- ✅ 设置-关于：应用信息卡片
+- ✅ 设置-高级：备份与恢复（export_backup/restore_backup）
+- ✅ IPC接口：get_config, save_config, get_frpc_version, upgrade_frpc, export_backup, restore_backup
+- ✅ 服务器运行管理：start_frpc, stop_frpc, start_all_frpc, stop_all_frpc, get_all_frpc_status
+- ✅ frpc-status-changed 事件监听，实时状态更新
+- ✅ 服务器错误信息显示：启动失败后在状态后显示错误原因，重启时清空
+- ✅ 错误码 i18n 翻译（zh-CN/zh-TW/en/ja），支持命名占位符变量提取
+- ✅ translateError 函数：正则模式匹配 + vue-i18n 翻译
+- ✅ 控制台调试工具：`cmd('命令名', {参数})` 透传 invoke
+- ✅ GitHub代理开关配置（useGithubProxy，默认false）
 
 ### 待办事项
-- [ ] 界面UI设计-设置界面-高级-其他设置
+- [ ] 后端 AppConfig 添加 use_github_proxy 字段（serde default false）
+- [ ] 设置界面-高级-其他设置
 
 ---
 
 ## 关键决策记录
 
-### 2026-06-26
-- **决策**: 主题和语言配置使用`localStorage`进行持久化
-- **原因**: 先以UI设计为主，然后逐步对接后端
-- **实现**: 暂时使用`localStorage`进行持久化存储
+### 2026-06-28
+- **决策**: 服务器错误信息在"已停止"状态后显示，不改变状态为"异常"
+- **原因**: 后端发 new_status: "stopped" + error_message，状态应显示"已停止"
+- **实现**: hasError 不影响状态判断，serverError 单独存储并在状态后显示
 
-### 2026-06-27
-- **决策**: 代理复制按钮直接提交，不弹对话框
-- **原因**: 复制逻辑应该和新增不同，直接创建enabled=false的副本
-- **实现**: handleDuplicate直接调用createProxy，不打开ProxyDialog
+- **决策**: 错误翻译绕过 vue-i18n 的引号key问题
+- **原因**: vue-i18n 对含引号的 JSON key（如 `Unknown config field "{name}"`）解析失败
+- **实现**: i18n 改用简单 key（如 error.unknownConfigField），正则提取变量后传给 t()
 
-- **决策**: 拖拽手柄使用SortableJS的forceFallback模式
-- **原因**: Tauri webview拦截HTML5 Drag API，导致拖拽无法正常工作
-- **实现**: SortableJS配置forceFallback:true，使用JS模拟拖拽
+- **决策**: 控制台调试用 `cmd()` 透传 invoke
+- **原因**: 用户需要快速调用任意后端接口调试
+- **实现**: `(window as any).cmd = (name, args) => invoke(name, args)`
 
-- **决策**: 服务器列表和代理列表的拖拽手柄样式统一
-- **原因**: 之前服务器手柄在卡片外（absolute定位），代理手柄在卡片内
-- **实现**: 将服务器手柄移入ServerItem组件内部，与ProxyItem布局一致
+- **决策**: GitHub代理开关放内核卡片下方，和通用配置一起调 save_config
+- **原因**: 下载frpc时可选通过代理加速
+- **实现**: SettingsPage.vue 添加 SwitchRoot 开关，config.ts 添加 useGithubProxy 字段
 
-### 2026-06-27 (下午)
-- **决策**: 内核版本卡片始终渲染，值用 `versionInfo?.field || '-'` 占位
-- **原因**: 之前 `v-if="versionInfo"` 导致接口请求时整个卡片不渲染
-- **实现**: 移除v-if，用可选链和fallback值占位
-
-- **决策**: 未安装/已安装/升级 三种状态用不同颜色区分
-- **原因**: 仿CC Switch设计风格，状态一目了然
-- **实现**: 未安装→黄色感叹号，已是最新→绿色对勾，可升级→黄色感叹号+文字
-
-- **决策**: 安装按钮用灰色边框，升级按钮用蓝色实心
-- **原因**: 安装是新操作，升级是更新操作，视觉区分
-- **实现**: 通过条件class动态切换按钮样式
-
-- **决策**: 安装/升级成功后3秒自动清除提示
-- **原因**: 成功提示不需要一直显示
-- **实现**: setTimeout 3秒后清空 upgradeProgress
-
-- **决策**: 安装/升级状态文案区分（安装中/升级中，安装成功/升级成功）
-- **原因**: 用户体验更清晰
-- **实现**: 根据 current_version === '0' 判断当前是安装还是升级
-
-- **决策**: 服务器列表和通用设置移除id图标，改用服务器名称
-- **原因**: 简化UI，服务器名称更直观
-- **实现**: 移除id图标，AppHeader显示server.title
-
-- **决策**: 代理项type改为蓝色tag显示，移除图标和副标题
-- **原因**: 统一视觉风格，tag更清晰
-- **实现**: 移除type图标，用蓝色背景tag显示type
-
-- **决策**: 应用配置统一存储在后端 conf/config.toml
-- **原因**: 前后端配置同步，支持跨设备
-- **实现**: 使用 get_config/save_config 接口，config.ts 统一管理
-
-- **决策**: 应用名称改为 FrpC Tray
-- **原因**: 品牌统一
-- **实现**: 修改 AppHeader 和 i18n 翻译
+- **决策**: locations 字段仅 http 类型显示，https 不显示
+- **原因**: https 类型没有 locations 字段
+- **实现**: ProxyDialog.vue v-if 改为 `formData.type === 'http'`
 
 ---
 
 ## 技术细节备忘
-
-### UI风格
-- 使用tailwindcss进行组件设计
-- Styling: Follow CC Switch design patterns (dark theme, glass morphism)
-
-### 服务器列表UI
-- 使用ServerItem.vue组件：可展开编辑的卡片
-- 使用ServerList.vue组件：支持拖拽排序的列表
-- 表单布局：名称+保存删除按钮（第一行）、地址+端口（第二行）、鉴权方式+密钥（第三行）
-- 新增服务器时鉴权方式默认填入"token"
-- 最多支持26个服务器（id为a-z单个字母）
-
-### 代理列表UI
-- 使用ProxyItem.vue组件：显示代理信息
-- 使用ProxyList.vue组件：支持拖拽排序的列表
-- 使用ProxyDialog.vue组件：创建/编辑代理弹窗
-- 标题显示desc字段，type用蓝色tag显示
-- 代理复制：直接创建enabled=false的副本，不弹对话框
-
-### 设置页面
-- 通用页面：语言切换、主题切换、主页面显示服务器选择、开机自启、静默启动、自动运行
-- 内核页面：frpc版本卡片（Win/amd64标签、当前版本、最新版本、升级按钮）
-  - 未安装（current_version === '0'）：黄色感叹号、灰色安装按钮
-  - 可升级：黄色感叹号+文字、蓝色升级按钮
-  - 已是最新：绿色对勾图标
-  - 最新版本获取失败：显示"请重试"按钮
-  - 成功提示3秒自动清除
-- 关于页面：应用信息卡片（图标、版本号、GitHub/更新日志/检查更新按钮）
-- 高级页面：备份与恢复折叠卡片（橙色图标、导出备份/选择ZIP备份文件按钮）
 
 ### 配置管理
 - 统一配置结构（存储在 conf/config.toml）：
@@ -171,29 +82,33 @@
     "theme": "system",
     "autostart": false,
     "silent_launch": false,
-    "auto_run": false
+    "auto_run": false,
+    "use_github_proxy": false
   }
   ```
 - 前端 config.ts 负责前后端字段映射（camelCase ↔ snake_case）
-- 启动时通过 get_config 加载，修改时通过 save_config 保存
 
-### 拖拽排序实现
-- 使用SortableJS（非vue-draggable-plus）
-- 配置forceFallback:true绕过Tauri webview限制
-- onEnd事件中手动splice数组并emit新顺序
-- 拖拽手柄使用.drag-handle类选择器
+### 错误翻译
+- i18n key 使用简单名称（如 error.unknownConfigField）
+- 正则模式匹配提取变量，替换占位符 {name}/{port}/{detail}/{reason}
+- 错误码列表见 backend/api_spec.json → events[0].errorCodes.values
+
+### 服务器状态
+- 事件监听 frpc-status-changed，payload 包含 server_id, old_status, new_status, error_message
+- 状态映射：running → "running"，其他 → "idle"
+- 错误信息：有 error_message 时显示在"已停止"后面，启动时清空
 
 ---
 
 ## 协作状态
-- **当前版本**: V5
-- **后端 ACK**: V7
-- **阻塞点**: 无
+- **前端版本**: V6
+- **后端确认**: ACK_BACKEND_VERSION: V12
+- **阻塞点**: 后端需添加 use_github_proxy 字段到 AppConfig
 
 ---
 
 ## 下次启动检查清单
-1. 如无新需求，继续完善高级tab其他设置
-2. 检查代理拖拽排序是否正常工作
-3. 检查服务器拖拽排序是否正常工作
-4. 备份与恢复功能已对接完成
+1. 后端添加 use_github_proxy 字段到 AppConfig
+2. 检查 GitHub 代理开关是否正常工作
+3. 检查错误信息显示和翻译
+4. 设置界面-高级-其他设置
