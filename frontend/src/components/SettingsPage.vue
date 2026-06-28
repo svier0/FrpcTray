@@ -37,7 +37,7 @@ const backupProgress = ref("");
 const autostart = ref(appConfig.value.autostart);
 const silentLaunch = ref(appConfig.value.silentLaunch);
 const autoRun = ref(appConfig.value.autoRun);
-const useGithubProxy = ref(appConfig.value.useGithubProxy ?? true);
+const useGithubProxy = ref(appConfig.value.useGithubProxy);
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },

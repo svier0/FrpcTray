@@ -18,7 +18,7 @@ const defaultConfig: AppConfig = {
   autostart: false,
   silentLaunch: false,
   autoRun: false,
-  useGithubProxy: true,
+  useGithubProxy: false,
 };
 
 function toBackendConfig(config: AppConfig) {
