@@ -103,10 +103,7 @@
       "title": "Auto Run",
       "description": "Start proxies automatically on launch"
     },
-    "showFrpcConsole": {
-      "title": "Show Console Window",
-      "description": "Show frpc console window when starting (for debugging)"
-    },
+
     "about": {
       "version": "Version",
       "appName": "FrpC Tray",

@@ -103,10 +103,7 @@
       "title": "自動運行",
       "description": "啟動時自動開始運行代理"
     },
-    "showFrpcConsole": {
-      "title": "顯示命令列視窗",
-      "description": "啟動 frpc 時顯示獨立命令列視窗（除錯用）"
-    },
+
     "about": {
       "version": "版本",
       "appName": "FrpC Tray",
