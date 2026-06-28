@@ -36,6 +36,57 @@ async fn emit_status(app: &AppHandle, server_id: &str, old: &str, new: &str, pid
     });
 }
 
+fn summarize_frpc_error(raw: &str) -> Option<String> {
+    let trimmed = raw.trim();
+    // Strip Go log timestamp prefix: "2006/01/02 15:04:05 "
+    let line = if trimmed.len() > 20 {
+        let b = trimmed.as_bytes();
+        if b[4] == b'/' && b[7] == b'/' && b[10] == b' '
+            && b[13] == b':' && b[16] == b':' && b[19] == b' '
+            && b[..4].iter().all(|c| c.is_ascii_digit())
+            && b[5..7].iter().all(|c| c.is_ascii_digit())
+            && b[8..10].iter().all(|c| c.is_ascii_digit())
+        {
+            trimmed[20..].trim()
+        } else {
+            trimmed
+        }
+    } else {
+        trimmed
+    };
+    let lower = line.to_lowercase();
+
+    let known: &[(&str, &str)] = &[
+        ("login to server failed", "Login to server failed"),
+        ("login to the server failed", "Login to server failed"),
+        ("error parsing config", "Config parse error"),
+        ("token in login doesn", "Token mismatch"),
+        ("failed to verify certificate", "TLS certificate verification failed"),
+        ("tls:", "TLS error"),
+        ("connection refused", "Connection refused"),
+        ("connection reset by peer", "Connection reset"),
+        ("network is unreachable", "Network unreachable"),
+        ("i/o deadline reached", "Connection timeout"),
+        ("recover to server timed out", "Reconnect timeout"),
+        ("port already used", "Port already in use"),
+        ("port unavailable", "Port unavailable"),
+        ("proxy name", "Proxy name conflict"),
+        ("already in use", "Already in use"),
+        ("health check failed", "Health check failed"),
+        ("control is closed", "Control channel closed"),
+        ("permission denied", "Permission denied"),
+        ("unknown field", "Unknown config field"),
+        ("eof", "Connection closed unexpectedly"),
+    ];
+
+    for (pattern, summary) in known {
+        if lower.contains(pattern) {
+            return Some(summary.to_string());
+        }
+    }
+    None
+}
+
 async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio::process::Child>>) {
     tokio::spawn(async move {
         use tokio::io::AsyncReadExt;
@@ -64,13 +115,17 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
                 .find(|l| !l.trim().is_empty())
                 .map(|l| {
                     let l = l.trim();
-                    let summary = l.split(": ").next().unwrap_or(l).to_string();
-                    if summary.len() > 120 {
-                        let mut out: String = summary.chars().take(117).collect();
+                    // Try known error patterns first
+                    if let Some(summary) = summarize_frpc_error(l) {
+                        return summary;
+                    }
+                    // Fallback: raw line, truncated to 120 chars
+                    if l.len() > 120 {
+                        let mut out: String = l.chars().take(117).collect();
                         out.push_str("...");
                         out
                     } else {
-                        summary
+                        l.to_string()
                     }
                 });
 
