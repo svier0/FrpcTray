@@ -1,6 +1,6 @@
 # 前端联调看板
 FRONTEND_VERSION: V5
-ACK_BACKEND_VERSION: V7
+ACK_BACKEND_VERSION: V8
 
 ## 📢 最新进度与反馈
 - ✅ 已完成代理 CRUD 操作对接（创建/编辑/删除）
@@ -17,6 +17,7 @@ ACK_BACKEND_VERSION: V7
 - ✅ 备份与恢复接口对接：export_backup、restore_backup
 - ✅ 代理项type标签改为蓝色tag显示
 - ✅ 开机自启/静默启动/自动运行 UI 已完成
-
-## 📢 需求反馈
-- 需要后端提供开机自启接口（get_autostart / set_autostart）
+- ✅ 应用配置接口对接（get_config, save_config）
+- ✅ 服务器状态栏 UI 已完成
+- ✅ 服务器运行管理接口对接（start_frpc, stop_frpc, get_all_frpc_status）
+- ✅ frpc-status-changed 事件监听
