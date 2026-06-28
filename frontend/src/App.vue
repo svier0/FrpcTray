@@ -204,9 +204,8 @@ async function loadAllFrpcStatus() {
     const statusMap: Record<string, ServerStatus> = {};
     const errorMap: Record<string, string> = {};
     statusList.forEach((s) => {
-      const hasError = s.status === "error" || (s.status === "stopped" && s.error_message);
-      statusMap[s.server_id] = s.status === "running" ? "running" : hasError ? "error" : "idle";
-      if (hasError && s.error_message) {
+      statusMap[s.server_id] = s.status === "running" ? "running" : "idle";
+      if (s.error_message) {
         errorMap[s.server_id] = s.error_message;
       }
     });
@@ -253,8 +252,8 @@ onMounted(() => {
   
   listen<{ server_id: string; new_status: string; error_message?: string }>("frpc-status-changed", (event) => {
     const { server_id, new_status, error_message } = event.payload;
-    const hasError = new_status === "error" || (new_status === "stopped" && error_message);
-    serverStatus.value = { ...serverStatus.value, [server_id]: new_status === "running" ? "running" : hasError ? "error" : "idle" };
+    const hasError = !!error_message;
+    serverStatus.value = { ...serverStatus.value, [server_id]: new_status === "running" ? "running" : "idle" };
     if (hasError && error_message) {
       serverError.value = { ...serverError.value, [server_id]: error_message };
     } else if (new_status === "running") {
