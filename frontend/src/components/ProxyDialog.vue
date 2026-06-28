@@ -167,7 +167,7 @@ const proxyTypes = ["tcp", "udp", "http", "https", "stcp", "sudp", "xtcp"];
             />
           </div>
 
-          <div class="space-y-1" v-if="formData.type === 'http' || formData.type === 'https'">
+          <div class="space-y-1" v-if="formData.type === 'http'">
             <label class="text-xs text-muted-foreground">{{ t("proxy.dialog.locations") }}</label>
             <input
               v-model="formData.locations"
