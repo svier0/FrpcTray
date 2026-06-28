@@ -188,6 +188,38 @@ pub struct ServerInfo {
     pub tls: Option<TlsConfig>,
 }
 
+// ── Frpc running status ──
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FrpcRunningStatus {
+    pub server_id: String,
+    pub status: String,
+    pub pid: Option<u32>,
+    pub error_message: Option<String>,
+}
+
+#[allow(dead_code)]
+impl FrpcRunningStatus {
+    pub fn stopped(server_id: &str) -> Self {
+        Self {
+            server_id: server_id.to_string(),
+            status: "stopped".to_string(),
+            pid: None,
+            error_message: None,
+        }
+    }
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct FrpcStatusEvent {
+    pub server_id: String,
+    pub old_status: String,
+    pub new_status: String,
+    pub pid: Option<u32>,
+    pub error_message: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CreateServerInput {
     pub title: String,

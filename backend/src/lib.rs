@@ -18,6 +18,7 @@ use commands::proxy::*;
 use commands::frpc::*;
 use commands::backup::*;
 use commands::config_cmd::*;
+use commands::frpc_manager::*;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -114,6 +115,11 @@ pub fn run() {
             restore_backup,
             get_config,
             save_config,
+            start_frpc,
+            stop_frpc,
+            start_all_frpc,
+            stop_all_frpc,
+            get_all_frpc_status,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

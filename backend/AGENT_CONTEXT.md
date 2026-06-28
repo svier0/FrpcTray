@@ -60,7 +60,9 @@
 - [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
 - [x] get_frpc_version 版本号获取改为 scoop 仓库
 - [x] 新增 get_config/save_config 应用配置命令
-- [ ] 后续功能开发...
+- [x] 重构 lib.rs 为模块化结构
+- [x] 搭建 frpc 运行管理接口框架（5 个存根命令 + 状态事件）
+- [ ] 实现 frpc 进程管理核心逻辑...
 
 ---
 
@@ -137,7 +139,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V7
+- **当前版本**: V8
 - **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **阻塞点**: 无

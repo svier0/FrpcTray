@@ -1,18 +1,14 @@
 # 后端联调看板
-BACKEND_VERSION: V7
+BACKEND_VERSION: V8
 ACK_FRONTEND_VERSION: V5
 
-## 📢 最新联调通知（V7）
-- **新增 2 个配置命令**，共 17 个命令：
-  - `get_config`：读取 `conf/config.toml`，文件不存在返回默认值
-  - `save_config(config)`：写入 `conf/config.toml`
-- **AppConfig 结构**：
-  ```toml
-  language = "zh-CN"
-  theme = "system"
-  autostart = false
-  silent_launch = false
-  auto_run = false
-  ```
-- 前端不调用保存按钮不生成配置文件
-- 详见 `/backend/api_spec.json`
+## 📢 最新联调通知（V8）
+- **新增 5 个 frpc 运行管理接口**（存根，逻辑未实现）：
+  - `start_frpc(server_id)`：启动指定服务器 frpc
+  - `stop_frpc(server_id)`：停止指定服务器 frpc
+  - `start_all_frpc()`：一键启动所有激活服务器
+  - `stop_all_frpc()`：一键停止所有运行中进程
+  - `get_all_frpc_status()`：获取所有服务器运行状态
+- **新增事件** `frpc-status-changed`：进程状态变化时自动推送
+- **新增结构** `FrpcRunningStatus` / `FrpcStatusEvent`
+- 共 22 个命令，详见 `/backend/api_spec.json`

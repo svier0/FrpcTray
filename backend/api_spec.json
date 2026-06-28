@@ -1,5 +1,5 @@
 {
-  "version": "V7",
+  "version": "V8",
   "lastUpdated": "2026-06-27",
   "commands": [
     {
@@ -200,6 +200,60 @@
         "success": "空",
         "error": "错误信息字符串"
       }
+    },
+    {
+      "name": "start_frpc",
+      "description": "启动指定服务器的 frpc 进程",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "stop_frpc",
+      "description": "停止指定服务器的 frpc 进程",
+      "parameters": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "start_all_frpc",
+      "description": "一键启动所有激活服务器的 frpc 进程",
+      "parameters": [],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "stop_all_frpc",
+      "description": "一键停止所有运行中的 frpc 进程",
+      "parameters": [],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空",
+        "error": "错误信息字符串"
+      }
+    },
+    {
+      "name": "get_all_frpc_status",
+      "description": "获取所有服务器的 frpc 运行状态（同步用，前端轮询或启动后调一次）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<Vec<FrpcRunningStatus>, String>",
+        "success": "所有服务器的运行状态数组",
+        "error": "错误信息字符串"
+      }
     }
   ],
   "dataStructures": {
@@ -283,6 +337,30 @@
         { "name": "silent_launch", "type": "bool", "description": "静默启动（不显示主窗口），默认 false" },
         { "name": "auto_run", "type": "bool", "description": "自动运行代理，默认 false" }
       ]
+    },
+    "FrpcRunningStatus": {
+      "description": "frpc 运行状态（每个服务器一个）",
+      "fields": [
+        { "name": "server_id", "type": "String", "description": "服务器 ID" },
+        { "name": "status", "type": "String", "description": "运行状态：'running'/'stopped'/'error'" },
+        { "name": "pid", "type": "u32 | null", "description": "进程 PID，未运行时为 null" },
+        { "name": "error_message", "type": "String | null", "description": "错误信息（status=error 时）" }
+      ]
     }
-  }
+  },
+  "events": [
+    {
+      "name": "frpc-status-changed",
+      "payload": {
+        "description": "frpc 进程状态变化时推送",
+        "fields": [
+          { "name": "server_id", "type": "String", "description": "服务器 ID" },
+          { "name": "old_status", "type": "String", "description": "旧状态" },
+          { "name": "new_status", "type": "String", "description": "新状态" },
+          { "name": "pid", "type": "u32 | null", "description": "进程 PID" },
+          { "name": "error_message", "type": "String | null", "description": "错误信息" }
+        ]
+      }
+    }
+  ]
 }
