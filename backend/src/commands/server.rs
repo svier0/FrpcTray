@@ -131,7 +131,14 @@ pub fn delete_server(id: String) -> Result<(), String> {
         return Err(format!("服务器 '{}' 不存在", id));
     }
     fs::remove_file(&path)
-        .map_err(|e| format!("删除文件失败: {}", e))
+        .map_err(|e| format!("删除文件失败: {}", e))?;
+
+    // Cleanup associated log file
+    let log_path = get_config_dir().parent().unwrap().join("log").join(format!("frpc.{}.log", id));
+    if log_path.exists() {
+        let _ = fs::remove_file(&log_path);
+    }
+    Ok(())
 }
 
 #[tauri::command]

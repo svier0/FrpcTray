@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::fs;
 use tokio::sync::Mutex;
 use tokio::sync::oneshot;
 use tauri::{AppHandle, Emitter, Manager};
@@ -30,42 +29,6 @@ fn frpc_name() -> &'static str {
 
 fn frpc_bin_path() -> std::path::PathBuf {
     get_bin_dir().join(frpc_name())
-}
-
-/// Ensure the TOML config file has a [log] section so frpc writes output to disk.
-fn ensure_log_section(path: &std::path::Path, server_id: &str) -> Result<(), String> {
-    use toml_edit::*;
-    let content = fs::read_to_string(path)
-        .map_err(|e| format!("读取配置文件失败: {}", e))?;
-    let mut doc: DocumentMut = content.parse()
-        .map_err(|e| format!("解析配置失败: {}", e))?;
-
-    let needs_log = match doc.get("log") {
-        Some(Item::Table(t)) => t.get("to").and_then(|v| v.as_str()).is_none(),
-        _ => true,
-    };
-
-    if needs_log {
-        if !doc.contains_key("log") {
-            let mut t = Table::new();
-            t.decor_mut().set_prefix("\n");
-            t.insert("to", value(format!("../log/frpc.{}.log", server_id)));
-            t.insert("level", value("info"));
-            t.insert("maxDays", value(3));
-            doc.insert("log", Item::Table(t));
-            eprintln!("[frpc-tray] 已注入 [log] 到 {}", path.display());
-        } else {
-            if let Some(Item::Table(t)) = doc.get_mut("log") {
-                if !t.contains_key("to") {
-                    t.insert("to", value(format!("../log/frpc.{}.log", server_id)));
-                    eprintln!("[frpc-tray] 已注入 log.to 到 {}", path.display());
-                }
-            }
-        }
-        fs::write(path, doc.to_string())
-            .map_err(|e| format!("写入配置文件失败: {}", e))?;
-    }
-    Ok(())
 }
 
 async fn emit_status(app: &AppHandle, server_id: &str, old: &str, new: &str, pid: Option<u32>, err: Option<String>) {
@@ -336,9 +299,6 @@ pub async fn start_frpc(
     // Ensure log directory exists
     let log_dir = get_config_dir().parent().unwrap().join("log");
     let _ = std::fs::create_dir_all(&log_dir);
-
-    // Inject [log] section if missing — so frpc writes a log file
-    ensure_log_section(&config_file, &server_id)?;
 
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
