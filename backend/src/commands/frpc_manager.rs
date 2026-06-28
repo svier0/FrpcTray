@@ -314,8 +314,7 @@ pub async fn start_frpc(
         .unwrap_or(false);
 
     if show_console {
-        cmd.stdout(std::process::Stdio::inherit())
-           .stderr(std::process::Stdio::inherit());
+        // Don't set stdout/stderr — child inherits new console's handles automatically
         #[cfg(windows)]
         {
             use std::os::windows::process::CommandExt;
