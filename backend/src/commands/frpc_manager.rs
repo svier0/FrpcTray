@@ -206,6 +206,22 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
 
+        // Tee stderr to terminal for debug visibility
+        if let Some(stderr) = child.stderr.take() {
+            tokio::spawn(async move {
+                use tokio::io::AsyncBufReadExt;
+                let mut reader = tokio::io::BufReader::new(stderr);
+                let mut line = String::new();
+                loop {
+                    line.clear();
+                    match reader.read_line(&mut line).await {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => eprint!("[frpc] {}", line),
+                    }
+                }
+            });
+        }
+
         if let Some(stdout) = child.stdout.take() {
             let mut reader = tokio::io::BufReader::new(stdout);
             let mut line = String::new();
@@ -219,6 +235,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                             Ok(0) => break,
                             Ok(_) => {
                                 let trimmed = line.trim();
+                                eprintln!("[frpc] {}", trimmed);
                                 let lower = trimmed.to_lowercase();
                                 if lower.contains("login to server success") {
                                     login_ok = true;
@@ -250,6 +267,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 }
             }
         } else {
+            eprintln!("[frpc-tray] WARNING: stdout is None, cannot read frpc output");
             login_ok = true;
         }
 
