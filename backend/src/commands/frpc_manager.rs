@@ -93,13 +93,8 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
                     eprintln!("[frpc-tray] frpc {} 输出:\n{}", server_id, msg);
                 }
 
-                let mut err_msg = format!("进程退出, exit code: {}", code);
-                if let Some(ref out) = child_output {
-                    err_msg.push('\n');
-                    err_msg.push_str(out);
-                }
                 emit_status(&app, &server_id, "running", "stopped", None,
-                    Some(err_msg)).await;
+                    child_output).await;
             }
             Err(e) => {
                 eprintln!("[frpc-tray] frpc {} 进程等待失败: {}", server_id, e);
