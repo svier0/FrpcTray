@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import { i18n } from "../i18n";
+import i18n from "../i18n";
 import type { ServerItem } from "../components/ServerItem.vue";
 
 export interface ProxyItem {
