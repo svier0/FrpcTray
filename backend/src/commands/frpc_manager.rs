@@ -209,7 +209,23 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut error_line: Option<String> = None;
 
         eprintln!("[frpc-tray] monitor {} stdout is_some={}", server_id, child.stdout.is_some());
+        eprintln!("[frpc-tray] monitor {} stderr is_some={}", server_id, child.stderr.is_some());
         eprintln!("[frpc-tray] monitor {} pid={:?}", server_id, child.id());
+
+        // Take stderr and print to terminal for visibility
+        if let Some(stderr) = child.stderr.take() {
+            tokio::spawn(async move {
+                let mut reader = tokio::io::BufReader::new(stderr);
+                let mut line = String::new();
+                loop {
+                    line.clear();
+                    match reader.read_line(&mut line).await {
+                        Ok(0) | Err(_) => break,
+                        Ok(_) => eprint!("[frpc:err] {}", line),
+                    }
+                }
+            });
+        }
 
         if let Some(stdout) = child.stdout.take() {
             eprintln!("[frpc-tray] monitor {} starting read loop", server_id);
@@ -352,7 +368,9 @@ pub async fn start_frpc(
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
        .arg(&config_file)
-       .current_dir(get_config_dir());
+       .current_dir(get_config_dir())
+       .stdout(std::process::Stdio::piped())
+       .stderr(std::process::Stdio::piped());
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
