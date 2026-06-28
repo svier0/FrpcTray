@@ -208,7 +208,11 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
 
+        eprintln!("[frpc-tray] monitor {} stdout is_some={}", server_id, child.stdout.is_some());
+        eprintln!("[frpc-tray] monitor {} pid={:?}", server_id, child.id());
+
         if let Some(stdout) = child.stdout.take() {
+            eprintln!("[frpc-tray] monitor {} starting read loop", server_id);
             let mut reader = tokio::io::BufReader::new(stdout);
             let mut line = String::new();
             let deadline = tokio::time::sleep(Duration::from_secs(10));
@@ -218,9 +222,13 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 tokio::select! {
                     result = reader.read_line(&mut line) => {
                         match result {
-                            Ok(0) => break,
+                            Ok(0) => {
+                                eprintln!("[frpc-tray] monitor {} EOF", server_id);
+                                break;
+                            }
                             Ok(_) => {
                                 let trimmed = line.trim();
+                                eprintln!("[frpc-tray] monitor {} line: {:?}", server_id, trimmed);
                                 let lower = trimmed.to_lowercase();
                                 if lower.contains("login to server success") {
                                     login_ok = true;
@@ -253,6 +261,9 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     }
                 }
             }
+        } else {
+            // Console mode (CREATE_NEW_CONSOLE) — can't read output, assume success
+            login_ok = true;
         }
 
         if login_ok {
@@ -341,9 +352,20 @@ pub async fn start_frpc(
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
        .arg(&config_file)
-       .current_dir(get_config_dir())
-       .stdout(std::process::Stdio::piped())
-       .stderr(std::process::Stdio::piped());
+       .current_dir(get_config_dir());
+
+    let config = crate::config::read_app_config();
+
+    if config.show_frpc_console {
+        #[cfg(windows)]
+        {
+            use std::os::windows::process::CommandExt;
+            cmd.as_std_mut().creation_flags(0x00000010); // CREATE_NEW_CONSOLE
+        }
+    } else {
+        cmd.stdout(std::process::Stdio::piped())
+           .stderr(std::process::Stdio::piped());
+    }
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;

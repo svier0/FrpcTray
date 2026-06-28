@@ -107,6 +107,8 @@ pub struct AppConfig {
     pub auto_run: bool,
     #[serde(default)]
     pub use_github_proxy: bool,
+    #[serde(default)]
+    pub show_frpc_console: bool,
 }
 
 fn default_language() -> String {
@@ -126,6 +128,7 @@ impl Default for AppConfig {
             silent_launch: false,
             auto_run: false,
             use_github_proxy: false,
+            show_frpc_console: false,
         }
     }
 }
