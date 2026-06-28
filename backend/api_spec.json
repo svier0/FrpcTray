@@ -344,7 +344,7 @@
       "description": "frpc 运行状态（每个服务器一个）",
       "fields": [
         { "name": "server_id", "type": "String", "description": "服务器 ID" },
-        { "name": "status", "type": "String", "description": "运行状态：'running'/'stopped'/'error'" },
+        { "name": "status", "type": "String", "description": "运行状态：'running'/'connecting'/'stopped'/'error'" },
         { "name": "pid", "type": "u32 | null", "description": "进程 PID，未运行时为 null" },
         { "name": "error_message", "type": "String | null", "description": "错误信息（status=error 时）" }
       ]

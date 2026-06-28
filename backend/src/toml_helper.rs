@@ -363,33 +363,6 @@ pub fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
     }
 }
 
-fn ensure_log_to(doc: &mut DocumentMut, id: &str) {
-    let expected = format!("../log/frpc.{}.log", id);
-
-    let current = doc.get("log")
-        .and_then(|v| v.as_table())
-        .and_then(|t| t.get("to"))
-        .and_then(|v| v.as_str());
-
-    if current == Some(&expected) {
-        return;
-    }
-
-    use toml_edit::*;
-    // Get or create [log] table
-    if doc.get("log").and_then(|v| v.as_table()).is_none() {
-        let mut t = Table::new();
-        t.decor_mut().set_prefix("\n");
-        t.insert("level", value("info"));
-        t.insert("maxDays", value(3));
-        doc.insert("log", Item::Table(t));
-    }
-    // Set 'to' in the existing table
-    if let Some(Item::Table(t)) = doc.get_mut("log") {
-        set_or_insert(t, "to", value(&expected));
-    }
-}
-
 pub fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
     let path = server_path(id);
 
@@ -406,12 +379,8 @@ pub fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String
         DocumentMut::new()
     };
 
-    update_meta_comments(&mut doc, config);
     update_server_fields(&mut doc, config);
-
-    // Ensure [log] section has 'to' — frpc won't write logs without it
-    ensure_log_to(&mut doc, id);
-
+    update_meta_comments(&mut doc, config);
     doc.retain(|key, _| key != "proxies");
 
     let mut output = doc.to_string();

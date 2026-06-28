@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use tokio::io::AsyncBufReadExt;
 use tokio::sync::Mutex;
-use tokio::sync::oneshot;
+use tokio::sync::watch;
 use tauri::{AppHandle, Emitter, Manager};
 use crate::config::*;
 use crate::toml_helper::read_server_file;
@@ -8,7 +9,8 @@ use super::server::list_servers_impl;
 
 struct ProcessEntry {
     pid: u32,
-    kill_tx: oneshot::Sender<()>,
+    status: String,
+    kill_tx: watch::Sender<bool>,
 }
 
 pub struct FrpcManager {
@@ -194,75 +196,100 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
     None
 }
 
-async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, kill_rx: oneshot::Receiver<()>) {
+async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, mut kill_rx: watch::Receiver<bool>) {
     tokio::spawn(async move {
-        use tokio::io::AsyncReadExt;
-        let (status, child_output) = {
-            tokio::select! {
-                status = child.wait() => {
-                    let mut out_buf = String::new();
-                    let mut err_buf = String::new();
-                    if let Some(s) = child.stdout.as_mut() {
-                        let _ = s.read_to_string(&mut out_buf).await;
-                    }
-                    if let Some(s) = child.stderr.as_mut() {
-                        let _ = s.read_to_string(&mut err_buf).await;
-                    }
-                    let combined = if out_buf.trim().is_empty() {
-                        err_buf
-                    } else if err_buf.trim().is_empty() {
-                        out_buf
-                    } else {
-                        format!("{}\n{}", out_buf.trim(), err_buf.trim())
-                    };
-                    let msg = combined.lines()
-                        .find(|l| !l.trim().is_empty())
-                        .map(|l| {
-                            let l = l.trim();
-                            if let Some(summary) = summarize_frpc_error(l) {
-                                return summary;
+        let state = app.state::<FrpcManager>();
+
+        // Consume initial changed() notification (returns immediately)
+        let _ = kill_rx.changed().await;
+
+        // Phase 1: read stdout until "login to server success", EOF (process exit), or kill
+        let mut login_ok = false;
+        let mut error_line: Option<String> = None;
+
+        if let Some(stdout) = child.stdout.take() {
+            let mut reader = tokio::io::BufReader::new(stdout);
+            let mut line = String::new();
+
+            loop {
+                tokio::select! {
+                    result = reader.read_line(&mut line) => {
+                        match result {
+                            Ok(0) => break,
+                            Ok(_) => {
+                                let trimmed = line.trim();
+                                if trimmed.to_lowercase().contains("login to server success") {
+                                    login_ok = true;
+                                    break;
+                                }
+                                if error_line.is_none() && !trimmed.is_empty() {
+                                    error_line = Some(line.clone());
+                                }
+                                line.clear();
                             }
-                            if l.len() > 120 {
-                                let mut out: String = l.chars().take(117).collect();
-                                out.push_str("...");
-                                out
-                            } else {
-                                l.to_string()
-                            }
-                        });
-                    (status, msg)
-                }
-                _ = kill_rx => {
-                    let _ = child.kill().await;
-                    let status = child.wait().await;
-                    (status, None)
+                            Err(_) => break,
+                        }
+                    }
+                    _ = kill_rx.changed() => {
+                        if *kill_rx.borrow() {
+                            let _ = child.kill().await;
+                            let _ = child.wait().await;
+                            break;
+                        }
+                    }
                 }
             }
-        };
-
-        let state = app.state::<FrpcManager>();
-        let mut procs = state.processes.lock().await;
-
-        // If already removed by stop_frpc, this was intentional — skip crash event
-        if procs.remove(&server_id).is_none() {
-            return;
+        } else {
+            // Console mode (CREATE_NEW_CONSOLE) — can't read output, assume success
+            login_ok = true;
         }
 
-        match status {
-            Ok(exit) => {
-                let code = exit.code().unwrap_or(-1);
-                eprintln!("[frpc-tray] frpc {} 进程退出, code={}", server_id, code);
-                if let Some(ref msg) = child_output {
-                    eprintln!("[frpc-tray] frpc {} 输出:\n{}", server_id, msg);
+        if login_ok {
+            // Update status to running
+            {
+                let mut procs = state.processes.lock().await;
+                if let Some(entry) = procs.get_mut(&server_id) {
+                    entry.status = "running".to_string();
                 }
-
-                emit_status(&app, &server_id, "running", "stopped", None,
-                    child_output).await;
             }
-            Err(e) => {
-                eprintln!("[frpc-tray] frpc {} 进程等待失败: {}", server_id, e);
-                emit_status(&app, &server_id, "running", "error", None,
-                    Some(e.to_string())).await;
+            emit_status(&app, &server_id, "connecting", "running", child.id(), None).await;
+
+            // Phase 2: wait for exit or kill
+            loop {
+                tokio::select! {
+                    _ = child.wait() => {
+                        break;
+                    }
+                    _ = kill_rx.changed() => {
+                        if *kill_rx.borrow() {
+                            let _ = child.kill().await;
+                            let _ = child.wait().await;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            let mut procs = state.processes.lock().await;
+            if procs.remove(&server_id).is_some() {
+                emit_status(&app, &server_id, "running", "stopped", None, None).await;
+            }
+        } else {
+            // Process exited or was killed before login
+            let msg = error_line.as_deref()
+                .and_then(|l| summarize_frpc_error(l.trim()))
+                .or_else(|| error_line.map(|l| {
+                    let l = l.trim().to_string();
+                    if l.len() > 120 {
+                        format!("{}...", &l[..117])
+                    } else {
+                        l
+                    }
+                }));
+
+            let mut procs = state.processes.lock().await;
+            if procs.remove(&server_id).is_some() {
+                emit_status(&app, &server_id, "connecting", "stopped", None, msg).await;
             }
         }
     });
@@ -324,15 +351,19 @@ pub async fn start_frpc(
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
 
     let pid = child.id();
-    let (kill_tx, kill_rx) = oneshot::channel();
+    let (kill_tx, kill_rx) = watch::channel(false);
 
     {
         let mut procs = state.processes.lock().await;
-        procs.insert(server_id.clone(), ProcessEntry { pid: pid.expect("child should have a pid"), kill_tx });
+        procs.insert(server_id.clone(), ProcessEntry {
+            pid: pid.expect("child should have a pid"),
+            status: "connecting".to_string(),
+            kill_tx,
+        });
     }
 
     spawn_monitor(app.clone(), server_id.clone(), child, kill_rx).await;
-    emit_status(&app, &server_id, "stopped", "running", pid, None).await;
+    emit_status(&app, &server_id, "stopped", "connecting", pid, None).await;
 
     Ok(())
 }
@@ -349,8 +380,9 @@ pub async fn stop_frpc(
     };
 
     if let Some(entry) = entry {
-        let _ = entry.kill_tx.send(());
-        emit_status(&app, &server_id, "running", "stopped", None, None).await;
+        let old_status = entry.status.clone();
+        let _ = entry.kill_tx.send(true);
+        emit_status(&app, &server_id, &old_status, "stopped", None, None).await;
     }
     Ok(())
 }
@@ -415,7 +447,7 @@ pub async fn get_all_frpc_status(
         if let Some(entry) = procs.get(&s.id) {
             FrpcRunningStatus {
                 server_id: s.id.clone(),
-                status: "running".to_string(),
+                status: entry.status.clone(),
                 pid: Some(entry.pid),
                 error_message: None,
             }
