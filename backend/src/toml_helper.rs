@@ -364,24 +364,30 @@ pub fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
 }
 
 fn ensure_log_to(doc: &mut DocumentMut, id: &str) {
-    use toml_edit::*;
     let expected = format!("../log/frpc.{}.log", id);
 
-    let current = match doc.get("log") {
-        Some(Item::Table(t)) => t.get("to").and_then(|v| v.as_str()),
-        _ => None,
-    };
+    let current = doc.get("log")
+        .and_then(|v| v.as_table())
+        .and_then(|t| t.get("to"))
+        .and_then(|v| v.as_str());
 
     if current == Some(&expected) {
         return;
     }
 
-    let mut t = Table::new();
-    t.decor_mut().set_prefix("\n");
-    t.insert("to", value(&expected));
-    t.insert("level", value("info"));
-    t.insert("maxDays", value(3));
-    doc.insert("log", Item::Table(t));
+    use toml_edit::*;
+    // Get or create [log] table
+    if doc.get("log").and_then(|v| v.as_table()).is_none() {
+        let mut t = Table::new();
+        t.decor_mut().set_prefix("\n");
+        t.insert("level", value("info"));
+        t.insert("maxDays", value(3));
+        doc.insert("log", Item::Table(t));
+    }
+    // Set 'to' in the existing table
+    if let Some(Item::Table(t)) = doc.get_mut("log") {
+        set_or_insert(t, "to", value(&expected));
+    }
 }
 
 pub fn write_server_file(id: &str, config: &FrpcConfigFile) -> Result<(), String> {
