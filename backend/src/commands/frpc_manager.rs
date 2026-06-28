@@ -112,6 +112,10 @@ pub async fn start_frpc(
         return Err(format!("配置文件不存在: {}", config_file.display()));
     }
 
+    // Ensure log directory exists
+    let log_dir = get_config_dir().parent().unwrap().join("log");
+    let _ = std::fs::create_dir_all(&log_dir);
+
     let child = tokio::process::Command::new(&bin)
         .arg("-c")
         .arg(&config_file)

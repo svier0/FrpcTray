@@ -100,7 +100,7 @@ pub fn create_server(input: CreateServerInput) -> Result<String, String> {
         transport: input.transport,
         tls: input.tls,
         log: Some(LogConfig {
-            to: Some(format!("frpc.{}.log", id)),
+            to: Some(format!("../log/frpc.{}.log", id)),
             level: Some("info".to_string()),
             max_days: Some(3),
         }),
