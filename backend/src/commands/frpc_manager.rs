@@ -352,9 +352,7 @@ pub async fn start_frpc(
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
        .arg(&config_file)
-       .current_dir(get_config_dir())
-       .stdout(std::process::Stdio::piped())
-       .stderr(std::process::Stdio::piped());
+       .current_dir(get_config_dir());
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
