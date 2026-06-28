@@ -221,10 +221,16 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                             Ok(0) => break,
                             Ok(_) => {
                                 let trimmed = line.trim();
-                                if trimmed.to_lowercase().contains("login to server success") {
+                                let lower = trimmed.to_lowercase();
+                                if lower.contains("login to server success") {
                                     login_ok = true;
                                     break;
                                 }
+                                // frpc service ... stopped — always the last line, startup phase ended
+                                if lower.contains("frpc service") && lower.contains("stopped") {
+                                    break;
+                                }
+                                // Capture the first non-empty line as error cause (appears before "frpc service ... stopped")
                                 if error_line.is_none() && !trimmed.is_empty() {
                                     error_line = Some(line.clone());
                                 }
