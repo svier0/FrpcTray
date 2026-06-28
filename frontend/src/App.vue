@@ -252,11 +252,13 @@ onMounted(() => {
   
   listen<{ server_id: string; new_status: string; error_message?: string }>("frpc-status-changed", (event) => {
     const { server_id, new_status, error_message } = event.payload;
-    serverStatus.value[server_id] = new_status === "running" ? "running" : new_status === "error" ? "error" : "idle";
+    serverStatus.value = { ...serverStatus.value, [server_id]: new_status === "running" ? "running" : new_status === "error" ? "error" : "idle" };
     if (new_status === "error" && error_message) {
-      serverError.value[server_id] = error_message;
+      serverError.value = { ...serverError.value, [server_id]: error_message };
     } else if (new_status === "running") {
-      delete serverError.value[server_id];
+      const next = { ...serverError.value };
+      delete next[server_id];
+      serverError.value = next;
     }
   });
 });
