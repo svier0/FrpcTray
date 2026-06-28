@@ -70,25 +70,18 @@ async fn get_latest_frpc_version() -> Result<String, String> {
     let client = get_http_client();
     let cfg = crate::config::read_app_config();
 
-    let urls: &[&str] = if cfg.use_github_proxy {
-        &[
-            "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
-            "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
-        ]
+    let url = if cfg.use_github_proxy {
+        "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json"
     } else {
-        &[
-            "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
-            "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
-        ]
+        "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json"
     };
-    for url in urls {
-        match fetch_scoop_version(client, url, 10).await {
-            Ok(v) => return Ok(v),
-            Err(e) => eprintln!("[frpc-tray] {} 失败: {}", url, e),
+    match fetch_scoop_version(client, url, 10).await {
+        Ok(v) => Ok(v),
+        Err(e) => {
+            let label = if cfg.use_github_proxy { "镜像" } else { "GitHub" };
+            Err(format!("从 {} 获取最新版本失败: {}", label, e))
         }
     }
-
-    Err("所有方式均失败，请检查网络连接".to_string())
 }
 
 async fn fetch_scoop_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
@@ -150,13 +143,10 @@ pub async fn upgrade_frpc(version: String) -> Result<(), String> {
         vec![
             format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
             format!("https://ghfast.top/https://github.com/fatedier/frp/releases/download/{}", path),
-            format!("https://github.com/fatedier/frp/releases/download/{}", path),
         ]
     } else {
         vec![
             format!("https://github.com/fatedier/frp/releases/download/{}", path),
-            format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
-            format!("https://ghfast.top/https://github.com/fatedier/frp/releases/download/{}", path),
         ]
     };
 
