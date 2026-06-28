@@ -1,6 +1,6 @@
 # 前端联调看板
 FRONTEND_VERSION: V5
-ACK_BACKEND_VERSION: V8
+ACK_BACKEND_VERSION: V9
 
 ## 📢 最新进度与反馈
 - ✅ 已完成代理 CRUD 操作对接（创建/编辑/删除）
@@ -21,3 +21,4 @@ ACK_BACKEND_VERSION: V8
 - ✅ 服务器状态栏 UI 已完成
 - ✅ 服务器运行管理接口对接（start_frpc, stop_frpc, get_all_frpc_status）
 - ✅ frpc-status-changed 事件监听
+- ✅ 服务器运行管理接口已实现（V9确认）
