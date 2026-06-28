@@ -336,7 +336,8 @@
         { "name": "autostart", "type": "bool", "description": "开机自启动，默认 false" },
         { "name": "silent_launch", "type": "bool", "description": "静默启动（不显示主窗口），默认 false" },
         { "name": "auto_run", "type": "bool", "description": "自动运行代理，默认 false" },
-        { "name": "show_frpc_console", "type": "bool", "description": "显示 frpc 命令行窗口（调试用），默认 false" }
+        { "name": "show_frpc_console", "type": "bool", "description": "显示 frpc 命令行窗口（调试用），默认 false" },
+        { "name": "use_github_proxy", "type": "bool", "description": "优先使用代理/镜像访问 GitHub（GitHub 不可用时开启），默认 false" }
       ]
     },
     "FrpcRunningStatus": {

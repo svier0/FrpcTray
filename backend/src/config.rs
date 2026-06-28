@@ -107,6 +107,8 @@ pub struct AppConfig {
     pub auto_run: bool,
     #[serde(default)]
     pub show_frpc_console: bool,
+    #[serde(default)]
+    pub use_github_proxy: bool,
 }
 
 fn default_language() -> String {
@@ -126,8 +128,18 @@ impl Default for AppConfig {
             silent_launch: false,
             auto_run: false,
             show_frpc_console: false,
+            use_github_proxy: false,
         }
     }
+}
+
+pub fn read_app_config() -> AppConfig {
+    let dir = get_config_dir();
+    let path = dir.join("config.toml");
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|s| toml::from_str(&s).ok())
+        .unwrap_or_default()
 }
 
 #[derive(Debug, Serialize, Deserialize)]

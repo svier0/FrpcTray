@@ -306,14 +306,9 @@ pub async fn start_frpc(
        .current_dir(get_config_dir());
 
     // Check if frpc console should be shown
-    let config_path = get_config_dir().join("config.toml");
-    let show_console = std::fs::read_to_string(&config_path)
-        .ok()
-        .and_then(|s| toml::from_str::<AppConfig>(&s).ok())
-        .map(|c| c.show_frpc_console)
-        .unwrap_or(false);
+    let config = crate::config::read_app_config();
 
-    if show_console {
+    if config.show_frpc_console {
         // Don't set stdout/stderr — child inherits new console's handles automatically
         #[cfg(windows)]
         {

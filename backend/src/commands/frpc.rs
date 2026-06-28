@@ -68,12 +68,20 @@ fn parse_frpc_version_output(output: &str) -> String {
 
 async fn get_latest_frpc_version() -> Result<String, String> {
     let client = get_http_client();
+    let cfg = crate::config::read_app_config();
 
-    let urls = [
-        "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
-        "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
-    ];
-    for url in &urls {
+    let urls: &[&str] = if cfg.use_github_proxy {
+        &[
+            "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
+            "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
+        ]
+    } else {
+        &[
+            "https://raw.githubusercontent.com/ScoopInstaller/Main/refs/heads/master/bucket/frp.json",
+            "https://raw.giteeusercontent.com/scoop-installer/Main/raw/master/bucket/frp.json",
+        ]
+    };
+    for url in urls {
         match fetch_scoop_version(client, url, 10).await {
             Ok(v) => return Ok(v),
             Err(e) => eprintln!("[frpc-tray] {} 失败: {}", url, e),
@@ -136,11 +144,21 @@ pub async fn upgrade_frpc(version: String) -> Result<(), String> {
     let platform = get_platform();
     let arch = get_arch();
     let path = format!("v{version}/frp_{version}_{platform}_{arch}.zip", version = version, platform = platform, arch = arch);
-    let urls = [
-        format!("https://github.com/fatedier/frp/releases/download/{}", path),
-        format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
-        format!("https://ghfast.top/https://github.com/fatedier/frp/releases/download/{}", path),
-    ];
+    let cfg = crate::config::read_app_config();
+
+    let urls: Vec<String> = if cfg.use_github_proxy {
+        vec![
+            format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
+            format!("https://ghfast.top/https://github.com/fatedier/frp/releases/download/{}", path),
+            format!("https://github.com/fatedier/frp/releases/download/{}", path),
+        ]
+    } else {
+        vec![
+            format!("https://github.com/fatedier/frp/releases/download/{}", path),
+            format!("https://gh-proxy.com/https://github.com/fatedier/frp/releases/download/{}", path),
+            format!("https://ghfast.top/https://github.com/fatedier/frp/releases/download/{}", path),
+        ]
+    };
 
     let client = get_http_client();
     let mut body = None;
