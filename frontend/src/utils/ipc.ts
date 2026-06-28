@@ -125,37 +125,54 @@ export async function getAllFrpcStatus(): Promise<FrpcRunningStatus[]> {
   return invoke("get_all_frpc_status");
 }
 
-const errorPatterns: Array<{ regex: RegExp; template: string }> = [
-  { regex: /Unknown config field "([^"]+)"/i, template: 'Unknown config field "{name}"' },
-  { regex: /Proxy name "([^"]+)" already in use/i, template: 'Proxy name "{name}" already in use' },
-  { regex: /Port (\d+) already in use/i, template: "Port {port} already in use" },
-  { regex: /Port (\d+) unavailable/i, template: "Port {port} unavailable" },
-  { regex: /Config parse error: (.+)/i, template: "Config parse error: {detail}" },
-  { regex: /TLS certificate verification failed: (.+)/i, template: "TLS certificate verification failed: {reason}" },
-  { regex: /TLS error: (.+)/i, template: "TLS error: {detail}" },
-  { regex: /Health check failed: (.+)/i, template: "Health check failed: {detail}" },
+const errorPatterns: Array<{ regex: RegExp; keys: string[]; zhCN: string; zhTW: string; en: string; ja: string }> = [
+  { regex: /Unknown config field "([^"]+)"/i, keys: ["name"], zhCN: "未知配置字段 \"{name}\"", zhTW: "未知設定欄位 \"{name}\"", en: "Unknown config field \"{name}\"", ja: "不明な設定フィールド \"{name}\"" },
+  { regex: /Proxy name "([^"]+)" already in use/i, keys: ["name"], zhCN: "代理名 \"{name}\" 已被使用", zhTW: "代理名 \"{name}\" 已被使用", en: "Proxy name \"{name}\" already in use", ja: "プロキシ名 \"{name}\" は既に使用されています" },
+  { regex: /Port (\d+) already in use/i, keys: ["port"], zhCN: "端口 {port} 已被占用", zhTW: "連接埠 {port} 已被占用", en: "Port {port} already in use", ja: "ポート {port} は既に使用されています" },
+  { regex: /Port (\d+) unavailable/i, keys: ["port"], zhCN: "端口 {port} 不可用", zhTW: "連接埠 {port} 不可用", en: "Port {port} unavailable", ja: "ポート {port} が利用できません" },
+  { regex: /Config parse error: (.+)/i, keys: ["detail"], zhCN: "配置解析错误：{detail}", zhTW: "設定解析錯誤：{detail}", en: "Config parse error: {detail}", ja: "設定の解析エラー：{detail}" },
+  { regex: /TLS certificate verification failed: (.+)/i, keys: ["reason"], zhCN: "TLS 证书验证失败：{reason}", zhTW: "TLS 憑證驗證失敗：{reason}", en: "TLS certificate verification failed: {reason}", ja: "TLS証明書の検証に失敗しました：{reason}" },
+  { regex: /TLS error: (.+)/i, keys: ["detail"], zhCN: "TLS 错误：{detail}", zhTW: "TLS 錯誤：{detail}", en: "TLS error: {detail}", ja: "TLSエラー：{detail}" },
+  { regex: /Health check failed: (.+)/i, keys: ["detail"], zhCN: "健康检查失败：{detail}", zhTW: "健康檢查失敗：{detail}", en: "Health check failed: {detail}", ja: "ヘルスチェックに失敗しました：{detail}" },
 ];
+
+const errorExact: Record<string, Record<string, string>> = {
+  "Login to server failed": { zhCN: "登录服务器失败", zhTW: "登入伺服器失敗", en: "Login to server failed", ja: "サーバーへのログインに失敗しました" },
+  "Token mismatch": { zhCN: "Token 不匹配", zhTW: "Token 不匹配", en: "Token mismatch", ja: "トークンが一致しません" },
+  "Connection refused": { zhCN: "连接被拒绝", zhTW: "連線被拒絕", en: "Connection refused", ja: "接続が拒否されました" },
+  "Connection reset": { zhCN: "连接被重置", zhTW: "連線被重設", en: "Connection reset", ja: "接続がリセットされました" },
+  "Network unreachable": { zhCN: "网络不可达", zhTW: "網路不可達", en: "Network unreachable", ja: "ネットワークに到達できません" },
+  "Connection timeout": { zhCN: "连接超时", zhTW: "連線逾時", en: "Connection timeout", ja: "接続タイムアウト" },
+  "Reconnect timeout": { zhCN: "重连超时", zhTW: "重連逾時", en: "Reconnect timeout", ja: "再接続タイムアウト" },
+  "Control channel closed": { zhCN: "控制通道已关闭", zhTW: "控制通道已關閉", en: "Control channel closed", ja: "制御チャネルが閉じられました" },
+  "Permission denied": { zhCN: "权限不足", zhTW: "權限不足", en: "Permission denied", ja: "権限がありません" },
+  "Connection closed unexpectedly": { zhCN: "连接意外关闭", zhTW: "連線意外關閉", en: "Connection closed unexpectedly", ja: "接続が予期せず閉じられました" },
+};
+
+function getLocale(): string {
+  return (i18n.global.locale as any).value || "zh-CN";
+}
+
+function getLang(): string {
+  const loc = getLocale();
+  if (loc.startsWith("zh-TW")) return "zhTW";
+  if (loc.startsWith("en")) return "en";
+  if (loc.startsWith("ja")) return "ja";
+  return "zhCN";
+}
 
 export function translateError(error: string | null): string {
   if (!error) return "";
-  const { t, te } = i18n.global;
-  for (const { regex, template } of errorPatterns) {
+  const lang = getLang();
+  for (const { regex, keys, zhCN, zhTW, en, ja } of errorPatterns) {
     const match = error.match(regex);
     if (match) {
-      const keys: Record<string, string> = {};
-      if (match[1]) {
-        const placeholder = template.match(/\{(\w+)\}/)?.[1];
-        if (placeholder) keys[placeholder] = match[1];
-      }
-      if (te(`error.${template}`)) {
-        let result = t(`error.${template}`, keys);
-        Object.entries(keys).forEach(([k, v]) => {
-          result = result.replace(`{${k}}`, v);
-        });
-        return result;
-      }
+      const map = { zhCN, zhTW, en, ja };
+      let result = map[lang];
+      keys.forEach((key, i) => { result = result.replace(`{${key}}`, match[i + 1]); });
+      return result;
     }
   }
-  if (te(`error.${error}`)) return t(`error.${error}`);
+  if (errorExact[error]) return errorExact[error][lang] || error;
   return error;
 }
