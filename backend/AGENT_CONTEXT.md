@@ -139,8 +139,8 @@
 ---
 
 ## 协作状态
-- **当前版本**: V11
-- **前端 ACK**: 已确认 V9 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V9)
+- **当前版本**: V12
+- **前端 ACK**: 已确认 V11 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V11)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 
