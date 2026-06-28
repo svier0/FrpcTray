@@ -1,13 +1,18 @@
 use std::collections::HashMap;
-use std::sync::Arc;
 use tokio::sync::Mutex;
+use tokio::sync::oneshot;
 use tauri::{AppHandle, Emitter, Manager};
 use crate::config::*;
 use crate::toml_helper::read_server_file;
 use super::server::list_servers_impl;
 
+struct ProcessEntry {
+    pid: u32,
+    kill_tx: oneshot::Sender<()>,
+}
+
 pub struct FrpcManager {
-    processes: Mutex<HashMap<String, Arc<Mutex<tokio::process::Child>>>>,
+    processes: Mutex<HashMap<String, ProcessEntry>>,
 }
 
 impl FrpcManager {
@@ -189,49 +194,50 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
     None
 }
 
-async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio::process::Child>>) {
+async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, kill_rx: oneshot::Receiver<()>) {
     tokio::spawn(async move {
         use tokio::io::AsyncReadExt;
         let (status, child_output) = {
-            let mut child = child.lock().await;
-            let status = child.wait().await;
-
-            let mut out_buf = String::new();
-            let mut err_buf = String::new();
-
-            if let Some(s) = child.stdout.as_mut() {
-                let _ = s.read_to_string(&mut out_buf).await;
-            }
-            if let Some(s) = child.stderr.as_mut() {
-                let _ = s.read_to_string(&mut err_buf).await;
-            }
-
-            let combined = if out_buf.trim().is_empty() {
-                err_buf
-            } else if err_buf.trim().is_empty() {
-                out_buf
-            } else {
-                format!("{}\n{}", out_buf.trim(), err_buf.trim())
-            };
-            let msg = combined.lines()
-                .find(|l| !l.trim().is_empty())
-                .map(|l| {
-                    let l = l.trim();
-                    // Try known error patterns first
-                    if let Some(summary) = summarize_frpc_error(l) {
-                        return summary;
+            tokio::select! {
+                status = child.wait() => {
+                    let mut out_buf = String::new();
+                    let mut err_buf = String::new();
+                    if let Some(s) = child.stdout.as_mut() {
+                        let _ = s.read_to_string(&mut out_buf).await;
                     }
-                    // Fallback: raw line, truncated to 120 chars
-                    if l.len() > 120 {
-                        let mut out: String = l.chars().take(117).collect();
-                        out.push_str("...");
-                        out
+                    if let Some(s) = child.stderr.as_mut() {
+                        let _ = s.read_to_string(&mut err_buf).await;
+                    }
+                    let combined = if out_buf.trim().is_empty() {
+                        err_buf
+                    } else if err_buf.trim().is_empty() {
+                        out_buf
                     } else {
-                        l.to_string()
-                    }
-                });
-
-            (status, msg)
+                        format!("{}\n{}", out_buf.trim(), err_buf.trim())
+                    };
+                    let msg = combined.lines()
+                        .find(|l| !l.trim().is_empty())
+                        .map(|l| {
+                            let l = l.trim();
+                            if let Some(summary) = summarize_frpc_error(l) {
+                                return summary;
+                            }
+                            if l.len() > 120 {
+                                let mut out: String = l.chars().take(117).collect();
+                                out.push_str("...");
+                                out
+                            } else {
+                                l.to_string()
+                            }
+                        });
+                    (status, msg)
+                }
+                _ = kill_rx => {
+                    let _ = child.kill().await;
+                    let status = child.wait().await;
+                    (status, None)
+                }
+            }
         };
 
         let state = app.state::<FrpcManager>();
@@ -304,14 +310,14 @@ pub async fn start_frpc(
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
 
     let pid = child.id();
-    let child = Arc::new(Mutex::new(child));
+    let (kill_tx, kill_rx) = oneshot::channel();
 
     {
         let mut procs = state.processes.lock().await;
-        procs.insert(server_id.clone(), child.clone());
+        procs.insert(server_id.clone(), ProcessEntry { pid: pid.expect("child should have a pid"), kill_tx });
     }
 
-    spawn_monitor(app.clone(), server_id.clone(), child).await;
+    spawn_monitor(app.clone(), server_id.clone(), child, kill_rx).await;
     emit_status(&app, &server_id, "stopped", "running", pid, None).await;
 
     Ok(())
@@ -323,23 +329,16 @@ pub async fn stop_frpc(
     state: tauri::State<'_, FrpcManager>,
     app: AppHandle,
 ) -> Result<(), String> {
-    let child = {
+    let entry = {
         let mut procs = state.processes.lock().await;
         procs.remove(&server_id)
     };
 
-    match child {
-        Some(child) => {
-            let mut child = child.lock().await;
-            if let Err(e) = child.kill().await {
-                return Err(format!("停止 frpc 失败: {}", e));
-            }
-            drop(child);
-            emit_status(&app, &server_id, "running", "stopped", None, None).await;
-            Ok(())
-        }
-        None => Err(format!("服务器 '{}' 未在运行", server_id)),
+    if let Some(entry) = entry {
+        let _ = entry.kill_tx.send(());
+        emit_status(&app, &server_id, "running", "stopped", None, None).await;
     }
+    Ok(())
 }
 
 #[tauri::command]
@@ -399,11 +398,11 @@ pub async fn get_all_frpc_status(
     let procs = state.processes.lock().await;
 
     Ok(servers.iter().map(|s| {
-        if procs.contains_key(&s.id) {
+        if let Some(entry) = procs.get(&s.id) {
             FrpcRunningStatus {
                 server_id: s.id.clone(),
                 status: "running".to_string(),
-                pid: None, // pid is set via spawn, hard to get here
+                pid: Some(entry.pid),
                 error_message: None,
             }
         } else {
