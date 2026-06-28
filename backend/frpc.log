@@ -1,0 +1,16 @@
+2026-06-28 12:58:16.838 [I] [sub/root.go:201] start frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] with aggregated configuration
+2026-06-28 12:58:16.876 [I] [client/service.go:308] try to connect to server...
+2026-06-28 12:58:16.889 [W] [client/service.go:319] connect to server error: dial tcp 127.0.0.1:7000: connectex: No connection could be made because the target machine actively refused it.
+2026-06-28 12:58:16.891 [I] [sub/root.go:218] frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] stopped
+2026-06-28 12:59:20.358 [I] [sub/root.go:201] start frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] with aggregated configuration
+2026-06-28 12:59:20.373 [I] [client/service.go:308] try to connect to server...
+2026-06-28 12:59:20.375 [W] [client/service.go:319] connect to server error: dial tcp 127.0.0.1:7000: connectex: No connection could be made because the target machine actively refused it.
+2026-06-28 12:59:20.375 [I] [sub/root.go:218] frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] stopped
+2026-06-28 12:59:21.696 [I] [sub/root.go:201] start frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] with aggregated configuration
+2026-06-28 12:59:21.712 [I] [client/service.go:308] try to connect to server...
+2026-06-28 12:59:21.713 [W] [client/service.go:319] connect to server error: dial tcp 127.0.0.1:7000: connectex: No connection could be made because the target machine actively refused it.
+2026-06-28 12:59:21.714 [I] [sub/root.go:218] frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] stopped
+2026-06-28 12:59:22.566 [I] [sub/root.go:201] start frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] with aggregated configuration
+2026-06-28 12:59:22.582 [I] [client/service.go:308] try to connect to server...
+2026-06-28 12:59:22.583 [W] [client/service.go:319] connect to server error: dial tcp 127.0.0.1:7000: connectex: No connection could be made because the target machine actively refused it.
+2026-06-28 12:59:22.584 [I] [sub/root.go:218] frpc service for config file [D:\x\rust\frpc-tray\backend\target\debug\conf\frpc.a.toml] stopped

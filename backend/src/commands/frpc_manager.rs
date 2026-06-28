@@ -38,9 +38,21 @@ async fn emit_status(app: &AppHandle, server_id: &str, old: &str, new: &str, pid
 
 async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio::process::Child>>) {
     tokio::spawn(async move {
-        let status = {
+        use tokio::io::AsyncReadExt;
+
+        let (status, stderr_output) = {
             let mut child = child.lock().await;
-            child.wait().await
+            let status = child.wait().await;
+            let stderr = match child.stderr.as_mut() {
+                Some(s) => {
+                    let mut buf = String::new();
+                    s.read_to_string(&mut buf).await.ok();
+                    let trimmed = buf.trim().to_string();
+                    if trimmed.is_empty() { None } else { Some(trimmed) }
+                }
+                None => None,
+            };
+            (status, stderr)
         };
 
         let state = app.state::<FrpcManager>();
@@ -51,8 +63,17 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
             Ok(exit) => {
                 let code = exit.code().unwrap_or(-1);
                 eprintln!("[frpc-tray] frpc {} 进程退出, code={}", server_id, code);
+                if let Some(ref msg) = stderr_output {
+                    eprintln!("[frpc-tray] frpc {} stderr:\n{}", server_id, msg);
+                }
+
+                let mut err_msg = format!("进程退出, exit code: {}", code);
+                if let Some(ref stderr) = stderr_output {
+                    err_msg.push('\n');
+                    err_msg.push_str(stderr);
+                }
                 emit_status(&app, &server_id, "running", "stopped", None,
-                    Some(format!("进程退出, exit code: {}", code))).await;
+                    Some(err_msg)).await;
             }
             Err(e) => {
                 eprintln!("[frpc-tray] frpc {} 进程等待失败: {}", server_id, e);
