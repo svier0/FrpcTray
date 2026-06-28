@@ -106,8 +106,6 @@ pub struct AppConfig {
     #[serde(default)]
     pub auto_run: bool,
     #[serde(default)]
-    pub show_frpc_console: bool,
-    #[serde(default)]
     pub use_github_proxy: bool,
 }
 
@@ -127,7 +125,6 @@ impl Default for AppConfig {
             autostart: false,
             silent_launch: false,
             auto_run: false,
-            show_frpc_console: false,
             use_github_proxy: false,
         }
     }

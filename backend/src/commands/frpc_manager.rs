@@ -253,9 +253,6 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     }
                 }
             }
-        } else {
-            // Console mode (CREATE_NEW_CONSOLE) — can't read output, assume success
-            login_ok = true;
         }
 
         if login_ok {
@@ -344,22 +341,9 @@ pub async fn start_frpc(
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
        .arg(&config_file)
-       .current_dir(get_config_dir());
-
-    // Check if frpc console should be shown
-    let config = crate::config::read_app_config();
-
-    if config.show_frpc_console {
-        // Don't set stdout/stderr — child inherits new console's handles automatically
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            cmd.as_std_mut().creation_flags(0x00000010); // CREATE_NEW_CONSOLE
-        }
-    } else {
-        cmd.stdout(std::process::Stdio::piped())
-           .stderr(std::process::Stdio::piped());
-    }
+       .current_dir(get_config_dir())
+       .stdout(std::process::Stdio::piped())
+       .stderr(std::process::Stdio::piped());
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
