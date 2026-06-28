@@ -115,6 +115,7 @@ pub async fn start_frpc(
     let child = tokio::process::Command::new(&bin)
         .arg("-c")
         .arg(&config_file)
+        .current_dir(get_config_dir())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::piped())
         .spawn()
