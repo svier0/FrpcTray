@@ -198,18 +198,21 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
 
 async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, mut kill_rx: watch::Receiver<bool>) {
     tokio::spawn(async move {
+        use tokio::time::{timeout, Duration};
         let state = app.state::<FrpcManager>();
 
         // Consume initial changed() notification (returns immediately)
         let _ = kill_rx.changed().await;
 
-        // Phase 1: read stdout until "login to server success", EOF (process exit), or kill
+        // Phase 1: read stdout until "login to server success", EOF (process exit), kill, or timeout
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
 
         if let Some(stdout) = child.stdout.take() {
             let mut reader = tokio::io::BufReader::new(stdout);
             let mut line = String::new();
+            let deadline = timeout(Duration::from_secs(10), std::future::pending::<()>());
+            tokio::pin!(deadline);
 
             loop {
                 tokio::select! {
@@ -236,6 +239,11 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                             let _ = child.wait().await;
                             break;
                         }
+                    }
+                    _ = &mut deadline => {
+                        let _ = child.kill().await;
+                        let _ = child.wait().await;
+                        break;
                     }
                 }
             }

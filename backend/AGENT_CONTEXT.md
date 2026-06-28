@@ -14,18 +14,23 @@
 
 ## 当前开发状态 (截至 2026-06-28)
 
-### 已完成（续 V13）
+### 已完成（续 V13→V14）
 - ✅ 去掉 `ensure_log_to`（用户要求不自动注入 log.to，新建时已有，旧配置保留原样）
 - ✅ 修复 `update_meta_comments` 在新建空文档时不生效：改为 `update_server_fields` 先插入 key，再调 `update_meta_comments`
 - ✅ **connecting 启动状态**：改造进程管理
   - `oneshot` → `watch::Sender<bool>` 替代 kill 信号（可多次检查）
   - `ProcessEntry` 新增 `status` 字段（`"connecting"` / `"running"`）
-  - `spawn_monitor` 逐行读取 stdout，检测 `login to server success` 后才发 `running`
+  - `spawn_monitor` 逐行读取 stdout，检测到 `login to server success` 后才发 `running`
   - 失败（进程退出或被杀）发 `connecting` → `stopped` + 错误信息
   - `show_frpc_console` 模式跳过检测，直接 `running`
   - `get_all_frpc_status` 返回实际 status
 - ✅ `api_spec.json` 已更新 `FrpcRunningStatus.status` 含 `connecting`
-- ✅ `BACKEND_STATUS.md` V13 增量更新，通知前端
+- ✅ `open_log_file` 命令新增（`frpc_manager.rs:461`）
+  - 取 `get_config_dir().parent().join("log").join("frpc.{id}.log")` 路径
+  - Windows 用 `cmd /c start` 打开，macOS/Linux 用 `open`/`xdg-open`
+  - 日志文件不存在返回错误
+  - 已注册到 `lib.rs` invoke_handler 和 `api_spec.json`
+- ✅ V14 覆盖看板：`show_frpc_console` 警告前端跳过 + connecting + open_log_file
 - ✅ V1 TOML 文件管理 (9 个命令) → 已被 V2 替代
 - ✅ V2 API：Server CRUD + reorder, Proxy CRUD + reorder (11 个命令)
 - ✅ 数据模型完全匹配前端需求：`ServerInfo`（对应 `conf/frpc.{id}.toml`）、`ProxyItem`（对应 `[[proxies]]`）
@@ -159,7 +164,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V13（增量通知前端）
+- **当前版本**: V14
 - **前端 ACK**: 已确认 V12 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V12)
 - **我的 ACK**: 已确认前端 V6 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V6)
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
@@ -180,7 +185,9 @@
 
 ---
 
-## 协作教训 (2026-06-27)
+## 协作教训 (2026-06-27~28)
 - **问题**: 用户询问如何让 agent 每次对话自动签收看板，我回复"要我帮你写入 AGENTS.md 吗"，违反了根目录禁止编辑的规则
 - **教训**: 根目录文件（`AGENTS.md`、`AI_COLLABORATION_GUIDE.md` 等）只有用户能编辑，agent 绝不能提出"帮你写入"的建议，即使意图是好的
 - **正确做法**: 只告诉用户该加什么内容，让他自己编辑
+- **教训 (V13→V14)**: `show_frpc_console` 是后端调试字段，但写进了看板通知前端对接。前端已读 V13，增量更新无效（已读不重读），必须 bump 到 V14 覆盖写新通知
+- **正确做法**: 后端调试字段不要写进看板；前端已读过的通知必须 bump 版本号才能重新通知
