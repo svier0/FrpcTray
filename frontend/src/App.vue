@@ -305,7 +305,7 @@ onMounted(() => {
             <span class="text-xs text-muted-foreground">
               {{ activeServerStatus === 'running' ? '运行中' : activeServerStatus === 'error' ? '异常' : '已停止' }}
             </span>
-            <span v-if="activeServerError" class="text-xs text-red-500 truncate max-w-[200px]">
+            <span v-if="activeServerError" class="text-xs text-red-500 truncate max-w-[400px]">
               {{ activeServerError }}
             </span>
           </div>
