@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import AppHeader from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
@@ -216,13 +216,8 @@ async function loadAllFrpcStatus() {
   }
 }
 
-function getActiveServerStatus(): ServerStatus {
-  return serverStatus.value[activeTab.value] || "idle";
-}
-
-function getActiveServerError(): string {
-  return serverError.value[activeTab.value] || "";
-}
+const activeServerStatus = computed<ServerStatus>(() => serverStatus.value[activeTab.value] || "idle");
+const activeServerError = computed(() => serverError.value[activeTab.value] || "");
 
 async function toggleServerRun() {
   const id = activeTab.value;
@@ -257,7 +252,6 @@ onMounted(() => {
   
   listen<{ server_id: string; new_status: string; error_message?: string }>("frpc-status-changed", (event) => {
     const { server_id, new_status, error_message } = event.payload;
-    console.log("frpc-status-changed:", event.payload);
     serverStatus.value[server_id] = new_status === "running" ? "running" : new_status === "error" ? "error" : "idle";
     if (new_status === "error" && error_message) {
       serverError.value[server_id] = error_message;
@@ -285,31 +279,31 @@ onMounted(() => {
           <div class="flex items-center gap-2">
             <button
               class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
-              :class="getActiveServerStatus() === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'"
+              :class="activeServerStatus === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'"
               @click="toggleServerRun"
             >
-              <svg v-if="getActiveServerStatus() !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg v-if="activeServerStatus !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect width="4" height="16" x="6" y="4"/>
                 <rect width="4" height="16" x="14" y="4"/>
               </svg>
-              {{ getActiveServerStatus() === 'running' ? '停止' : '启动' }}
+              {{ activeServerStatus === 'running' ? '停止' : '启动' }}
             </button>
             <div
               class="h-2 w-2 rounded-full"
               :class="{
-                'bg-blue-500': getActiveServerStatus() === 'running',
-                'bg-red-500': getActiveServerStatus() === 'error',
-                'bg-muted-foreground/30': getActiveServerStatus() === 'idle'
+                'bg-blue-500': activeServerStatus === 'running',
+                'bg-red-500': activeServerStatus === 'error',
+                'bg-muted-foreground/30': activeServerStatus === 'idle'
               }"
             />
             <span class="text-xs text-muted-foreground">
-              {{ getActiveServerStatus() === 'running' ? '运行中' : getActiveServerStatus() === 'error' ? '异常' : '已停止' }}
+              {{ activeServerStatus === 'running' ? '运行中' : activeServerStatus === 'error' ? '异常' : '已停止' }}
             </span>
-            <span v-if="getActiveServerError()" class="text-xs text-red-500 truncate max-w-[200px]">
-              {{ getActiveServerError() }}
+            <span v-if="activeServerError" class="text-xs text-red-500 truncate max-w-[200px]">
+              {{ activeServerError }}
             </span>
           </div>
           <div class="flex items-center gap-2">
