@@ -7,7 +7,7 @@ import ProxyDialog from "./components/ProxyDialog.vue";
 import type { ProxyFormData } from "./components/ProxyDialog.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
-import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus, translateError } from "./utils/ipc";
+import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus, openLogFile, translateError } from "./utils/ipc";
 import { listen } from "@tauri-apps/api/event";
 
 const globalEnabled = ref(false);
@@ -19,7 +19,7 @@ const proxies = ref<ProxyItem[]>([]);
 const enabledServers = ref<ServerItem[]>([]);
 const isLoadingProxies = ref(false);
 
-type ServerStatus = "idle" | "running" | "error";
+type ServerStatus = "idle" | "connecting" | "running" | "error";
 const serverStatus = ref<Record<string, ServerStatus>>({});
 const serverError = ref<Record<string, string>>({});
 
@@ -204,7 +204,15 @@ async function loadAllFrpcStatus() {
     const statusMap: Record<string, ServerStatus> = {};
     const errorMap: Record<string, string> = {};
     statusList.forEach((s) => {
-      statusMap[s.server_id] = s.status === "running" ? "running" : "idle";
+      if (s.status === "running") {
+        statusMap[s.server_id] = "running";
+      } else if (s.status === "connecting") {
+        statusMap[s.server_id] = "connecting";
+      } else if (s.status === "error") {
+        statusMap[s.server_id] = "error";
+      } else {
+        statusMap[s.server_id] = "idle";
+      }
       if (s.error_message) {
         errorMap[s.server_id] = s.error_message;
       }
@@ -236,8 +244,14 @@ async function toggleServerRun() {
   }
 }
 
-function handleViewServerLogs() {
-  console.log("view server logs", activeTab.value);
+async function handleViewServerLogs() {
+  const id = activeTab.value;
+  if (!id) return;
+  try {
+    await openLogFile(id);
+  } catch (e) {
+    console.error("Failed to open log file:", e);
+  }
 }
 
 watch(activeTab, (newTab) => {
@@ -254,7 +268,15 @@ onMounted(() => {
     const { server_id, new_status, error_message } = event.payload;
     console.log("frpc-status-changed:", event.payload);
     const hasError = !!error_message;
-    serverStatus.value = { ...serverStatus.value, [server_id]: new_status === "running" ? "running" : "idle" };
+    let mappedStatus: ServerStatus = "idle";
+    if (new_status === "running") {
+      mappedStatus = "running";
+    } else if (new_status === "connecting") {
+      mappedStatus = "connecting";
+    } else if (new_status === "error") {
+      mappedStatus = "error";
+    }
+    serverStatus.value = { ...serverStatus.value, [server_id]: mappedStatus };
     if (hasError && error_message) {
       serverError.value = { ...serverError.value, [server_id]: error_message };
     } else if (new_status === "running") {
@@ -284,6 +306,7 @@ onMounted(() => {
             <button
               class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
               :class="activeServerStatus === 'running' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'"
+              :disabled="activeServerStatus === 'connecting'"
               @click="toggleServerRun"
             >
               <svg v-if="activeServerStatus !== 'running'" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -293,18 +316,19 @@ onMounted(() => {
                 <rect width="4" height="16" x="6" y="4"/>
                 <rect width="4" height="16" x="14" y="4"/>
               </svg>
-              {{ activeServerStatus === 'running' ? '停止' : '启动' }}
+              {{ activeServerStatus === 'connecting' ? '连接中' : activeServerStatus === 'running' ? '停止' : '启动' }}
             </button>
             <div
               class="h-2 w-2 rounded-full"
               :class="{
-                'bg-blue-500': activeServerStatus === 'running',
+                'bg-blue-500 animate-pulse': activeServerStatus === 'connecting',
+                'bg-emerald-500': activeServerStatus === 'running',
                 'bg-red-500': activeServerStatus === 'error',
                 'bg-muted-foreground/30': activeServerStatus === 'idle'
               }"
             />
             <span class="text-xs text-muted-foreground">
-              {{ activeServerStatus === 'running' ? '运行中' : activeServerStatus === 'error' ? '异常' : '已停止' }}
+              {{ activeServerStatus === 'connecting' ? '连接中' : activeServerStatus === 'running' ? '运行中' : activeServerStatus === 'error' ? '异常' : '已停止' }}
             </span>
             <span v-if="activeServerError" class="text-xs text-red-500 truncate max-w-[400px]">
               {{ translateError(activeServerError) }}

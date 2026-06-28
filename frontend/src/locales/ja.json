@@ -103,6 +103,10 @@
       "title": "自動実行",
       "description": "起動時にプロキシを自動的に開始"
     },
+    "showFrpcConsole": {
+      "title": "コンソールウィンドウを表示",
+      "description": "起動時にfrpcコンソールウィンドウを表示（デバッグ用）"
+    },
     "about": {
       "version": "バージョン",
       "appName": "FrpC Tray",

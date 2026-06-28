@@ -100,7 +100,7 @@ export async function saveConfig(config: AppConfig): Promise<void> {
 
 export interface FrpcRunningStatus {
   server_id: string;
-  status: "running" | "stopped" | "error";
+  status: "running" | "connecting" | "stopped" | "error";
   pid: number | null;
   error_message: string | null;
 }
@@ -164,4 +164,8 @@ export function translateError(error: string | null): string {
   }
   if (errorExact[error]) return t(errorExact[error]);
   return error;
+}
+
+export async function openLogFile(serverId: string): Promise<void> {
+  return invoke("open_log_file", { serverId });
 }

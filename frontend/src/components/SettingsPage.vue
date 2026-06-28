@@ -37,6 +37,7 @@ const backupProgress = ref("");
 const autostart = ref(appConfig.value.autostart);
 const silentLaunch = ref(appConfig.value.silentLaunch);
 const autoRun = ref(appConfig.value.autoRun);
+const showFrpcConsole = ref(appConfig.value.showFrpcConsole);
 const useGithubProxy = ref(appConfig.value.useGithubProxy);
 
 const languages = [
@@ -225,6 +226,11 @@ async function toggleSilentLaunch() {
 async function toggleAutoRun() {
   autoRun.value = !autoRun.value;
   updateConfig({ autoRun: autoRun.value });
+}
+
+async function toggleShowFrpcConsole() {
+  showFrpcConsole.value = !showFrpcConsole.value;
+  updateConfig({ showFrpcConsole: showFrpcConsole.value });
 }
 
 async function toggleGithubProxy() {
@@ -465,6 +471,35 @@ watch(language, (newLang) => {
                 :checked="autoRun"
                 class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
                 @update:checked="toggleAutoRun"
+              >
+                <SwitchThumb
+                  class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
+                />
+              </SwitchRoot>
+            </div>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <div class="rounded-xl border border-border bg-card p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="14" x="2" y="3" rx="2"/>
+                    <line x1="8" x2="16" y1="21" y2="21"/>
+                    <line x1="12" x2="12" y1="17" y2="21"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-sm font-medium">{{ t('settings.showFrpcConsole.title') }}</h3>
+                  <p class="text-xs text-muted-foreground">{{ t('settings.showFrpcConsole.description') }}</p>
+                </div>
+              </div>
+              <SwitchRoot
+                :checked="showFrpcConsole"
+                class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted"
+                @update:checked="toggleShowFrpcConsole"
               >
                 <SwitchThumb
                   class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"

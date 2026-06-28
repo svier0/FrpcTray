@@ -28,7 +28,7 @@
 - ✅ 服务器列表：CRUD、拖拽排序、重命名（无id图标，显示服务器名称）
 - ✅ 代理列表：CRUD、拖拽排序、enabled开关、type蓝色tag（无图标、无副标题）
 - ✅ ProxyDialog：创建/编辑代理表单，locations仅http类型显示
-- ✅ 设置-通用：语言、主题、主页面显示、开机自启、静默启动、自动运行
+- ✅ 设置-通用：语言、主题、主页面显示、开机自启、静默启动、自动运行、显示命令行窗口
 - ✅ 设置-内核：frpc版本卡片、安装/升级、状态指示器、GitHub代理开关
 - ✅ 设置-关于：应用信息卡片
 - ✅ 设置-高级：备份与恢复（export_backup/restore_backup）
@@ -40,9 +40,9 @@
 - ✅ translateError 函数：正则模式匹配 + vue-i18n 翻译
 - ✅ 控制台调试工具：`cmd('命令名', {参数})` 透传 invoke
 - ✅ GitHub代理开关配置（useGithubProxy，默认false）
+- ✅ 后端V13对接：connecting状态、showFrpcConsole、openLogFile
 
 ### 待办事项
-- [ ] 后端 AppConfig 添加 use_github_proxy 字段（serde default false）
 - [ ] 设置界面-高级-其他设置
 
 ---
@@ -70,6 +70,14 @@
 - **原因**: https 类型没有 locations 字段
 - **实现**: ProxyDialog.vue v-if 改为 `formData.type === 'http'`
 
+- **决策**: connecting 状态显示脉冲动画，按钮置灰
+- **原因**: 后端新增 connecting 状态（启动后检测登录前），需明确视觉反馈
+- **实现**: App.vue 状态圆点 bg-blue-500 + animate-pulse，按钮 disabled
+
+- **决策**: showFrpcConsole 放在通用设置 tab
+- **原因**: 调试开关属于运行时配置，和 autoRun 同级
+- **实现**: SettingsPage.vue 添加 SwitchRoot 开关
+
 ---
 
 ## 技术细节备忘
@@ -83,6 +91,7 @@
     "autostart": false,
     "silent_launch": false,
     "auto_run": false,
+    "show_frpc_console": false,
     "use_github_proxy": false
   }
   ```
@@ -95,20 +104,22 @@
 
 ### 服务器状态
 - 事件监听 frpc-status-changed，payload 包含 server_id, old_status, new_status, error_message
-- 状态映射：running → "running"，其他 → "idle"
+- 状态：running / connecting / idle / error
+- connecting：启动后检测到登录前，圆点脉冲动画，按钮置灰
 - 错误信息：有 error_message 时显示在"已停止"后面，启动时清空
 
 ---
 
 ## 协作状态
-- **前端版本**: V6
-- **后端确认**: ACK_BACKEND_VERSION: V12
-- **阻塞点**: 后端需添加 use_github_proxy 字段到 AppConfig
+- **前端版本**: V7
+- **后端确认**: ACK_BACKEND_VERSION: V13
+- **阻塞点**: 无
 
 ---
 
 ## 下次启动检查清单
-1. 后端添加 use_github_proxy 字段到 AppConfig
-2. 检查 GitHub 代理开关是否正常工作
-3. 检查错误信息显示和翻译
-4. 设置界面-高级-其他设置
+1. 检查 GitHub 代理开关是否正常工作
+2. 检查错误信息显示和翻译
+3. 检查 connecting 状态显示
+4. 检查日志按钮打开日志文件
+5. 设置界面-高级-其他设置

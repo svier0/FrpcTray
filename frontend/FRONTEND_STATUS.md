@@ -1,8 +1,10 @@
 # 前端联调看板
-FRONTEND_VERSION: V6
-ACK_BACKEND_VERSION: V12
+FRONTEND_VERSION: V7
+ACK_BACKEND_VERSION: V13
 
 ## 📢 最新进度与反馈
-- ✅ 服务器错误信息显示：启动失败后在状态后显示错误原因，重启时清空
-- ✅ 已添加错误码 i18n 翻译（zh-CN/zh-TW/en/ja），含命名占位符
-- ✅ translateError 函数：精确匹配 + 正则模式匹配，支持变量提取
+- ✅ 已对接后端 V13 所有新功能：connecting 状态、showFrpcConsole、openLogFile
+- ✅ 配置映射已更新（use_github_proxy、show_frpc_console）
+- ✅ 服务器状态：connecting 时按钮置灰、状态圆点脉冲动画
+- ✅ 日志按钮已对接 openLogFile 命令
+- ✅ 设置-通用：新增"显示命令行窗口"开关
