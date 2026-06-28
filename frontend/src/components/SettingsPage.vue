@@ -591,6 +591,8 @@ watch(language, (newLang) => {
           </div>
         </div>
       </div>
+
+      <div v-else-if="activeTab === 'advanced'" class="space-y-6">
         <div class="rounded-xl border border-border bg-card overflow-hidden">
           <button
             class="flex items-center w-full px-5 py-4 text-left hover:bg-muted/30 transition-colors"
