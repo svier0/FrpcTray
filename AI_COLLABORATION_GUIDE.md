@@ -84,6 +84,8 @@ ACK_BACKEND_VERSION: V1 表示已经看过后端V1版本的面板内容
 
 ### **每次启动或写完一个阶段** 都必须进行看板对齐
 
+### **编辑`/frontend/FRONTEND_STATUS.md`和`/backend/BACKEND_STATUS.md`前，绝对不可跳过版本号检查**
+
 ---
 
 ## 5. 死锁仲裁 (Human Escalation)
