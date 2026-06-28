@@ -201,26 +201,8 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         use tokio::time::Duration;
         let state = app.state::<FrpcManager>();
 
-        let _ = kill_rx.changed().await;
-
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
-
-        // Tee stderr to terminal for debug visibility
-        if let Some(stderr) = child.stderr.take() {
-            tokio::spawn(async move {
-                use tokio::io::AsyncBufReadExt;
-                let mut reader = tokio::io::BufReader::new(stderr);
-                let mut line = String::new();
-                loop {
-                    line.clear();
-                    match reader.read_line(&mut line).await {
-                        Ok(0) | Err(_) => break,
-                        Ok(_) => eprint!("[frpc] {}", line),
-                    }
-                }
-            });
-        }
 
         if let Some(stdout) = child.stdout.take() {
             let mut reader = tokio::io::BufReader::new(stdout);
@@ -267,7 +249,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 }
             }
         } else {
-            eprintln!("[frpc-tray] WARNING: stdout is None, cannot read frpc output");
+            eprintln!("[frpc-tray] stdout is None, frpc output not available");
             login_ok = true;
         }
 
@@ -363,6 +345,8 @@ pub async fn start_frpc(
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
+
+    eprintln!("[frpc-tray] spawned, stdout.is_some={}, stderr.is_some={}", child.stdout.is_some(), child.stderr.is_some());
 
     let pid = child.id();
     let (kill_tx, kill_rx) = watch::channel(false);
