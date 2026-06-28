@@ -144,5 +144,24 @@
       "retry": "Retry",
       "loading": "Loading..."
     }
+  },
+  "error": {
+    "Login to server failed": "Login to server failed",
+    "Config parse error": "Config parse error",
+    "Token mismatch": "Token mismatch",
+    "TLS certificate verification failed": "TLS certificate verification failed",
+    "TLS error": "TLS error",
+    "Connection refused": "Connection refused",
+    "Connection reset": "Connection reset",
+    "Network unreachable": "Network unreachable",
+    "Connection timeout": "Connection timeout",
+    "Reconnect timeout": "Reconnect timeout",
+    "Port already in use": "Port already in use",
+    "Port unavailable": "Port unavailable",
+    "Health check failed": "Health check failed",
+    "Control channel closed": "Control channel closed",
+    "Permission denied": "Permission denied",
+    "Unknown config field": "Unknown config field",
+    "Connection closed unexpectedly": "Connection closed unexpectedly"
   }
 }

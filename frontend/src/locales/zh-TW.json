@@ -144,5 +144,24 @@
       "retry": "請重試",
       "loading": "載入中..."
     }
+  },
+  "error": {
+    "Login to server failed": "登入伺服器失敗",
+    "Config parse error": "設定解析錯誤",
+    "Token mismatch": "Token 不匹配",
+    "TLS certificate verification failed": "TLS 憑證驗證失敗",
+    "TLS error": "TLS 錯誤",
+    "Connection refused": "連線被拒絕",
+    "Connection reset": "連線被重設",
+    "Network unreachable": "網路不可達",
+    "Connection timeout": "連線逾時",
+    "Reconnect timeout": "重連逾時",
+    "Port already in use": "連接埠已被占用",
+    "Port unavailable": "連接埠不可用",
+    "Health check failed": "健康檢查失敗",
+    "Control channel closed": "控制通道已關閉",
+    "Permission denied": "權限不足",
+    "Unknown config field": "未知設定欄位",
+    "Connection closed unexpectedly": "連線意外關閉"
   }
 }

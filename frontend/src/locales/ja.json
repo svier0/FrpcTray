@@ -144,5 +144,24 @@
       "retry": "再試行",
       "loading": "読み込み中..."
     }
+  },
+  "error": {
+    "Login to server failed": "サーバーへのログインに失敗しました",
+    "Config parse error": "設定の解析エラー",
+    "Token mismatch": "トークンが一致しません",
+    "TLS certificate verification failed": "TLS証明書の検証に失敗しました",
+    "TLS error": "TLSエラー",
+    "Connection refused": "接続が拒否されました",
+    "Connection reset": "接続がリセットされました",
+    "Network unreachable": "ネットワークに到達できません",
+    "Connection timeout": "接続タイムアウト",
+    "Reconnect timeout": "再接続タイムアウト",
+    "Port already in use": "ポートが既に使用されています",
+    "Port unavailable": "ポートが利用できません",
+    "Health check failed": "ヘルスチェックに失敗しました",
+    "Control channel closed": "制御チャネルが閉じられました",
+    "Permission denied": "権限がありません",
+    "Unknown config field": "不明な設定フィールド",
+    "Connection closed unexpectedly": "接続が予期せず閉じられました"
   }
 }
