@@ -7,7 +7,7 @@ import ProxyDialog from "./components/ProxyDialog.vue";
 import type { ProxyFormData } from "./components/ProxyDialog.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
-import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus } from "./utils/ipc";
+import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus, translateError } from "./utils/ipc";
 import { listen } from "@tauri-apps/api/event";
 
 const globalEnabled = ref(false);
@@ -307,7 +307,7 @@ onMounted(() => {
               {{ activeServerStatus === 'running' ? '运行中' : activeServerStatus === 'error' ? '异常' : '已停止' }}
             </span>
             <span v-if="activeServerError" class="text-xs text-red-500 truncate max-w-[400px]">
-              {{ activeServerError }}
+              {{ translateError(activeServerError) }}
             </span>
           </div>
           <div class="flex items-center gap-2">

@@ -162,6 +162,10 @@
     "Control channel closed": "制御チャネルが閉じられました",
     "Permission denied": "権限がありません",
     "Unknown config field": "不明な設定フィールド",
-    "Connection closed unexpectedly": "接続が予期せず閉じられました"
+    "Connection closed unexpectedly": "接続が予期せず閉じられました",
+    "proxy name {0} is already in use": "プロキシ名 {0} は既に使用されています",
+    "proxy {0} already exists": "プロキシ {0} は既に存在します",
+    "port {0} already in use": "ポート {0} は既に使用されています",
+    "listen error: port {0} already in use": "リスンエラー：ポート {0} は既に使用されています"
   }
 }

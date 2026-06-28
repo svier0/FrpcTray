@@ -162,6 +162,10 @@
     "Control channel closed": "控制通道已关闭",
     "Permission denied": "权限不足",
     "Unknown config field": "未知配置字段",
-    "Connection closed unexpectedly": "连接意外关闭"
+    "Connection closed unexpectedly": "连接意外关闭",
+    "proxy name {0} is already in use": "代理名 {0} 已被使用",
+    "proxy {0} already exists": "代理 {0} 已存在",
+    "port {0} already in use": "端口 {0} 已被占用",
+    "listen error: port {0} already in use": "监听错误：端口 {0} 已被占用"
   }
 }

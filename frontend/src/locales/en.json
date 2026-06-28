@@ -162,6 +162,10 @@
     "Control channel closed": "Control channel closed",
     "Permission denied": "Permission denied",
     "Unknown config field": "Unknown config field",
-    "Connection closed unexpectedly": "Connection closed unexpectedly"
+    "Connection closed unexpectedly": "Connection closed unexpectedly",
+    "proxy name {0} is already in use": "proxy name {0} is already in use",
+    "proxy {0} already exists": "proxy {0} already exists",
+    "port {0} already in use": "port {0} already in use",
+    "listen error: port {0} already in use": "listen error: port {0} already in use"
   }
 }

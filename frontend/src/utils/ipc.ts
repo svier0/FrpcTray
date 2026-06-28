@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { i18n } from "../i18n";
 import type { ServerItem } from "../components/ServerItem.vue";
 
 export interface ProxyItem {
@@ -122,4 +123,30 @@ export async function stopAllFrpc(): Promise<void> {
 
 export async function getAllFrpcStatus(): Promise<FrpcRunningStatus[]> {
   return invoke("get_all_frpc_status");
+}
+
+const errorPatterns: Array<{ regex: RegExp; template: string }> = [
+  { regex: /proxy name "([^"]+)" is already in use/i, template: "proxy name {0} is already in use" },
+  { regex: /proxy "([^"]+)" already exists/i, template: "proxy {0} already exists" },
+  { regex: /port (\d+) already in use/i, template: "port {0} already in use" },
+  { regex: /listen error: port (\d+) already in use/i, template: "listen error: port {0} already in use" },
+];
+
+export function translateError(error: string | null): string {
+  if (!error) return "";
+  const t = i18n.global.t;
+  const exact = t(`error.${error}`, { defaultMessage: "" });
+  if (exact && exact !== `error.${error}`) return exact;
+  for (const { regex, template } of errorPatterns) {
+    const match = error.match(regex);
+    if (match) {
+      const args = match.slice(1);
+      let result = t(`error.${template}`, { defaultMessage: template });
+      args.forEach((arg, i) => {
+        result = result.replace(`{${i}}`, arg);
+      });
+      return result;
+    }
+  }
+  return error;
 }
