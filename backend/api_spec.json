@@ -358,25 +358,27 @@
           { "name": "old_status", "type": "String", "description": "旧状态" },
           { "name": "new_status", "type": "String", "description": "新状态" },
           { "name": "pid", "type": "u32 | null", "description": "进程 PID" },
-          { "name": "error_message", "type": "String | null", "description": "错误信息，已知错误映射为简洁英文摘要（见 errorCodes），未知错误保底原始行（截断 120 字符），正常停止或无输出时为 null" }
+          { "name": "error_message", "type": "String | null", "description": "错误信息。已知错误映射为简洁英文摘要（见 errorCodes），带 {placeholder} 的已替换为实际值。未知错误保底原始行（截断 120 字符）。正常停止或无输出时为 null。" }
         ]
       },
       "errorCodes": {
-        "description": "summarize_frpc_error() 输出的已知错误摘要，前端可据此做 i18n 翻译",
+        "description": "summarize_frpc_error() 输出的已知错误摘要。带 {placeholder} 的表示动态提取变量。前端可据此做 i18n 翻译，翻译时保留 {placeholder} 原样替换。",
         "values": [
           "Login to server failed",
-          "Config parse error",
+          "Config parse error: {detail}",
+          "Unknown config field \"{name}\"",
+          "Proxy name \"{name}\" already in use",
           "Token mismatch",
-          "TLS certificate verification failed",
-          "TLS error",
+          "TLS certificate verification failed: {reason}",
+          "TLS error: {detail}",
           "Connection refused",
           "Connection reset",
           "Network unreachable",
           "Connection timeout",
           "Reconnect timeout",
-          "Port already in use",
-          "Port unavailable",
-          "Health check failed",
+          "Port {port} already in use",
+          "Port {port} unavailable",
+          "Health check failed: {detail}",
           "Control channel closed",
           "Permission denied",
           "Connection closed unexpectedly"

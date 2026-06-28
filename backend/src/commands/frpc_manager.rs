@@ -36,51 +36,156 @@ async fn emit_status(app: &AppHandle, server_id: &str, old: &str, new: &str, pid
     });
 }
 
-fn summarize_frpc_error(raw: &str) -> Option<String> {
-    let trimmed = raw.trim();
-    // Strip Go log timestamp prefix: "2006/01/02 15:04:05 "
-    let line = if trimmed.len() > 20 {
-        let b = trimmed.as_bytes();
+fn extract_quoted_after<'a>(s: &'a str, prefix: &str) -> Option<String> {
+    let lower = s.to_lowercase();
+    let idx = lower.find(prefix)?;
+    let after = s[idx + prefix.len()..].trim();
+    let start = after.find('"')?;
+    let rest = &after[start + 1..];
+    let end = rest.find('"')?;
+    Some(rest[..end].to_string())
+}
+
+fn extract_after_prefix<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
+    let lower = s.to_lowercase();
+    let idx = lower.find(prefix)?;
+    Some(&s[idx + prefix.len()..])
+}
+
+fn strip_timestamp(s: &str) -> &str {
+    let s = s.trim();
+    if s.len() > 20 {
+        let b = s.as_bytes();
         if b[4] == b'/' && b[7] == b'/' && b[10] == b' '
             && b[13] == b':' && b[16] == b':' && b[19] == b' '
             && b[..4].iter().all(|c| c.is_ascii_digit())
             && b[5..7].iter().all(|c| c.is_ascii_digit())
             && b[8..10].iter().all(|c| c.is_ascii_digit())
         {
-            trimmed[20..].trim()
-        } else {
-            trimmed
-        }
-    } else {
-        trimmed
-    };
-    let lower = line.to_lowercase();
-
-    let known: &[(&str, &str)] = &[
-        ("login to server failed", "Login to server failed"),
-        ("login to the server failed", "Login to server failed"),
-        ("error parsing config", "Config parse error"),
-        ("token in login doesn", "Token mismatch"),
-        ("failed to verify certificate", "TLS certificate verification failed"),
-        ("tls:", "TLS error"),
-        ("connection refused", "Connection refused"),
-        ("connection reset by peer", "Connection reset"),
-        ("network is unreachable", "Network unreachable"),
-        ("i/o deadline reached", "Connection timeout"),
-        ("recover to server timed out", "Reconnect timeout"),
-        ("port already used", "Port already in use"),
-        ("port unavailable", "Port unavailable"),
-        ("health check failed", "Health check failed"),
-        ("control is closed", "Control channel closed"),
-        ("permission denied", "Permission denied"),
-        ("eof", "Connection closed unexpectedly"),
-    ];
-
-    for (pattern, summary) in known {
-        if lower.contains(pattern) {
-            return Some(summary.to_string());
+            return s[20..].trim();
         }
     }
+    s
+}
+
+fn summarize_frpc_error(raw: &str) -> Option<String> {
+    let line = strip_timestamp(raw);
+    let lower = line.to_lowercase();
+
+    // --- Simple fixed mappings ---
+    if lower.contains("login to server failed") || lower.contains("login to the server failed") {
+        return Some("Login to server failed".to_string());
+    }
+    if lower.contains("token in login doesn") {
+        return Some("Token mismatch".to_string());
+    }
+    if lower.contains("connection reset by peer") {
+        return Some("Connection reset".to_string());
+    }
+    if lower.contains("network is unreachable") {
+        return Some("Network unreachable".to_string());
+    }
+    if lower.contains("i/o deadline reached") || lower.contains("i/o timeout") {
+        return Some("Connection timeout".to_string());
+    }
+    if lower.contains("recover to server timed out") {
+        return Some("Reconnect timeout".to_string());
+    }
+    if lower.contains("control is closed") {
+        return Some("Control channel closed".to_string());
+    }
+    if lower.contains("permission denied") {
+        return Some("Permission denied".to_string());
+    }
+    if lower.contains("connection refused") {
+        return Some("Connection refused".to_string());
+    }
+    if lower.trim() == "eof" {
+        return Some("Connection closed unexpectedly".to_string());
+    }
+
+    // --- Variable extraction ---
+    // error parsing config: <detail>
+    if lower.contains("error parsing config") {
+        if let Some(detail) = extract_after_prefix(line, "error parsing config") {
+            let detail = detail.trim_start_matches(':').trim();
+            if !detail.is_empty() {
+                return Some(format!("Config parse error: {}", detail));
+            }
+        }
+        return Some("Config parse error".to_string());
+    }
+
+    // unknown field "xxx"
+    if lower.contains("unknown field") {
+        if let Some(field) = extract_quoted_after(line, "unknown field") {
+            return Some(format!("Unknown config field \"{}\"", field));
+        }
+        // fall through to raw
+    }
+
+    // proxy name "xxx" is already in use
+    if lower.contains("proxy name") {
+        if let Some(name) = extract_quoted_after(line, "proxy name") {
+            return Some(format!("Proxy name \"{}\" already in use", name));
+        }
+    }
+
+    // port already used: <num>
+    if lower.contains("port already used") {
+        let detail = extract_after_prefix(line, "port already used")
+            .map(|s| s.trim_start_matches(':').trim().to_string())
+            .filter(|s| !s.is_empty());
+        if let Some(info) = detail {
+            return Some(format!("Port {} already in use", info));
+        }
+        return Some("Port already in use".to_string());
+    }
+
+    // port unavailable
+    if lower.contains("port unavailable") {
+        let detail = extract_after_prefix(line, "port unavailable")
+            .map(|s| s.trim_start_matches(':').trim().to_string())
+            .filter(|s| !s.is_empty());
+        if let Some(info) = detail {
+            return Some(format!("Port {} unavailable", info));
+        }
+        return Some("Port unavailable".to_string());
+    }
+
+    // health check failed
+    if lower.contains("health check failed") {
+        let detail = extract_after_prefix(line, "health check failed")
+            .map(|s| s.trim_start_matches(':').trim().to_string())
+            .filter(|s| !s.is_empty());
+        if let Some(info) = detail {
+            return Some(format!("Health check failed: {}", info));
+        }
+        return Some("Health check failed".to_string());
+    }
+
+    // tls: failed to verify certificate: <reason>
+    if lower.contains("failed to verify certificate") {
+        if let Some(reason) = extract_after_prefix(line, "failed to verify certificate") {
+            let reason = reason.trim_start_matches(':').trim();
+            if !reason.is_empty() {
+                return Some(format!("TLS certificate verification failed: {}", reason));
+            }
+        }
+        return Some("TLS certificate verification failed".to_string());
+    }
+
+    // tls: <detail>
+    if lower.contains("tls:") {
+        if let Some(detail) = line.splitn(2, "tls:").nth(1) {
+            let detail = detail.trim();
+            if !detail.is_empty() {
+                return Some(format!("TLS error: {}", detail));
+            }
+        }
+        return Some("TLS error".to_string());
+    }
+
     None
 }
 
