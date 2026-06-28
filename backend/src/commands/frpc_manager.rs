@@ -70,8 +70,6 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
         ("recover to server timed out", "Reconnect timeout"),
         ("port already used", "Port already in use"),
         ("port unavailable", "Port unavailable"),
-        ("proxy name", "Proxy name conflict"),
-        ("already in use", "Already in use"),
         ("health check failed", "Health check failed"),
         ("control is closed", "Control channel closed"),
         ("permission denied", "Permission denied"),

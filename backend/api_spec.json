@@ -376,8 +376,6 @@
           "Reconnect timeout",
           "Port already in use",
           "Port unavailable",
-          "Proxy name conflict",
-          "Already in use",
           "Health check failed",
           "Control channel closed",
           "Permission denied",
