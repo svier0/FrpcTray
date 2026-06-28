@@ -1,6 +1,6 @@
 {
-  "version": "V8",
-  "lastUpdated": "2026-06-27",
+  "version": "V9",
+  "lastUpdated": "2026-06-28",
   "commands": [
     {
       "name": "list_servers",
@@ -358,7 +358,31 @@
           { "name": "old_status", "type": "String", "description": "旧状态" },
           { "name": "new_status", "type": "String", "description": "新状态" },
           { "name": "pid", "type": "u32 | null", "description": "进程 PID" },
-          { "name": "error_message", "type": "String | null", "description": "错误信息" }
+          { "name": "error_message", "type": "String | null", "description": "错误信息，已知错误映射为简洁英文摘要（见 errorCodes），未知错误保底原始行（截断 120 字符），正常停止或无输出时为 null" }
+        ]
+      },
+      "errorCodes": {
+        "description": "summarize_frpc_error() 输出的已知错误摘要，前端可据此做 i18n 翻译",
+        "values": [
+          "Login to server failed",
+          "Config parse error",
+          "Token mismatch",
+          "TLS certificate verification failed",
+          "TLS error",
+          "Connection refused",
+          "Connection reset",
+          "Network unreachable",
+          "Connection timeout",
+          "Reconnect timeout",
+          "Port already in use",
+          "Port unavailable",
+          "Proxy name conflict",
+          "Already in use",
+          "Health check failed",
+          "Control channel closed",
+          "Permission denied",
+          "Unknown config field",
+          "Connection closed unexpectedly"
         ]
       }
     }

@@ -4,8 +4,6 @@ ACK_FRONTEND_VERSION: V5
 
 ## 📢 最新联调通知（V11）
 - **错误消息模式匹配**：已知 frpc 错误映射为简洁英文摘要
-  - `login to the server failed: dial tcp ...` → `Login to server failed`
-  - `tls: failed to verify certificate: x509: ...` → `TLS certificate verification failed`
-  - `connection refused` → `Connection refused`
+  - 所有可能的 error_message 值已列在 `api_spec.json` 的 `events[0].errorCodes.values` 中，前端可据此做 i18n 翻译
   - 未知错误保底显示原始行（截断 120 字符）
   - 无输出时 `error_message` 为 `null`
