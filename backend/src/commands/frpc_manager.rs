@@ -43,37 +43,42 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
             let mut child = child.lock().await;
             let status = child.wait().await;
 
-            let mut output = String::new();
-
-            let tail = |s: &str, max_lines: usize| -> String {
+            let tail = |s: &str, n: usize| -> String {
                 let lines: Vec<&str> = s.lines().collect();
-                if lines.len() <= max_lines {
+                if lines.len() <= n {
                     s.to_string()
                 } else {
-                    let mut out = format!("...(truncated, {} lines)\n", lines.len() - max_lines);
-                    out.push_str(&lines[lines.len() - max_lines..].join("\n"));
+                    let mut out = format!("...(truncated, {} lines)\n", lines.len() - n);
+                    out.push_str(&lines[lines.len() - n..].join("\n"));
                     out
                 }
             };
 
+            let mut out_buf = String::new();
+            let mut err_buf = String::new();
+
             if let Some(s) = child.stdout.as_mut() {
-                let mut buf = String::new();
-                let _ = s.read_to_string(&mut buf).await;
-                if !buf.trim().is_empty() {
-                    output.push_str("stdout:\n");
-                    output.push_str(&tail(buf.trim(), 20));
-                }
+                let _ = s.read_to_string(&mut out_buf).await;
             }
             if let Some(s) = child.stderr.as_mut() {
-                let mut buf = String::new();
-                let _ = s.read_to_string(&mut buf).await;
-                if !buf.trim().is_empty() {
-                    if !output.is_empty() { output.push('\n'); }
-                    output.push_str("stderr:\n");
-                    output.push_str(&tail(buf.trim(), 20));
-                }
+                let _ = s.read_to_string(&mut err_buf).await;
             }
 
+            let out = {
+                let t = out_buf.trim().to_string();
+                if t.is_empty() { None } else { Some(tail(&t, 3)) }
+            };
+            let err = {
+                let t = err_buf.trim().to_string();
+                if t.is_empty() { None } else { Some(tail(&t, 3)) }
+            };
+
+            let output = match (out, err) {
+                (Some(o), Some(e)) => format!("{}\n{}", o, e),
+                (Some(o), None) => o,
+                (None, Some(e)) => e,
+                (None, None) => String::new(),
+            };
             (status, if output.is_empty() { None } else { Some(output) })
         };
 
