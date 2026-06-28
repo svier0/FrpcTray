@@ -254,6 +254,18 @@
         "success": "所有服务器的运行状态数组",
         "error": "错误信息字符串"
       }
+    },
+    {
+      "name": "open_log_file",
+      "description": "用系统默认程序打开指定服务器的日志文件（记事本等文本编辑器）",
+      "parameters": [
+        {"name": "server_id", "type": "String", "description": "服务器 ID"}
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "已打开日志文件",
+        "error": "错误信息字符串（如日志文件不存在）"
+      }
     }
   ],
   "dataStructures": {

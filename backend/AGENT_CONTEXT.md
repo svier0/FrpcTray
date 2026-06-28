@@ -12,9 +12,20 @@
 
 ---
 
-## 当前开发状态 (截至 2026-06-27)
+## 当前开发状态 (截至 2026-06-28)
 
-### 已完成
+### 已完成（续 V13）
+- ✅ 去掉 `ensure_log_to`（用户要求不自动注入 log.to，新建时已有，旧配置保留原样）
+- ✅ 修复 `update_meta_comments` 在新建空文档时不生效：改为 `update_server_fields` 先插入 key，再调 `update_meta_comments`
+- ✅ **connecting 启动状态**：改造进程管理
+  - `oneshot` → `watch::Sender<bool>` 替代 kill 信号（可多次检查）
+  - `ProcessEntry` 新增 `status` 字段（`"connecting"` / `"running"`）
+  - `spawn_monitor` 逐行读取 stdout，检测 `login to server success` 后才发 `running`
+  - 失败（进程退出或被杀）发 `connecting` → `stopped` + 错误信息
+  - `show_frpc_console` 模式跳过检测，直接 `running`
+  - `get_all_frpc_status` 返回实际 status
+- ✅ `api_spec.json` 已更新 `FrpcRunningStatus.status` 含 `connecting`
+- ✅ `BACKEND_STATUS.md` V13 增量更新，通知前端
 - ✅ V1 TOML 文件管理 (9 个命令) → 已被 V2 替代
 - ✅ V2 API：Server CRUD + reorder, Proxy CRUD + reorder (11 个命令)
 - ✅ 数据模型完全匹配前端需求：`ServerInfo`（对应 `conf/frpc.{id}.toml`）、`ProxyItem`（对应 `[[proxies]]`）
@@ -126,10 +137,13 @@
 - `update_server` 保留原有 log/proxies，只覆盖 server 级字段
 
 ### 进程管理架构
-- `FrpcManager` 存储 `HashMap<String, ProcessEntry>`，其中 `ProcessEntry` 含 `pid` + `kill_tx`(oneshot channel)
-- `spawn_monitor` 独占 `tokio::process::Child`，用 `select!` 等待进程退出或 kill 信号
-- `stop_frpc` 发 kill 信号 + 移除 map 条目即返回，不抢锁
-- 调试用 `show_frpc_console` 配置可显示 frpc 命令行窗口
+- `FrpcManager` 存储 `HashMap<String, ProcessEntry>`，其中 `ProcessEntry` 含 `pid` + `status` + `kill_tx`（`watch::Sender<bool>`）
+- 启动流程：`start_frpc` → 插入 map（status="connecting"）→ `spawn_monitor` → 发 `connecting` 事件
+- monitor 阶段1：逐行读 stdout，检测到 `login to server success` → status="running" → 发 `running` 事件
+- monitor 阶段1：EOF（进程退出）或 kill 信号 → `connecting` → `stopped` + 错误摘要
+- monitor 阶段2：login 成功后等待 `child.wait()` 或 `kill_rx.changed()`，退出时发 `running` → `stopped`
+- `stop_frpc` 发 `kill_tx.send(true)` + 移除 map 条目即返回
+- 调试用 `show_frpc_console` 配置 stdout/stderr 不管道，跳过 stdout 检测直接 `running`
 
 ### toml_edit 注意事项
 - **Key.decor vs Value.decor**: `Key.leaf_decor().prefix()` = key 之前的注释（用这个放 `# @` 元数据），`Value.decor().prefix()` = `=` 和值之间的空白（不是放注释的地方）
@@ -145,10 +159,11 @@
 ---
 
 ## 协作状态
-- **当前版本**: V13
+- **当前版本**: V13（增量通知前端）
 - **前端 ACK**: 已确认 V12 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V12)
 - **我的 ACK**: 已确认前端 V6 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V6)
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
+- **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
 
 ---
 

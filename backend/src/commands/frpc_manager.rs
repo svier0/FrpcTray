@@ -456,3 +456,34 @@ pub async fn get_all_frpc_status(
         }
     }).collect())
 }
+
+#[tauri::command]
+pub async fn open_log_file(server_id: String) -> Result<(), String> {
+    let path = get_config_dir()
+        .parent()
+        .ok_or_else(|| "无法获取配置目录父路径".to_string())?
+        .join("log")
+        .join(format!("frpc.{}.log", server_id));
+
+    if !path.exists() {
+        return Err(format!("日志文件不存在: {}", path.display()));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("cmd")
+            .args(["/c", "start", "", &path.to_string_lossy()])
+            .spawn()
+            .map_err(|e| format!("打开文件失败: {}", e))?;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        std::process::Command::new("open")
+            .arg(&path)
+            .spawn()
+            .map_err(|e| format!("打开文件失败: {}", e))?;
+    }
+
+    Ok(())
+}

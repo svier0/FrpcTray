@@ -121,6 +121,7 @@ pub fn run() {
             start_all_frpc,
             stop_all_frpc,
             get_all_frpc_status,
+            open_log_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
