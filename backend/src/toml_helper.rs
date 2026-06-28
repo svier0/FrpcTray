@@ -365,17 +365,20 @@ pub fn update_server_fields(doc: &mut DocumentMut, config: &FrpcConfigFile) {
 
 fn ensure_log_to(doc: &mut DocumentMut, id: &str) {
     use toml_edit::*;
-    let has_log_to = match doc.get("log") {
-        Some(Item::Table(t)) => t.get("to").and_then(|v| v.as_str()).is_some(),
-        _ => false,
+    let expected = format!("../log/frpc.{}.log", id);
+
+    let current = match doc.get("log") {
+        Some(Item::Table(t)) => t.get("to").and_then(|v| v.as_str()),
+        _ => None,
     };
-    if has_log_to {
+
+    if current == Some(&expected) {
         return;
     }
 
     let mut t = Table::new();
     t.decor_mut().set_prefix("\n");
-    t.insert("to", value(format!("../log/frpc.{}.log", id)));
+    t.insert("to", value(&expected));
     t.insert("level", value("info"));
     t.insert("maxDays", value(3));
     doc.insert("log", Item::Table(t));
