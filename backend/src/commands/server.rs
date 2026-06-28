@@ -2,8 +2,7 @@ use std::fs;
 use crate::config::*;
 use crate::toml_helper::*;
 
-#[tauri::command]
-pub fn list_servers() -> Result<Vec<ServerInfo>, String> {
+pub fn list_servers_impl() -> Result<Vec<ServerInfo>, String> {
     let dir = get_config_dir();
     fs::create_dir_all(dir)
         .map_err(|e| format!("创建配置目录失败: {}", e))?;
@@ -41,6 +40,11 @@ pub fn list_servers() -> Result<Vec<ServerInfo>, String> {
 
     servers.sort_by_key(|s| s.sort);
     Ok(servers)
+}
+
+#[tauri::command]
+pub fn list_servers() -> Result<Vec<ServerInfo>, String> {
+    list_servers_impl()
 }
 
 #[tauri::command]

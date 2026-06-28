@@ -25,6 +25,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .manage(FrpcManager::new())
         .setup(|app| {
             let config_dir: PathBuf = if cfg!(target_os = "windows") {
                 get_executable_dir().join("conf")

@@ -62,7 +62,7 @@
 - [x] 新增 get_config/save_config 应用配置命令
 - [x] 重构 lib.rs 为模块化结构
 - [x] 搭建 frpc 运行管理接口框架（5 个存根命令 + 状态事件）
-- [ ] 实现 frpc 进程管理核心逻辑...
+- [x] 实现 frpc 进程管理核心逻辑（FrpcManager + tokio 进程监控）
 
 ---
 
@@ -139,7 +139,7 @@
 ---
 
 ## 协作状态
-- **当前版本**: V8
+- **当前版本**: V9
 - **前端 ACK**: 未确认 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V3)
 - **我的 ACK**: 已确认前端 V5 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V5)
 - **阻塞点**: 无
