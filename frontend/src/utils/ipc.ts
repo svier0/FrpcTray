@@ -96,3 +96,30 @@ export async function getConfig(): Promise<AppConfig> {
 export async function saveConfig(config: AppConfig): Promise<void> {
   return invoke("save_config", { config });
 }
+
+export interface FrpcRunningStatus {
+  server_id: string;
+  status: "running" | "stopped" | "error";
+  pid: number | null;
+  error_message: string | null;
+}
+
+export async function startFrpc(serverId: string): Promise<void> {
+  return invoke("start_frpc", { serverId });
+}
+
+export async function stopFrpc(serverId: string): Promise<void> {
+  return invoke("stop_frpc", { serverId });
+}
+
+export async function startAllFrpc(): Promise<void> {
+  return invoke("start_all_frpc");
+}
+
+export async function stopAllFrpc(): Promise<void> {
+  return invoke("stop_all_frpc");
+}
+
+export async function getAllFrpcStatus(): Promise<FrpcRunningStatus[]> {
+  return invoke("get_all_frpc_status");
+}

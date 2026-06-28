@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
 import AppHeader from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
@@ -7,7 +7,8 @@ import ProxyDialog from "./components/ProxyDialog.vue";
 import type { ProxyFormData } from "./components/ProxyDialog.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
-import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies } from "./utils/ipc";
+import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus } from "./utils/ipc";
+import { listen } from "@tauri-apps/api/event";
 
 const globalEnabled = ref(false);
 const activeTab = ref<string>("");
@@ -18,7 +19,6 @@ const proxies = ref<ProxyItem[]>([]);
 const enabledServers = ref<ServerItem[]>([]);
 const isLoadingProxies = ref(false);
 
-// Mock 服务器运行状态: idle / running / error
 type ServerStatus = "idle" | "running" | "error";
 const serverStatus = ref<Record<string, ServerStatus>>({});
 
@@ -197,15 +197,37 @@ function handleCloseSettings() {
   loadServers();
 }
 
+async function loadAllFrpcStatus() {
+  try {
+    const statusList = await getAllFrpcStatus();
+    const statusMap: Record<string, ServerStatus> = {};
+    statusList.forEach((s) => {
+      statusMap[s.server_id] = s.status === "running" ? "running" : s.status === "error" ? "error" : "idle";
+    });
+    serverStatus.value = statusMap;
+  } catch (e) {
+    console.error("Failed to load frpc status:", e);
+  }
+}
+
 function getActiveServerStatus(): ServerStatus {
   return serverStatus.value[activeTab.value] || "idle";
 }
 
-function toggleServerRun() {
+async function toggleServerRun() {
   const id = activeTab.value;
   if (!id) return;
   const current = serverStatus.value[id] || "idle";
-  serverStatus.value[id] = current === "running" ? "idle" : "running";
+  try {
+    if (current === "running") {
+      await stopFrpc(id);
+    } else {
+      await startFrpc(id);
+    }
+    await loadAllFrpcStatus();
+  } catch (e) {
+    console.error("Failed to toggle frpc:", e);
+  }
 }
 
 function handleViewServerLogs() {
@@ -220,6 +242,12 @@ watch(activeTab, (newTab) => {
 
 onMounted(() => {
   loadServers();
+  loadAllFrpcStatus();
+  
+  listen<{ server_id: string; new_status: string }>("frpc-status-changed", (event) => {
+    const { server_id, new_status } = event.payload;
+    serverStatus.value[server_id] = new_status === "running" ? "running" : new_status === "error" ? "error" : "idle";
+  });
 });
 </script>
 
