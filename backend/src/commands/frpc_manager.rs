@@ -43,17 +43,6 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
             let mut child = child.lock().await;
             let status = child.wait().await;
 
-            let tail = |s: &str, n: usize| -> String {
-                let lines: Vec<&str> = s.lines().collect();
-                if lines.len() <= n {
-                    s.to_string()
-                } else {
-                    let mut out = format!("...(truncated, {} lines)\n", lines.len() - n);
-                    out.push_str(&lines[lines.len() - n..].join("\n"));
-                    out
-                }
-            };
-
             let mut out_buf = String::new();
             let mut err_buf = String::new();
 
@@ -64,22 +53,28 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
                 let _ = s.read_to_string(&mut err_buf).await;
             }
 
-            let out = {
-                let t = out_buf.trim().to_string();
-                if t.is_empty() { None } else { Some(tail(&t, 3)) }
+            // Take first non-empty line from combined output
+            let combined = if out_buf.trim().is_empty() {
+                err_buf
+            } else if err_buf.trim().is_empty() {
+                out_buf
+            } else {
+                format!("{}\n{}", out_buf.trim(), err_buf.trim())
             };
-            let err = {
-                let t = err_buf.trim().to_string();
-                if t.is_empty() { None } else { Some(tail(&t, 3)) }
-            };
+            let msg = combined.lines()
+                .find(|l| !l.trim().is_empty())
+                .map(|l| l.trim().to_string());
+            let msg = msg.map(|s| {
+                if s.len() > 120 {
+                    let mut out: String = s.chars().take(117).collect();
+                    out.push_str("...");
+                    out
+                } else {
+                    s.to_string()
+                }
+            });
 
-            let output = match (out, err) {
-                (Some(o), Some(e)) => format!("{}\n{}", o, e),
-                (Some(o), None) => o,
-                (None, Some(e)) => e,
-                (None, None) => String::new(),
-            };
-            (status, if output.is_empty() { None } else { Some(output) })
+            (status, msg)
         };
 
         let state = app.state::<FrpcManager>();
