@@ -53,7 +53,6 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
                 let _ = s.read_to_string(&mut err_buf).await;
             }
 
-            // Take first non-empty line from combined output
             let combined = if out_buf.trim().is_empty() {
                 err_buf
             } else if err_buf.trim().is_empty() {
@@ -63,16 +62,17 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
             };
             let msg = combined.lines()
                 .find(|l| !l.trim().is_empty())
-                .map(|l| l.trim().to_string());
-            let msg = msg.map(|s| {
-                if s.len() > 120 {
-                    let mut out: String = s.chars().take(117).collect();
-                    out.push_str("...");
-                    out
-                } else {
-                    s.to_string()
-                }
-            });
+                .map(|l| {
+                    let l = l.trim();
+                    let summary = l.split(": ").next().unwrap_or(l).to_string();
+                    if summary.len() > 120 {
+                        let mut out: String = summary.chars().take(117).collect();
+                        out.push_str("...");
+                        out
+                    } else {
+                        summary
+                    }
+                });
 
             (status, msg)
         };
