@@ -352,20 +352,9 @@ pub async fn start_frpc(
     let mut cmd = tokio::process::Command::new(&bin);
     cmd.arg("-c")
        .arg(&config_file)
-       .current_dir(get_config_dir());
-
-    let config = crate::config::read_app_config();
-
-    if config.show_frpc_console {
-        #[cfg(windows)]
-        {
-            use std::os::windows::process::CommandExt;
-            cmd.as_std_mut().creation_flags(0x00000010); // CREATE_NEW_CONSOLE
-        }
-    } else {
-        cmd.stdout(std::process::Stdio::piped())
-           .stderr(std::process::Stdio::piped());
-    }
+       .current_dir(get_config_dir())
+       .stdout(std::process::Stdio::piped())
+       .stderr(std::process::Stdio::piped());
 
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
