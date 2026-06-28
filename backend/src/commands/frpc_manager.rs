@@ -201,34 +201,12 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         use tokio::time::Duration;
         let state = app.state::<FrpcManager>();
 
-        // Consume initial changed() notification (returns immediately)
         let _ = kill_rx.changed().await;
 
-        // Phase 1: read stdout until "login to server success", EOF (process exit), kill, or timeout
         let mut login_ok = false;
         let mut error_line: Option<String> = None;
 
-        eprintln!("[frpc-tray] monitor {} stdout is_some={}", server_id, child.stdout.is_some());
-        eprintln!("[frpc-tray] monitor {} stderr is_some={}", server_id, child.stderr.is_some());
-        eprintln!("[frpc-tray] monitor {} pid={:?}", server_id, child.id());
-
-        // Take stderr and print to terminal for visibility
-        if let Some(stderr) = child.stderr.take() {
-            tokio::spawn(async move {
-                let mut reader = tokio::io::BufReader::new(stderr);
-                let mut line = String::new();
-                loop {
-                    line.clear();
-                    match reader.read_line(&mut line).await {
-                        Ok(0) | Err(_) => break,
-                        Ok(_) => eprint!("[frpc:err] {}", line),
-                    }
-                }
-            });
-        }
-
         if let Some(stdout) = child.stdout.take() {
-            eprintln!("[frpc-tray] monitor {} starting read loop", server_id);
             let mut reader = tokio::io::BufReader::new(stdout);
             let mut line = String::new();
             let deadline = tokio::time::sleep(Duration::from_secs(10));
@@ -238,23 +216,17 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 tokio::select! {
                     result = reader.read_line(&mut line) => {
                         match result {
-                            Ok(0) => {
-                                eprintln!("[frpc-tray] monitor {} EOF", server_id);
-                                break;
-                            }
+                            Ok(0) => break,
                             Ok(_) => {
                                 let trimmed = line.trim();
-                                eprintln!("[frpc-tray] monitor {} line: {:?}", server_id, trimmed);
                                 let lower = trimmed.to_lowercase();
                                 if lower.contains("login to server success") {
                                     login_ok = true;
                                     break;
                                 }
-                                // frpc service ... stopped — always the last line, startup phase ended
                                 if lower.contains("frpc service") && lower.contains("stopped") {
                                     break;
                                 }
-                                // Capture the first non-empty line as error cause (appears before "frpc service ... stopped")
                                 if error_line.is_none() && !trimmed.is_empty() {
                                     error_line = Some(line.clone());
                                 }
@@ -278,7 +250,6 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 }
             }
         } else {
-            // Console mode (CREATE_NEW_CONSOLE) — can't read output, assume success
             login_ok = true;
         }
 
