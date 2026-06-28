@@ -252,6 +252,7 @@ onMounted(() => {
   
   listen<{ server_id: string; new_status: string; error_message?: string }>("frpc-status-changed", (event) => {
     const { server_id, new_status, error_message } = event.payload;
+    console.log("frpc-status-changed:", event.payload);
     const hasError = !!error_message;
     serverStatus.value = { ...serverStatus.value, [server_id]: new_status === "running" ? "running" : "idle" };
     if (hasError && error_message) {
