@@ -53,11 +53,12 @@ fn ensure_log_section(path: &std::path::Path, server_id: &str) -> Result<(), Str
             t.insert("level", value("info"));
             t.insert("maxDays", value(3));
             doc.insert("log", Item::Table(t));
+            eprintln!("[frpc-tray] 已注入 [log] 到 {}", path.display());
         } else {
-            // log table exists but missing 'to'
             if let Some(Item::Table(t)) = doc.get_mut("log") {
                 if !t.contains_key("to") {
                     t.insert("to", value(format!("../log/frpc.{}.log", server_id)));
+                    eprintln!("[frpc-tray] 已注入 log.to 到 {}", path.display());
                 }
             }
         }
