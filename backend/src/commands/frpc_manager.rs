@@ -69,7 +69,11 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
 
         let state = app.state::<FrpcManager>();
         let mut procs = state.processes.lock().await;
-        procs.remove(&server_id);
+
+        // If already removed by stop_frpc, this was intentional — skip crash event
+        if procs.remove(&server_id).is_none() {
+            return;
+        }
 
         match status {
             Ok(exit) => {
