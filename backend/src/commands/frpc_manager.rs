@@ -73,7 +73,6 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
         ("health check failed", "Health check failed"),
         ("control is closed", "Control channel closed"),
         ("permission denied", "Permission denied"),
-        ("unknown field", "Unknown config field"),
         ("eof", "Connection closed unexpectedly"),
     ];
 

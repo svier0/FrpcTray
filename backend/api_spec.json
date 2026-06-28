@@ -379,7 +379,6 @@
           "Health check failed",
           "Control channel closed",
           "Permission denied",
-          "Unknown config field",
           "Connection closed unexpectedly"
         ]
       }
