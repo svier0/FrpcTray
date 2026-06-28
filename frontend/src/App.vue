@@ -21,6 +21,7 @@ const isLoadingProxies = ref(false);
 
 type ServerStatus = "idle" | "running" | "error";
 const serverStatus = ref<Record<string, ServerStatus>>({});
+const serverError = ref<Record<string, string>>({});
 
 const showProxyDialog = ref(false);
 const proxyDialogMode = ref<"create" | "edit">("create");
@@ -201,10 +202,15 @@ async function loadAllFrpcStatus() {
   try {
     const statusList = await getAllFrpcStatus();
     const statusMap: Record<string, ServerStatus> = {};
+    const errorMap: Record<string, string> = {};
     statusList.forEach((s) => {
       statusMap[s.server_id] = s.status === "running" ? "running" : s.status === "error" ? "error" : "idle";
+      if (s.status === "error" && s.error_message) {
+        errorMap[s.server_id] = s.error_message;
+      }
     });
     serverStatus.value = statusMap;
+    serverError.value = errorMap;
   } catch (e) {
     console.error("Failed to load frpc status:", e);
   }
@@ -212,6 +218,10 @@ async function loadAllFrpcStatus() {
 
 function getActiveServerStatus(): ServerStatus {
   return serverStatus.value[activeTab.value] || "idle";
+}
+
+function getActiveServerError(): string {
+  return serverError.value[activeTab.value] || "";
 }
 
 async function toggleServerRun() {
@@ -222,6 +232,7 @@ async function toggleServerRun() {
     if (current === "running") {
       await stopFrpc(id);
     } else {
+      delete serverError.value[id];
       await startFrpc(id);
     }
     await loadAllFrpcStatus();
@@ -244,9 +255,14 @@ onMounted(() => {
   loadServers();
   loadAllFrpcStatus();
   
-  listen<{ server_id: string; new_status: string }>("frpc-status-changed", (event) => {
-    const { server_id, new_status } = event.payload;
+  listen<{ server_id: string; new_status: string; error_message?: string }>("frpc-status-changed", (event) => {
+    const { server_id, new_status, error_message } = event.payload;
     serverStatus.value[server_id] = new_status === "running" ? "running" : new_status === "error" ? "error" : "idle";
+    if (new_status === "error" && error_message) {
+      serverError.value[server_id] = error_message;
+    } else if (new_status === "running") {
+      delete serverError.value[server_id];
+    }
   });
 });
 </script>
@@ -291,11 +307,11 @@ onMounted(() => {
             <span class="text-xs text-muted-foreground">
               {{ getActiveServerStatus() === 'running' ? '运行中' : getActiveServerStatus() === 'error' ? '异常' : '已停止' }}
             </span>
+            <span v-if="getActiveServerError()" class="text-xs text-red-500 truncate max-w-[200px]">
+              {{ getActiveServerError() }}
+            </span>
           </div>
           <div class="flex items-center gap-2">
-            <span v-if="getActiveServerStatus() === 'error'" class="text-xs text-red-500">
-              连接失败
-            </span>
             <button
               class="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-lg text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
               @click="handleViewServerLogs"
