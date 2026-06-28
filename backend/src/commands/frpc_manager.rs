@@ -40,19 +40,31 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
     tokio::spawn(async move {
         use tokio::io::AsyncReadExt;
 
-        let (status, stderr_output) = {
+        let (status, child_output) = {
             let mut child = child.lock().await;
             let status = child.wait().await;
-            let stderr = match child.stderr.as_mut() {
-                Some(s) => {
-                    let mut buf = String::new();
-                    s.read_to_string(&mut buf).await.ok();
-                    let trimmed = buf.trim().to_string();
-                    if trimmed.is_empty() { None } else { Some(trimmed) }
+
+            let mut output = String::new();
+
+            if let Some(s) = child.stdout.as_mut() {
+                let mut buf = String::new();
+                let _ = s.read_to_string(&mut buf).await;
+                if !buf.trim().is_empty() {
+                    output.push_str("stdout:\n");
+                    output.push_str(buf.trim());
                 }
-                None => None,
-            };
-            (status, stderr)
+            }
+            if let Some(s) = child.stderr.as_mut() {
+                let mut buf = String::new();
+                let _ = s.read_to_string(&mut buf).await;
+                if !buf.trim().is_empty() {
+                    if !output.is_empty() { output.push('\n'); }
+                    output.push_str("stderr:\n");
+                    output.push_str(buf.trim());
+                }
+            }
+
+            (status, if output.is_empty() { None } else { Some(output) })
         };
 
         let state = app.state::<FrpcManager>();
@@ -63,14 +75,14 @@ async fn spawn_monitor(app: AppHandle, server_id: String, child: Arc<Mutex<tokio
             Ok(exit) => {
                 let code = exit.code().unwrap_or(-1);
                 eprintln!("[frpc-tray] frpc {} 进程退出, code={}", server_id, code);
-                if let Some(ref msg) = stderr_output {
-                    eprintln!("[frpc-tray] frpc {} stderr:\n{}", server_id, msg);
+                if let Some(ref msg) = child_output {
+                    eprintln!("[frpc-tray] frpc {} 输出:\n{}", server_id, msg);
                 }
 
                 let mut err_msg = format!("进程退出, exit code: {}", code);
-                if let Some(ref stderr) = stderr_output {
+                if let Some(ref out) = child_output {
                     err_msg.push('\n');
-                    err_msg.push_str(stderr);
+                    err_msg.push_str(out);
                 }
                 emit_status(&app, &server_id, "running", "stopped", None,
                     Some(err_msg)).await;
