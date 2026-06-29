@@ -10,13 +10,7 @@
     "frontendDist": "../frontend/dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "FrpC Tray",
-        "width": 800,
-        "height": 540
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": null
     }

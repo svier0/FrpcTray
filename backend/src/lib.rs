@@ -90,15 +90,18 @@ pub fn run() {
             let _ = LIGHT_ITEM.set(light.clone());
             let quit = MenuItemBuilder::with_id("quit", "退出").build(app)?;
 
-            // Silent startup: destroy main window and enter light mode
+            // Silent startup or create main window
             if config.silent_launch {
                 LIGHT_MODE.store(true, Ordering::SeqCst);
                 if let Some(item) = LIGHT_ITEM.get() {
                     let _ = item.set_checked(true);
                 }
-                if let Some(w) = app.get_webview_window("main") {
-                    let _ = w.destroy();
-                }
+            } else {
+                let _ = WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+                    .title("FrpC Tray")
+                    .inner_size(800.0, 540.0)
+                    .center()
+                    .build()?;
             }
 
             let menu = MenuBuilder::new(app)
@@ -142,6 +145,9 @@ pub fn run() {
                         }
                     }
                     "quit" => {
+                        if LIGHT_MODE.load(Ordering::SeqCst) {
+                            show_or_create_window(app);
+                        }
                         QUIT_FLAG.store(true, Ordering::SeqCst);
                         app.exit(0);
                     }
