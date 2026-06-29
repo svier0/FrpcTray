@@ -240,6 +240,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut stderr_line = String::new();
         let deadline = tokio::time::sleep(Duration::from_secs(10));
         tokio::pin!(deadline);
+        let mut log_check = tokio::time::interval(Duration::from_secs(1));
 
         loop {
             let stdout_fut = async {
@@ -313,6 +314,15 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     let _ = child.wait().await;
                     break;
                 }
+                _ = log_check.tick() => {
+                    if let Some(line) = read_log_tail(&server_id) {
+                        let lower = line.to_lowercase();
+                        if lower.contains("login to server success") {
+                            login_ok = true;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
@@ -328,9 +338,11 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
 
             // Phase 2: wait for exit or kill
             let mut killed = false;
+            let mut exit_status: Option<std::process::ExitStatus> = None;
             loop {
                 tokio::select! {
-                    _ = child.wait() => {
+                    result = child.wait() => {
+                        exit_status = result.ok();
                         break;
                     }
                     _ = kill_rx.changed() => {
@@ -347,14 +359,23 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
             let err_msg = if killed {
                 None
             } else {
-                read_log_tail(&server_id)
-                    .as_deref()
-                    .and_then(summarize_frpc_error)
-                    .or_else(|| read_log_tail(&server_id).map(|s| {
-                        let s = strip_timestamp(&s).trim().to_string();
-                        if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
-                    }))
-                    .or_else(|| Some("Process exited unexpectedly".to_string()))
+                match exit_status {
+                    Some(status) if status.success() => {
+                        read_log_tail(&server_id)
+                            .as_deref()
+                            .and_then(summarize_frpc_error)
+                            .or_else(|| Some("Process exited unexpectedly".to_string()))
+                    }
+                    Some(status) => {
+                        let reason = status.code()
+                            .map(|c| format!("Process exited with code {}", c))
+                            .unwrap_or_else(|| "Process exited abnormally".to_string());
+                        Some(reason)
+                    }
+                    None => {
+                        Some("Process exited unexpectedly".to_string())
+                    }
+                }
             };
 
             let mut procs = state.processes.lock().await;

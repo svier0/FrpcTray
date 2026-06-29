@@ -192,7 +192,8 @@
 - **教训 (V13→V14)**: `show_frpc_console` 是后端调试字段，但写进了看板通知前端对接。前端已读 V13，增量更新无效（已读不重读），必须 bump 到 V14 覆盖写新通知
 - **正确做法**: 后端调试字段不要写进看板；前端已读过的通知必须 bump 版本号才能重新通知
 
-### 2026-06-29 (fix: running→stopped 无错误反馈)
+### 2026-06-29 (fix: running→stopped 无错误反馈 - 真正根因)
 - **问题**: frpc 启动成功（login to server success）后意外停止，前端收不到任何错误信息
-- **根因**: Phase 2 monitor 只等 `child.wait()`，不读取 stdout/stderr，`error_message` 永远为 `None`
-- **修复**: Phase 2 添加 `select!` 循环同时读 stdout/stderr，捕获最后一行输出作为错误消息；无任何输出时 fallback 为 "Process exited unexpectedly"
+- **根因**: frpc 配置了 `log.to = "../log/frpc.{id}.log"`，日志写入**文件**而非 stdout/stderr。Phase 2 monitor 只读 stdout/stderr，永远拿不到停止原因。之前修复继续读 stdout 方向错误
+- **修复**: 新增 `read_log_tail()` 函数，进程退出后读取日志文件最后 4KB，提取最后一行非空内容经 `summarize_frpc_error` 摘要后作为 `error_message`。无日志时 fallback "Process exited unexpectedly"。`log.to` 写文件时只有此方案有效
+- **新增** `summarize_frpc_error` 模式 "service is stopped" → "Service stopped"
