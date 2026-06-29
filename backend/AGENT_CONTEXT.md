@@ -15,11 +15,11 @@
 ## 当前开发状态 (截至 2026-06-29)
 
 ### 已完成
-- ✅ 开机自启功能：使用 `tauri-plugin-autostart` v2.5.1
-  - Windows: `shell:startup` 快捷方式
-  - macOS: `LaunchAgent`
-  - `save_config` 接收 `AppHandle`，切换 autostart 时同步调用插件 `enable()`/`disable()`
-  - 应用启动时检查配置与当前 autostart 状态并同步
+- ✅ 开机自启功能（手动实现，非插件）
+  - Windows: PowerShell `WScript.Shell` 创建 `.lnk` 快捷方式到 `shell:startup`
+  - macOS: `LaunchAgent` plist 写入 `~/Library/LaunchAgents/com.j7yx.svier0.frpc-tray.plist`
+  - Linux: `.config/autostart/frpc-tray.desktop`
+  - `save_config` 调用 `set_autostart()`，启动时也从配置同步
 
 ### 已完成（续 V13→V14）
 - ✅ 去掉 `ensure_log_to`（用户要求不自动注入 log.to，新建时已有，旧配置保留原样）

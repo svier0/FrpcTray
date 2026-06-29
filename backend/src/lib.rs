@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager,
+    Manager, WebviewWindowBuilder,
 };
 
 use config::*;
@@ -19,6 +19,19 @@ use commands::frpc::*;
 use commands::backup::*;
 use commands::config_cmd::*;
 use commands::frpc_manager::*;
+
+fn show_or_create_window(app: &tauri::AppHandle) {
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.show();
+        let _ = w.set_focus();
+    } else {
+        let _ = WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
+            .title("FrpC Tray")
+            .inner_size(800.0, 540.0)
+            .center()
+            .build();
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -77,24 +90,17 @@ pub fn run() {
                         ..
                     } = event
                     {
-                        let app = tray.app_handle();
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.show();
-                            let _ = w.set_focus();
-                        }
+                        show_or_create_window(tray.app_handle());
                     }
                 })
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "show" => {
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.show();
-                            let _ = w.set_focus();
-                        }
+                        show_or_create_window(app);
                     }
                     "light" => {
                         if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.hide();
+                            let _ = w.close();
                         }
                     }
                     "quit" => app.exit(0),
