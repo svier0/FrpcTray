@@ -46,7 +46,7 @@ function getStatusColor(id: string): string {
       class="flex items-center gap-2"
       style="WebkitAppRegion: no-drag"
     >
-      <span class="text-lg font-semibold text-orange-500">FrpC Tray</span>
+      <span class="text-lg font-semibold text-orange-500">FrpcTray</span>
 
       <button
         class="inline-flex items-center justify-center h-8 w-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"

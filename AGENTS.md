@@ -1,7 +1,7 @@
 # AGENTS.md
 
 ## 项目概述 (Project Overview)
-frpc tray - A system tray application for managing frpc proxy configurations, built with Tauri 2 + Vue 3.
+FrpcTray - A system tray application for managing frpc proxy configurations, built with Tauri 2 + Vue 3.
 
 ## 技术栈 (Tech Stack)
 - **Frontend:** Vue 3, TypeScript, Tailwind CSS v4, Radix Vue, vue-i18n, vue-draggable-plus

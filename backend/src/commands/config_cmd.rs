@@ -8,7 +8,7 @@ fn startup_shortcut_path() -> PathBuf {
         .unwrap_or_else(|_| r"C:\Users\Default\AppData\Roaming".to_string());
     PathBuf::from(appdata)
         .join(r"Microsoft\Windows\Start Menu\Programs\Startup")
-        .join("FrpC Tray.lnk")
+        .join("FrpcTray.lnk")
 }
 
 #[cfg(target_os = "macos")]
@@ -98,7 +98,7 @@ pub fn set_autostart(enabled: bool) -> Result<(), String> {
             let exe = std::env::current_exe()
                 .map_err(|e| format!("无法获取程序路径: {}", e))?;
             let desktop = format!(
-                "[Desktop Entry]\nType=Application\nName=FrpC Tray\nExec={}\nNoDisplay=true\n",
+                "[Desktop Entry]\nType=Application\nName=FrpcTray\nExec={}\nNoDisplay=true\n",
                 exe.display()
             );
             if let Some(parent) = path.parent() {

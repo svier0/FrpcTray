@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "FrpC Tray",
+  "productName": "FrpcTray",
   "version": "0.1.0",
   "identifier": "com.j7yx.svier0.frpc-tray",
   "build": {

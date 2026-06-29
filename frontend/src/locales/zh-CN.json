@@ -106,7 +106,7 @@
 
     "about": {
       "version": "版本",
-      "appName": "FrpC Tray",
+      "appName": "FrpcTray",
       "appDescription": "frpc 进程代理管理工具",
       "description": "查看版本信息与更新状态。",
       "changelog": "更新日志",

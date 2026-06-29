@@ -38,7 +38,7 @@ fn show_or_create_window(app: &tauri::AppHandle) {
         let _ = w.set_focus();
     } else {
         let _ = WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
-            .title("FrpC Tray")
+            .title("FrpcTray")
             .inner_size(800.0, 540.0)
             .center()
             .build();
@@ -114,7 +114,7 @@ pub fn run() {
                 }
             } else {
                 let _ = WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("index.html".into()))
-                    .title("FrpC Tray")
+                    .title("FrpcTray")
                     .inner_size(800.0, 540.0)
                     .center()
                     .build()?;
