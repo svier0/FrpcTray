@@ -116,12 +116,11 @@
   - 根因：`read_log_tail` 读取 tail 4KB 后 `.last()`，多行写入时 `login to server success` 被后续行覆盖
   - 后果：log_check 漏检 → 30s 超时杀进程 → 错误消息取末行（不是错误行）推送前端
   - 修复：新增 `log_tail_contains` 扫描 tail 所有行匹配模式串
-- [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
-- [x] get_frpc_version 版本号获取改为 scoop 仓库
-- [x] 新增 get_config/save_config 应用配置命令
-- [x] 重构 lib.rs 为模块化结构
-- [x] 搭建 frpc 运行管理接口框架（5 个存根命令 + 状态事件）
-- [x] 实现 frpc 进程管理核心逻辑（FrpcManager + tokio 进程监控）
+- ✅ **修复：静默启动+自动运行场景下，连接失败的异常信息丢失**
+  - 根因：`spawn_monitor` 失败时 `procs.remove` 后错误只通过事件推送，无前端监听时丢失
+  - 修复：`FrpcManager` 新增 `failed_errors: Mutex<HashMap<String, Option<String>>>`
+  - 成功连接时 `errors.remove()` 清除，失败时 `errors.insert()` 保存
+  - `get_all_frpc_status` 返回 stopped 时带上 `failed_errors` 中的错误
 
 ---
 
@@ -212,6 +211,7 @@
 - **我的 ACK**: 已确认前端 V8 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V8)
 - **auto_run**: setup() 中检测 config.auto_run 启动全部已启用服务器
 - **日志格式修复** (V16 hotfix): `strip_timestamp` 支持 `-` 格式；`log_tail_contains` 扫描全部行而非仅末行
+- **failed_errors**: 连接失败时存错误到 `FrpcManager.failed_errors`，`get_all_frpc_status` 返回时带上
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
 

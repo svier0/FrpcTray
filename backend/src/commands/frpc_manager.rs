@@ -15,12 +15,14 @@ struct ProcessEntry {
 
 pub struct FrpcManager {
     processes: Mutex<HashMap<String, ProcessEntry>>,
+    failed_errors: Mutex<HashMap<String, Option<String>>>,
 }
 
 impl FrpcManager {
     pub fn new() -> Self {
         Self {
             processes: Mutex::new(HashMap::new()),
+            failed_errors: Mutex::new(HashMap::new()),
         }
     }
 }
@@ -394,12 +396,16 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         }
 
         if login_ok {
-            // Update status to running
+            // Update status to running and clear any stored failure error
             {
                 let mut procs = state.processes.lock().await;
                 if let Some(entry) = procs.get_mut(&server_id) {
                     entry.status = "running".to_string();
                 }
+            }
+            {
+                let mut errors = state.failed_errors.lock().await;
+                errors.remove(&server_id);
             }
             emit_status(&app, &server_id, "connecting", "running", child.id(), None).await;
 
@@ -447,6 +453,14 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
 
             let mut procs = state.processes.lock().await;
             if procs.remove(&server_id).is_some() {
+                drop(procs);
+                let mut errors = state.failed_errors.lock().await;
+                if let Some(ref m) = err_msg {
+                    errors.insert(server_id.clone(), Some(m.clone()));
+                } else {
+                    errors.remove(&server_id);
+                }
+                drop(errors);
                 emit_status(&app, &server_id, "running", "stopped", None, err_msg).await;
             }
         } else {
@@ -475,6 +489,14 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
 
             let mut procs = state.processes.lock().await;
             if procs.remove(&server_id).is_some() {
+                drop(procs);
+                let mut errors = state.failed_errors.lock().await;
+                if let Some(ref m) = msg {
+                    errors.insert(server_id.clone(), Some(m.clone()));
+                } else {
+                    errors.remove(&server_id);
+                }
+                drop(errors);
                 emit_status(&app, &server_id, "connecting", "stopped", None, msg).await;
             }
         }
@@ -617,6 +639,7 @@ pub async fn get_all_frpc_status(
 ) -> Result<Vec<FrpcRunningStatus>, String> {
     let servers = list_servers_impl()?;
     let procs = state.processes.lock().await;
+    let errors = state.failed_errors.lock().await;
 
     Ok(servers.iter().map(|s| {
         if let Some(entry) = procs.get(&s.id) {
@@ -627,7 +650,13 @@ pub async fn get_all_frpc_status(
                 error_message: None,
             }
         } else {
-            FrpcRunningStatus::stopped(&s.id)
+            let err_msg = errors.get(&s.id).and_then(|e| e.clone());
+            FrpcRunningStatus {
+                server_id: s.id.clone(),
+                status: "stopped".to_string(),
+                pid: None,
+                error_message: err_msg,
+            }
         }
     }).collect())
 }
