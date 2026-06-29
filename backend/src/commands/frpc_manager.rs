@@ -576,6 +576,11 @@ pub async fn stop_frpc(
         procs.remove(&server_id)
     };
 
+    {
+        let mut errors = state.failed_errors.lock().await;
+        errors.remove(&server_id);
+    }
+
     if let Some(entry) = entry {
         let old_status = entry.status.clone();
         let _ = entry.kill_tx.send(true);
