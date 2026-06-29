@@ -89,6 +89,18 @@ pub fn run() {
                 let _ = set_autostart(true);
             }
 
+            // Auto-run enabled servers on startup
+            if config.auto_run {
+                let app_handle = app.handle().clone();
+                tauri::async_runtime::spawn(async move {
+                    let app_clone = app_handle.clone();
+                    let state = app_handle.state::<FrpcManager>();
+                    if let Err(e) = start_all_frpc(state, app_clone).await {
+                        eprintln!("[frpc-tray] auto_run error: {}", e);
+                    }
+                });
+            }
+
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
             let light = CheckMenuItem::with_id(app, "light", "轻量模式", true, false, None::<&str>)?;
             let _ = LIGHT_ITEM.set(light.clone());

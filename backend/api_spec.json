@@ -1,6 +1,6 @@
 {
-  "version": "V10",
-  "lastUpdated": "2026-06-28",
+  "version": "V11",
+  "lastUpdated": "2026-06-29",
   "commands": [
     {
       "name": "list_servers",

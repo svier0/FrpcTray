@@ -103,7 +103,11 @@
   - macOS/Linux: `<app_data_dir>/bin/`
   - `get_current_frpc_version` 改为从 `BIN_DIR` 读取
 
-### 待办事项
+### 已完成（V15→V16）
+- ✅ **auto_run 启动时自动运行** (2026-06-29)
+  - `setup()` 中 `config.auto_run` 为 true 时 spawn 后台任务调用 `start_all_frpc`
+  - `start_all_frpc` 命令（frpc_manager.rs:521）已实现：list_servers_impl → 筛选 enable → 逐个 start_frpc
+  - 先 clone AppHandle 再获取 State，避开了 State 借用 AppHandle 导致的 move 问题
 - [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
 - [x] get_frpc_version 版本号获取改为 scoop 仓库
 - [x] 新增 get_config/save_config 应用配置命令
@@ -195,9 +199,10 @@
 ---
 
 ## 协作状态
-- **当前版本**: V14
-- **前端 ACK**: 已确认 V12 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V12)
-- **我的 ACK**: 已确认前端 V7 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V7)
+- **当前版本**: V16
+- **前端 ACK**: 已确认 V15 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V15)
+- **我的 ACK**: 已确认前端 V8 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V8)
+- **auto_run**: setup() 中检测 config.auto_run 启动全部已启用服务器
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
 
