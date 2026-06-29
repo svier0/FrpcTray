@@ -6,9 +6,10 @@ mod commands;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::OnceLock;
 
 use tauri::{
-    menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
+    menu::{CheckMenuItem, MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, WebviewWindowBuilder,
 };
@@ -22,8 +23,15 @@ use commands::config_cmd::*;
 use commands::frpc_manager::*;
 
 static QUIT_FLAG: AtomicBool = AtomicBool::new(false);
+static LIGHT_MODE: AtomicBool = AtomicBool::new(false);
+static LIGHT_ITEM: OnceLock<CheckMenuItem<tauri::Wry>> = OnceLock::new();
 
 fn show_or_create_window(app: &tauri::AppHandle) {
+    if LIGHT_MODE.swap(false, Ordering::SeqCst) {
+        if let Some(item) = LIGHT_ITEM.get() {
+            let _ = item.set_checked(false);
+        }
+    }
     if let Some(w) = app.get_webview_window("main") {
         let _ = w.show();
         let _ = w.set_focus();
@@ -78,7 +86,8 @@ pub fn run() {
             }
 
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
-            let light = MenuItemBuilder::with_id("light", "轻量模式").build(app)?;
+            let light = CheckMenuItem::with_id(app, "light", "轻量模式", true, false, None::<&str>)?;
+            let _ = LIGHT_ITEM.set(light.clone());
             let quit = MenuItemBuilder::with_id("quit", "退出").build(app)?;
 
             let menu = MenuBuilder::new(app)
@@ -108,8 +117,17 @@ pub fn run() {
                         show_or_create_window(app);
                     }
                     "light" => {
-                        if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.destroy();
+                        let is_light = !LIGHT_MODE.load(Ordering::SeqCst);
+                        LIGHT_MODE.store(is_light, Ordering::SeqCst);
+                        if let Some(item) = LIGHT_ITEM.get() {
+                            let _ = item.set_checked(is_light);
+                        }
+                        if is_light {
+                            if let Some(w) = app.get_webview_window("main") {
+                                let _ = w.destroy();
+                            }
+                        } else {
+                            show_or_create_window(app);
                         }
                     }
                     "quit" => {
