@@ -15,11 +15,27 @@
 ## 当前开发状态 (截至 2026-06-29)
 
 ### 已完成
-- ✅ 开机自启功能（手动实现，非插件）
-  - Windows: PowerShell `WScript.Shell` 创建 `.lnk` 快捷方式到 `shell:startup`
-  - macOS: `LaunchAgent` plist 写入 `~/Library/LaunchAgents/com.j7yx.svier0.frpc-tray.plist`
+- ✅ **frpc 进程监控修复**（三次迭代）
+  - 根因：`log.to` 写文件，stdout 无输出 → Phase 1 10s 超时杀死 frpc
+  - 修复 V1（回滚）：Phase 2 读 stdout → 错方向
+  - 修复 V2（回滚）：Phase 2 读日志文件 → 最后一行是登录成功，误导
+  - 修复 V3（最终提交 `9c5c45f`）：Phase 1 每秒轮询日志文件检测 `login to server success`
+  - 修复 V4（`4fc3a08`）：超时 10s→30s；`summarize_frpc_error` 末尾过滤 `[I]`/`[W]` 行
+  - `strip_log_prefix()` 去掉 `[级别] [文件:行号] [run_id]` 前缀，只保留实际信息
+  - Phase 2 进程退出时用 `ExitStatus` 报告退出码（非零 = crash）
+  - 所有错误消息路径均过滤 info/warning 级别日志行
+- ✅ **开机自启**（手动实现，非 `tauri-plugin-autostart`）
+  - Windows: PowerShell `WScript.Shell` 创建 `.lnk` 到 `shell:startup`
+  - macOS: LaunchAgent plist 写入 `~/Library/LaunchAgents/com.j7yx.svier0.frpc-tray.plist`
   - Linux: `.config/autostart/frpc-tray.desktop`
-  - `save_config` 调用 `set_autostart()`，启动时也从配置同步
+  - `save_config` 调用 `set_autostart()`，启动时从配置同步
+- ✅ **轻量模式**（WebView2 进程释放）
+  - `light` handler: `w.destroy()` 替代 `w.hide()`
+  - `CheckMenuItem` 原生勾选支持
+  - `show_or_create_window()` 重建窗口（`WebviewWindowBuilder`）
+  - `CloseRequested` handler: `prevent_close()` + `hide()`（X 按钮）
+  - `Builder::build()` + `App::run()` 拦截 `RunEvent::ExitRequested`
+  - `QUIT_FLAG` 区分用户退出 vs 窗口自动关闭
 
 ### 已完成（续 V13→V14）
 - ✅ 去掉 `ensure_log_to`（用户要求不自动注入 log.to，新建时已有，旧配置保留原样）
@@ -38,6 +54,11 @@
   - 日志文件不存在返回错误
   - 已注册到 `lib.rs` invoke_handler 和 `api_spec.json`
 - ✅ V14 覆盖看板：`show_frpc_console` 警告前端跳过 + connecting + open_log_file
+- ✅ **静默启动（silent_launch）**（2026-06-29）
+  - `AppConfig.silent_launch = true` 时，启动后自动销毁主窗口，进入轻量模式
+  - 托盘菜单"轻量模式"自动勾选
+  - 只有托盘图标，无 WebView2 进程
+  - 实现方式：`setup()` 中创建菜单项后，判断 `config.silent_launch` → 设 `LIGHT_MODE=true` + 勾选菜单 + `w.destroy()`
 - ✅ V1 TOML 文件管理 (9 个命令) → 已被 V2 替代
 - ✅ V2 API：Server CRUD + reorder, Proxy CRUD + reorder (11 个命令)
 - ✅ 数据模型完全匹配前端需求：`ServerInfo`（对应 `conf/frpc.{id}.toml`）、`ProxyItem`（对应 `[[proxies]]`）

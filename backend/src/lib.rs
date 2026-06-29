@@ -90,6 +90,17 @@ pub fn run() {
             let _ = LIGHT_ITEM.set(light.clone());
             let quit = MenuItemBuilder::with_id("quit", "退出").build(app)?;
 
+            // Silent startup: destroy main window and enter light mode
+            if config.silent_launch {
+                LIGHT_MODE.store(true, Ordering::SeqCst);
+                if let Some(item) = LIGHT_ITEM.get() {
+                    let _ = item.set_checked(true);
+                }
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.destroy();
+                }
+            }
+
             let menu = MenuBuilder::new(app)
                 .item(&show)
                 .item(&PredefinedMenuItem::separator(app)?)
