@@ -21,7 +21,7 @@
 
 ---
 
-## 当前开发状态 (截至 2026-06-28)
+## 当前开发状态 (截至 2026-06-29)
 
 ### 已完成
 - ✅ 主界面：标题栏、总开关（默认关闭）、设置按钮、服务器tab
@@ -41,6 +41,9 @@
 - ✅ 控制台调试工具：`cmd('命令名', {参数})` 透传 invoke
 - ✅ GitHub代理开关配置（useGithubProxy，默认false）
 - ✅ 后端V13对接：connecting状态、openLogFile
+- ✅ frp 官方 SVG logo（public/logo.svg）
+- ✅ 关于页面图标更新为 frp 官方 logo
+- ✅ TypeScript 类型修复（AppHeader ServerStatus 添加 connecting）
 
 ### 待办事项
 - [ ] 设置界面-高级-其他设置
@@ -48,6 +51,15 @@
 ---
 
 ## 关键决策记录
+
+### 2026-06-29
+- **决策**: 关于页面使用 frp 官方 SVG logo
+- **原因**: 统一品牌标识，从 gofrp.org 提取官方图标
+- **实现**: public/logo.svg 存放图标，SettingsPage.vue 使用 img 标签引用
+
+- **决策**: AppHeader ServerStatus 添加 connecting 类型
+- **原因**: TypeScript 类型不匹配导致构建失败
+- **实现**: AppHeader.vue ServerStatus 类型从 "idle" | "running" | "error" 改为 "idle" | "connecting" | "running" | "error"
 
 ### 2026-06-28
 - **决策**: 服务器错误信息在"已停止"状态后显示，不改变状态为"异常"
@@ -107,10 +119,13 @@
 - connecting：启动后检测到登录前，圆点脉冲动画，按钮置灰
 - 错误信息：有 error_message 时显示在"已停止"后面，启动时清空
 
+### 静态资源
+- frp 官方 SVG logo：public/logo.svg，用于关于页面
+
 ---
 
 ## 协作状态
-- **前端版本**: V8
+- **前端版本**: V9
 - **后端确认**: ACK_BACKEND_VERSION: V15
 - **阻塞点**: 无
 
