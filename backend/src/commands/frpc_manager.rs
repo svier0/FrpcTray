@@ -61,16 +61,31 @@ fn extract_after_prefix<'a>(s: &'a str, prefix: &str) -> Option<&'a str> {
 
 fn strip_timestamp(s: &str) -> &str {
     let s = s.trim();
-    if s.len() > 20 {
-        let b = s.as_bytes();
-        if b[4] == b'/' && b[7] == b'/' && b[10] == b' '
-            && b[13] == b':' && b[16] == b':' && b[19] == b' '
-            && b[..4].iter().all(|c| c.is_ascii_digit())
-            && b[5..7].iter().all(|c| c.is_ascii_digit())
-            && b[8..10].iter().all(|c| c.is_ascii_digit())
-        {
-            return s[20..].trim();
+    let b = s.as_bytes();
+    if b.len() >= 19
+        && b[..4].iter().all(|c| c.is_ascii_digit())
+        && (b[4] == b'-' || b[4] == b'/')
+        && b[5..7].iter().all(|c| c.is_ascii_digit())
+        && (b[7] == b'-' || b[7] == b'/')
+        && b[8..10].iter().all(|c| c.is_ascii_digit())
+        && b[10] == b' '
+        && b[11..13].iter().all(|c| c.is_ascii_digit())
+        && b[13] == b':'
+        && b[14..16].iter().all(|c| c.is_ascii_digit())
+        && b[16] == b':'
+        && b[17..19].iter().all(|c| c.is_ascii_digit())
+    {
+        let mut end = 19;
+        if end < b.len() && b[end] == b'.' {
+            end += 1;
+            while end < b.len() && b[end].is_ascii_digit() {
+                end += 1;
+            }
         }
+        if end < b.len() {
+            return s[end..].trim();
+        }
+        return "";
     }
     s
 }
@@ -249,6 +264,38 @@ fn read_log_tail(server_id: &str) -> Option<String> {
         .map(|s| s.to_string())
 }
 
+fn log_tail_contains(server_id: &str, pattern: &str) -> bool {
+    use std::io::{BufReader, Read, Seek, SeekFrom};
+
+    let path = match get_config_dir().parent() {
+        Some(p) => p.join("log").join(format!("frpc.{}.log", server_id)),
+        None => return false,
+    };
+
+    let file = match std::fs::File::open(&path) {
+        Ok(f) => f,
+        Err(_) => return false,
+    };
+
+    let file_len = match file.metadata() {
+        Ok(m) => m.len(),
+        Err(_) => return false,
+    };
+
+    let read_size = std::cmp::min(file_len, 4096);
+    let mut reader = BufReader::new(file);
+    if read_size < file_len {
+        let _ = reader.seek(SeekFrom::End(-(read_size as i64)));
+    }
+
+    let mut content = String::new();
+    if reader.read_to_string(&mut content).is_err() {
+        return false;
+    }
+
+    content.to_lowercase().contains(pattern)
+}
+
 async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, mut kill_rx: watch::Receiver<bool>) {
     tokio::spawn(async move {
         use tokio::time::Duration;
@@ -338,12 +385,9 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     break;
                 }
                 _ = log_check.tick() => {
-                    if let Some(line) = read_log_tail(&server_id) {
-                        let lower = line.to_lowercase();
-                        if lower.contains("login to server success") {
-                            login_ok = true;
-                            break;
-                        }
+                    if log_tail_contains(&server_id, "login to server success") {
+                        login_ok = true;
+                        break;
                     }
                 }
             }

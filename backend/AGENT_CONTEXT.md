@@ -108,6 +108,14 @@
   - `setup()` 中 `config.auto_run` 为 true 时 spawn 后台任务调用 `start_all_frpc`
   - `start_all_frpc` 命令（frpc_manager.rs:521）已实现：list_servers_impl → 筛选 enable → 逐个 start_frpc
   - 先 clone AppHandle 再获取 State，避开了 State 借用 AppHandle 导致的 move 问题
+- ✅ **修复：`strip_timestamp` 只支持 `/` 格式，frpc 日志实际用 `-`**（再次出现的历史 bug）
+  - 根因：`strip_timestamp` 检测 `b[4] == b'/' && b[7] == b'/'`，frpc 日志用 `2026-06-29`（横线）→ 不匹配 → 时间戳留在行首
+  - 后果：`[I]`/`[W]` 检查因行首有 `2026-06...` 而失败 → info 行被当错误推送前端
+  - 修复：同时支持 `/` 和 `-`，并处理毫秒后缀 `.fff`
+- ✅ **修复：`read_log_tail` 只返回最后一行 → login success 可能不是末行 → 漏检**
+  - 根因：`read_log_tail` 读取 tail 4KB 后 `.last()`，多行写入时 `login to server success` 被后续行覆盖
+  - 后果：log_check 漏检 → 30s 超时杀进程 → 错误消息取末行（不是错误行）推送前端
+  - 修复：新增 `log_tail_contains` 扫描 tail 所有行匹配模式串
 - [x] 补充 export_backup 和 restore_backup 详细定义到 api_spec.json
 - [x] get_frpc_version 版本号获取改为 scoop 仓库
 - [x] 新增 get_config/save_config 应用配置命令
@@ -203,6 +211,7 @@
 - **前端 ACK**: 已确认 V15 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V15)
 - **我的 ACK**: 已确认前端 V8 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V8)
 - **auto_run**: setup() 中检测 config.auto_run 启动全部已启用服务器
+- **日志格式修复** (V16 hotfix): `strip_timestamp` 支持 `-` 格式；`log_tail_contains` 扫描全部行而非仅末行
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
 
