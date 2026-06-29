@@ -34,7 +34,7 @@ const defaultData: ProxyFormData = {
   localPort: 8080,
   remotePort: null,
   customDomains: "",
-  locations: "/",
+  locations: "",
 };
 
 const formData = ref<ProxyFormData>({ ...defaultData });

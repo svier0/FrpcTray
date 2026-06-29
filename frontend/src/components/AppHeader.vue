@@ -1,22 +1,24 @@
 <script setup lang="ts">
-import { SwitchRoot, SwitchThumb } from "radix-vue";
 import { useI18n } from "vue-i18n";
 import type { ServerItem } from "./ServerItem.vue";
 
 type ServerStatus = "idle" | "connecting" | "running" | "error";
 
 const props = defineProps<{
-  globalEnabled: boolean;
   activeTab: string;
   enabledServers: ServerItem[];
   serverStatus: Record<string, ServerStatus>;
+  serverError: Record<string, string>;
+  anyServerRunning: boolean;
+  anyServerConnecting: boolean;
+  isTogglingAll: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: "update:globalEnabled", value: boolean): void;
   (e: "update:activeTab", value: string): void;
   (e: "openSettings"): void;
   (e: "addProxy"): void;
+  (e: "toggleAll"): void;
 }>();
 
 const { t } = useI18n();
@@ -26,8 +28,10 @@ function setActiveTab(tab: string) {
 }
 
 function getStatusColor(id: string): string {
+  if (props.serverError[id]) return "bg-red-500";
   const status = props.serverStatus[id] || "idle";
-  if (status === "running") return "bg-blue-500";
+  if (status === "connecting") return "bg-blue-500";
+  if (status === "running") return "bg-emerald-500";
   if (status === "error") return "bg-red-500";
   return "bg-muted-foreground/30";
 }
@@ -55,15 +59,16 @@ function getStatusColor(id: string): string {
         </svg>
       </button>
 
-      <SwitchRoot
-        :checked="props.globalEnabled"
-        class="relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-muted ml-1"
-        @update:checked="(val: boolean) => emit('update:globalEnabled', val)"
+      <button
+        class="ml-1 inline-flex items-center justify-center h-7 px-2.5 rounded-lg text-xs font-medium transition-colors"
+        :class="props.isTogglingAll ? 'bg-muted text-muted-foreground cursor-not-allowed' : props.anyServerRunning ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'"
+        :disabled="props.isTogglingAll"
+        @click="emit('toggleAll')"
       >
-        <SwitchThumb
-          class="pointer-events-none block h-4 w-4 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-4 data-[state=unchecked]:translate-x-0"
-        />
-      </SwitchRoot>
+        <template v-if="props.isTogglingAll">操作中…</template>
+        <template v-else-if="props.anyServerRunning">全部停止</template>
+        <template v-else>全部启动</template>
+      </button>
     </div>
 
     <div

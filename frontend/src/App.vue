@@ -7,10 +7,9 @@ import ProxyDialog from "./components/ProxyDialog.vue";
 import type { ProxyFormData } from "./components/ProxyDialog.vue";
 import SettingsPage from "./components/SettingsPage.vue";
 import type { ServerItem } from "./components/ServerItem.vue";
-import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, getAllFrpcStatus, openLogFile, translateError } from "./utils/ipc";
+import { listServers, listProxies, createProxy, updateProxy, deleteProxy, reorderProxies, startFrpc, stopFrpc, startAllFrpc, stopAllFrpc, getAllFrpcStatus, openLogFile, translateError } from "./utils/ipc";
 import { listen } from "@tauri-apps/api/event";
 
-const globalEnabled = ref(false);
 const activeTab = ref<string>("");
 const activeProxyId = ref<string | undefined>();
 const showSettings = ref(false);
@@ -93,7 +92,7 @@ async function handleUpdateEnabled(id: string, value: boolean) {
         localPort: proxy.localPort || 0,
         remotePort: proxy.remotePort,
         customDomains: proxy.customDomains,
-        locations: proxy.locations,
+        locations: proxy.type === "http" ? proxy.locations : undefined,
       });
     } catch (e) {
       console.error("Failed to update proxy enabled:", e);
@@ -135,7 +134,7 @@ async function handleDuplicate(id: string) {
         localPort: source.localPort || 0,
         remotePort: source.remotePort,
         customDomains: source.customDomains,
-        locations: source.locations,
+        locations: source.type === "http" ? source.locations : undefined,
       });
       await loadProxies(activeTab.value);
     } catch (e) {
@@ -174,7 +173,7 @@ async function handleProxySubmit(data: ProxyFormData) {
     localPort: data.localPort,
     remotePort: data.remotePort || undefined,
     customDomains: data.customDomains ? data.customDomains.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
-    locations: data.locations ? data.locations.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
+    locations: data.type === "http" && data.locations ? data.locations.split(",").map((s) => s.trim()).filter(Boolean) : undefined,
   };
 
   try {
@@ -202,7 +201,7 @@ async function loadAllFrpcStatus() {
   try {
     const statusList = await getAllFrpcStatus();
     const statusMap: Record<string, ServerStatus> = {};
-    const errorMap: Record<string, string> = {};
+    const newErrorMap = { ...serverError.value };
     statusList.forEach((s) => {
       if (s.status === "running") {
         statusMap[s.server_id] = "running";
@@ -214,11 +213,13 @@ async function loadAllFrpcStatus() {
         statusMap[s.server_id] = "idle";
       }
       if (s.error_message) {
-        errorMap[s.server_id] = s.error_message;
+        newErrorMap[s.server_id] = s.error_message;
+      } else if (s.status === "running") {
+        delete newErrorMap[s.server_id];
       }
     });
     serverStatus.value = statusMap;
-    serverError.value = errorMap;
+    serverError.value = newErrorMap;
   } catch (e) {
     console.error("Failed to load frpc status:", e);
   }
@@ -226,6 +227,39 @@ async function loadAllFrpcStatus() {
 
 const activeServerStatus = computed<ServerStatus>(() => serverStatus.value[activeTab.value] || "idle");
 const activeServerError = computed(() => serverError.value[activeTab.value] || "");
+
+const isTogglingAll = ref(false);
+const anyServerRunning = computed(() =>
+  enabledServers.value.some(s => serverStatus.value[s.id] === "running")
+);
+const anyServerConnecting = computed(() =>
+  enabledServers.value.some(s => serverStatus.value[s.id] === "connecting")
+);
+
+async function handleToggleAll() {
+  if (isTogglingAll.value) return;
+  isTogglingAll.value = true;
+  try {
+    if (anyServerRunning.value) {
+      serverError.value = {};
+      await stopAllFrpc();
+    } else {
+      const nextStatus = { ...serverStatus.value };
+      const nextError = { ...serverError.value };
+      enabledServers.value.forEach(s => {
+        nextStatus[s.id] = "connecting";
+        delete nextError[s.id];
+      });
+      serverStatus.value = nextStatus;
+      serverError.value = nextError;
+      await startAllFrpc();
+    }
+  } catch (e) {
+    console.error("Failed to toggle all frpc:", e);
+  } finally {
+    isTogglingAll.value = false;
+  }
+}
 
 async function toggleServerRun() {
   const id = activeTab.value;
@@ -238,7 +272,6 @@ async function toggleServerRun() {
       delete serverError.value[id];
       await startFrpc(id);
     }
-    await loadAllFrpcStatus();
   } catch (e) {
     console.error("Failed to toggle frpc:", e);
   }
@@ -292,12 +325,16 @@ onMounted(() => {
   <div class="flex flex-col h-screen overflow-hidden bg-background text-foreground">
     <template v-if="!showSettings">
       <AppHeader
-        v-model:global-enabled="globalEnabled"
         v-model:active-tab="activeTab"
         :enabled-servers="enabledServers"
         :server-status="serverStatus"
+        :server-error="serverError"
+        :any-server-running="anyServerRunning"
+        :any-server-connecting="anyServerConnecting"
+        :is-toggling-all="isTogglingAll"
         @open-settings="handleOpenSettings"
         @add-proxy="handleAddProxy"
+        @toggle-all="handleToggleAll"
       />
 
       <main class="flex-1 overflow-y-auto pt-14 px-4 pb-4">

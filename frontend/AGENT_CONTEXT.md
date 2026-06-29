@@ -126,7 +126,7 @@
 
 ## 协作状态
 - **前端版本**: V9
-- **后端确认**: ACK_BACKEND_VERSION: V15
+- **后端确认**: ACK_BACKEND_VERSION: V16
 - **阻塞点**: 无
 
 ---
