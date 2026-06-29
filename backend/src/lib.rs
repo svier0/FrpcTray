@@ -24,6 +24,7 @@ use commands::frpc_manager::*;
 
 static QUIT_FLAG: AtomicBool = AtomicBool::new(false);
 static LIGHT_MODE: AtomicBool = AtomicBool::new(false);
+static LIGHT_CLOSE: AtomicBool = AtomicBool::new(false);
 static LIGHT_ITEM: OnceLock<CheckMenuItem<tauri::Wry>> = OnceLock::new();
 
 fn show_or_create_window(app: &tauri::AppHandle) {
@@ -52,6 +53,9 @@ pub fn run() {
         .manage(FrpcManager::new())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if LIGHT_CLOSE.swap(false, Ordering::SeqCst) {
+                    return;
+                }
                 api.prevent_close();
                 let _ = window.hide();
             }
@@ -138,16 +142,14 @@ pub fn run() {
                         }
                         if is_light {
                             if let Some(w) = app.get_webview_window("main") {
-                                let _ = w.destroy();
+                                LIGHT_CLOSE.store(true, Ordering::SeqCst);
+                                let _ = w.close();
                             }
                         } else {
                             show_or_create_window(app);
                         }
                     }
                     "quit" => {
-                        if LIGHT_MODE.load(Ordering::SeqCst) {
-                            show_or_create_window(app);
-                        }
                         QUIT_FLAG.store(true, Ordering::SeqCst);
                         app.exit(0);
                     }
