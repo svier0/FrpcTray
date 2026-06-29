@@ -582,8 +582,24 @@ pub async fn stop_frpc(
     }
 
     if let Some(entry) = entry {
+        let pid = entry.pid;
         let old_status = entry.status.clone();
         let _ = entry.kill_tx.send(true);
+
+        // Force-kill by PID as fallback (child.kill in monitor task may fail silently)
+        #[cfg(target_os = "windows")]
+        {
+            let _ = std::process::Command::new("taskkill")
+                .args(["/F", "/PID", &pid.to_string()])
+                .output();
+        }
+        #[cfg(not(target_os = "windows"))]
+        {
+            let _ = std::process::Command::new("kill")
+                .args(["-9", &pid.to_string()])
+                .output();
+        }
+
         emit_status(&app, &server_id, &old_status, "stopped", None, None).await;
     }
     Ok(())
