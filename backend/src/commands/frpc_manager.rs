@@ -193,7 +193,37 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
         return Some("TLS error".to_string());
     }
 
+    // service is stopped
+    if lower.contains("service") && lower.contains("is stopped") {
+        return Some("Service stopped".to_string());
+    }
+
     None
+}
+
+fn read_log_tail(server_id: &str) -> Option<String> {
+    use std::io::{BufReader, Read, Seek, SeekFrom};
+
+    let path = get_config_dir()
+        .parent()?
+        .join("log")
+        .join(format!("frpc.{}.log", server_id));
+
+    let file = std::fs::File::open(path).ok()?;
+    let file_len = file.metadata().ok()?.len();
+    let read_size = std::cmp::min(file_len, 4096);
+    let mut reader = BufReader::new(file);
+    if read_size < file_len {
+        reader.seek(SeekFrom::End(-(read_size as i64))).ok()?;
+    }
+
+    let mut content = String::new();
+    reader.read_to_string(&mut content).ok()?;
+
+    content.lines()
+        .filter(|l| !l.trim().is_empty())
+        .last()
+        .map(|s| s.to_string())
 }
 
 async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::process::Child, mut kill_rx: watch::Receiver<bool>) {
@@ -296,53 +326,16 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
             }
             emit_status(&app, &server_id, "connecting", "running", child.id(), None).await;
 
-            // Phase 2: wait for exit or kill, while reading output
-            let mut stop_message: Option<String> = None;
+            // Phase 2: wait for exit or kill
+            let mut killed = false;
             loop {
-                let read_stdout = async {
-                    match &mut stdout_reader {
-                        Some(r) => r.read_line(&mut stdout_line).await,
-                        None => std::future::pending().await,
-                    }
-                };
-                let read_stderr = async {
-                    match &mut stderr_reader {
-                        Some(r) => r.read_line(&mut stderr_line).await,
-                        None => std::future::pending().await,
-                    }
-                };
                 tokio::select! {
-                    result = read_stdout => {
-                        match result {
-                            Ok(0) => { stdout_reader = None; }
-                            Ok(_) => {
-                                let trimmed = stdout_line.trim();
-                                if !trimmed.is_empty() {
-                                    stop_message = Some(trimmed.to_string());
-                                }
-                                stdout_line.clear();
-                            }
-                            Err(_) => { stdout_reader = None; }
-                        }
-                    }
-                    result = read_stderr => {
-                        match result {
-                            Ok(0) => { stderr_reader = None; }
-                            Ok(_) => {
-                                let trimmed = stderr_line.trim();
-                                if !trimmed.is_empty() && stop_message.is_none() {
-                                    stop_message = Some(trimmed.to_string());
-                                }
-                                stderr_line.clear();
-                            }
-                            Err(_) => { stderr_reader = None; }
-                        }
-                    }
                     _ = child.wait() => {
                         break;
                     }
                     _ = kill_rx.changed() => {
                         if *kill_rx.borrow() {
+                            killed = true;
                             let _ = child.kill().await;
                             let _ = child.wait().await;
                             break;
@@ -351,16 +344,17 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 }
             }
 
-            let err_msg = if let Some(msg) = stop_message.as_deref()
-                .and_then(|s| summarize_frpc_error(s.trim()))
-                .or_else(|| stop_message.map(|s| {
-                    let s = s.trim().to_string();
-                    if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
-                }))
-            {
-                Some(msg)
+            let err_msg = if killed {
+                None
             } else {
-                Some("Process exited unexpectedly".to_string())
+                read_log_tail(&server_id)
+                    .as_deref()
+                    .and_then(summarize_frpc_error)
+                    .or_else(|| read_log_tail(&server_id).map(|s| {
+                        let s = strip_timestamp(&s).trim().to_string();
+                        if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
+                    }))
+                    .or_else(|| Some("Process exited unexpectedly".to_string()))
             };
 
             let mut procs = state.processes.lock().await;
@@ -378,7 +372,16 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     } else {
                         l
                     }
-                }));
+                }))
+                .or_else(|| {
+                    read_log_tail(&server_id)
+                        .as_deref()
+                        .and_then(summarize_frpc_error)
+                        .or_else(|| read_log_tail(&server_id).map(|s| {
+                            let s = strip_timestamp(&s).trim().to_string();
+                            if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
+                        }))
+                });
 
             let mut procs = state.processes.lock().await;
             if procs.remove(&server_id).is_some() {

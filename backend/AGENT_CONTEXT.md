@@ -191,3 +191,8 @@
 - **正确做法**: 只告诉用户该加什么内容，让他自己编辑
 - **教训 (V13→V14)**: `show_frpc_console` 是后端调试字段，但写进了看板通知前端对接。前端已读 V13，增量更新无效（已读不重读），必须 bump 到 V14 覆盖写新通知
 - **正确做法**: 后端调试字段不要写进看板；前端已读过的通知必须 bump 版本号才能重新通知
+
+### 2026-06-29 (fix: running→stopped 无错误反馈)
+- **问题**: frpc 启动成功（login to server success）后意外停止，前端收不到任何错误信息
+- **根因**: Phase 2 monitor 只等 `child.wait()`，不读取 stdout/stderr，`error_message` 永远为 `None`
+- **修复**: Phase 2 添加 `select!` 循环同时读 stdout/stderr，捕获最后一行输出作为错误消息；无任何输出时 fallback 为 "Process exited unexpectedly"
