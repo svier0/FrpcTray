@@ -80,6 +80,8 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
     let lower = line.to_lowercase();
 
     // --- Simple fixed mappings ---
+
+    // --- Simple fixed mappings ---
     if lower.contains("login to server failed") || lower.contains("login to the server failed") {
         return Some("Login to server failed".to_string());
     }
@@ -198,6 +200,11 @@ fn summarize_frpc_error(raw: &str) -> Option<String> {
         return Some("Service stopped".to_string());
     }
 
+    // Info/warning level log lines that didn't match any specific error pattern
+    if lower.starts_with("[i]") || lower.starts_with("[w]") {
+        return None;
+    }
+
     None
 }
 
@@ -238,7 +245,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
         let mut stderr_reader = child.stderr.take().map(tokio::io::BufReader::new);
         let mut stdout_line = String::new();
         let mut stderr_line = String::new();
-        let deadline = tokio::time::sleep(Duration::from_secs(10));
+        let deadline = tokio::time::sleep(Duration::from_secs(30));
         tokio::pin!(deadline);
         let mut log_check = tokio::time::interval(Duration::from_secs(1));
 
@@ -386,14 +393,16 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
             // Process exited or was killed before login
             let msg = error_line.as_deref()
                 .and_then(|l| summarize_frpc_error(l.trim()))
-                .or_else(|| error_line.map(|l| {
-                    let l = l.trim().to_string();
-                    if l.len() > 120 {
-                        format!("{}...", &l[..117])
-                    } else {
-                        l
+                .or_else(|| {
+                    // Only pass through error_line if it's not info/warning level
+                    let l = error_line.as_deref()?;
+                    let stripped = strip_timestamp(l.trim());
+                    if stripped.to_lowercase().starts_with("[i]") || stripped.to_lowercase().starts_with("[w]") {
+                        return None;
                     }
-                }))
+                    let l = l.trim().to_string();
+                    if l.len() > 120 { Some(format!("{}...", &l[..117])) } else { Some(l) }
+                })
                 .or_else(|| {
                     read_log_tail(&server_id)
                         .as_deref()

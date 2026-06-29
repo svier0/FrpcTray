@@ -192,8 +192,12 @@
 - **教训 (V13→V14)**: `show_frpc_console` 是后端调试字段，但写进了看板通知前端对接。前端已读 V13，增量更新无效（已读不重读），必须 bump 到 V14 覆盖写新通知
 - **正确做法**: 后端调试字段不要写进看板；前端已读过的通知必须 bump 版本号才能重新通知
 
-### 2026-06-29 (fix: running→stopped 无错误反馈 - 真正根因)
-- **问题**: frpc 启动成功（login to server success）后意外停止，前端收不到任何错误信息
-- **根因**: frpc 配置了 `log.to = "../log/frpc.{id}.log"`，日志写入**文件**而非 stdout/stderr。Phase 2 monitor 只读 stdout/stderr，永远拿不到停止原因。之前修复继续读 stdout 方向错误
-- **修复**: 新增 `read_log_tail()` 函数，进程退出后读取日志文件最后 4KB，提取最后一行非空内容经 `summarize_frpc_error` 摘要后作为 `error_message`。无日志时 fallback "Process exited unexpectedly"。`log.to` 写文件时只有此方案有效
-- **新增** `summarize_frpc_error` 模式 "service is stopped" → "Service stopped"
+### 2026-06-29 (fix: running→stopped 真正根因 - monitor 杀进程)
+- **问题**: frpc 日志写文件，配置了 `log.to = "../log/frpc.{id}.log"`
+- **根因**: Phase 1 只靠 stdout 检测 `login to server success`，frpc 写文件时 stdout 无输出 → 10s 超时触发 **kill** frpc → 用户看到"启动成功过一会就停止"
+- **修复 V1**（已回滚）: Phase 2 读 stdout 管道 → 错方向，进程已死，管道空
+- **修复 V2**（已回滚）: Phase 2 读日志文件 → 最后一行是登录成功，报错信息毫无意义
+- **修复 V3（最终）**: 
+  - Phase 1 新增 `log_check` 每秒轮询日志文件检测 `login to server success`，无论 stdout 有无输出都能正确识别登录
+  - Phase 2 进程自行退出时，用 `ExitStatus`（退出码）判断：非零码表示 crash/异常，`"Process exited with code {n}"` 报告用户
+  - 保留 stdout/stderr 读取（启动失败时 frpc 会输出到 stderr）
