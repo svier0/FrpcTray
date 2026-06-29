@@ -3,7 +3,7 @@ import { SwitchRoot, SwitchThumb } from "radix-vue";
 import { useI18n } from "vue-i18n";
 import type { ServerItem } from "./ServerItem.vue";
 
-type ServerStatus = "idle" | "running" | "error";
+type ServerStatus = "idle" | "connecting" | "running" | "error";
 
 const props = defineProps<{
   globalEnabled: boolean;

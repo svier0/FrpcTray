@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import AppHeader from "./components/AppHeader.vue";
 import ProxyList from "./components/ProxyList.vue";
 import type { ProxyItem } from "./components/ProxyItem.vue";
