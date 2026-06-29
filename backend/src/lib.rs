@@ -5,6 +5,7 @@ mod commands;
 
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, PredefinedMenuItem},
@@ -19,6 +20,8 @@ use commands::frpc::*;
 use commands::backup::*;
 use commands::config_cmd::*;
 use commands::frpc_manager::*;
+
+static QUIT_FLAG: AtomicBool = AtomicBool::new(false);
 
 fn show_or_create_window(app: &tauri::AppHandle) {
     if let Some(w) = app.get_webview_window("main") {
@@ -39,6 +42,12 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .manage(FrpcManager::new())
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
+        })
         .setup(|app| {
             let config_dir: PathBuf = if cfg!(target_os = "windows") {
                 get_executable_dir().join("conf")
@@ -100,10 +109,13 @@ pub fn run() {
                     }
                     "light" => {
                         if let Some(w) = app.get_webview_window("main") {
-                            let _ = w.close();
+                            let _ = w.destroy();
                         }
                     }
-                    "quit" => app.exit(0),
+                    "quit" => {
+                        QUIT_FLAG.store(true, Ordering::SeqCst);
+                        app.exit(0);
+                    }
                     _ => {}
                 })
                 .build(app)?;
@@ -135,8 +147,15 @@ pub fn run() {
             get_all_frpc_status,
             open_log_file,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| {
+            if let tauri::RunEvent::ExitRequested { api, .. } = event {
+                if !QUIT_FLAG.load(Ordering::SeqCst) {
+                    api.prevent_exit();
+                }
+            }
+        });
 }
 
 #[cfg(test)]
