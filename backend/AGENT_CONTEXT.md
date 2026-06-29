@@ -55,10 +55,13 @@
   - 已注册到 `lib.rs` invoke_handler 和 `api_spec.json`
 - ✅ V14 覆盖看板：`show_frpc_console` 警告前端跳过 + connecting + open_log_file
 - ✅ **静默启动（silent_launch）**（2026-06-29）
-  - `AppConfig.silent_launch = true` 时，启动后自动销毁主窗口，进入轻量模式
-  - 托盘菜单"轻量模式"自动勾选
-  - 只有托盘图标，无 WebView2 进程
-  - 实现方式：`setup()` 中创建菜单项后，判断 `config.silent_launch` → 设 `LIGHT_MODE=true` + 勾选菜单 + `w.destroy()`
+  - `AppConfig.silent_launch = true` 时，启动后不创建窗口，直接进轻量模式（只留托盘图标）
+  - 实现：`tauri.conf.json` 移除 `windows` 定义，`setup()` 中 `silent_launch` 为 true 时跳过 `WebviewWindowBuilder` 创建
+  - 托盘菜单"轻量模式"自动勾选，`LIGHT_MODE` 标志置 true
+- ✅ **修复：启动闪烁** — 窗口不由 Tauri 自动创建，`setup()` 中按需创建，避免窗口闪现再杀
+- ✅ **修复：退出 1412 报错 + 退出白屏** — 轻量模式改用 `w.close()` 替代 `w.destroy()`
+  - `CloseRequested` handler 检查 `LIGHT_CLOSE` 标志：轻量触发→放行走正常解构；用户 X→拦截并 `hide()`
+  - 退出不重建窗口，无 HWND 残留
 - ✅ V1 TOML 文件管理 (9 个命令) → 已被 V2 替代
 - ✅ V2 API：Server CRUD + reorder, Proxy CRUD + reorder (11 个命令)
 - ✅ 数据模型完全匹配前端需求：`ServerInfo`（对应 `conf/frpc.{id}.toml`）、`ProxyItem`（对应 `[[proxies]]`）
