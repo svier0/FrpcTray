@@ -11,6 +11,7 @@ use tauri::{
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager,
 };
+use tauri_plugin_autostart::ManagerExt;
 
 use config::*;
 use commands::server::*;
@@ -25,6 +26,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_autostart::init(tauri_plugin_autostart::MacosLauncher::LaunchAgent, None))
         .manage(FrpcManager::new())
         .setup(|app| {
             let config_dir: PathBuf = if cfg!(target_os = "windows") {
@@ -48,6 +50,16 @@ pub fn run() {
             fs::create_dir_all(&bin_dir)
                 .expect("无法创建 bin 目录");
             set_bin_dir(bin_dir);
+
+            // Sync autostart state from saved config
+            let config = read_app_config();
+            if let Ok(enabled) = app.autolaunch().is_enabled() {
+                if config.autostart && !enabled {
+                    let _ = app.autolaunch().enable();
+                } else if !config.autostart && enabled {
+                    let _ = app.autolaunch().disable();
+                }
+            }
 
             let show = MenuItemBuilder::with_id("show", "显示主界面").build(app)?;
             let light = MenuItemBuilder::with_id("light", "轻量模式").build(app)?;

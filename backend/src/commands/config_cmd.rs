@@ -1,4 +1,6 @@
 use std::fs;
+use tauri::AppHandle;
+use tauri_plugin_autostart::ManagerExt;
 use crate::config::*;
 
 #[tauri::command]
@@ -20,7 +22,7 @@ pub async fn get_config() -> Result<AppConfig, String> {
 }
 
 #[tauri::command]
-pub async fn save_config(config: AppConfig) -> Result<(), String> {
+pub async fn save_config(app: AppHandle, config: AppConfig) -> Result<(), String> {
     let dir = get_config_dir();
     let path = dir.join("config.toml");
 
@@ -29,6 +31,14 @@ pub async fn save_config(config: AppConfig) -> Result<(), String> {
 
     fs::write(&path, content)
         .map_err(|e| format!("写入配置文件失败: {}", e))?;
+
+    let autoload = app.autolaunch();
+    let current = autoload.is_enabled().map_err(|e| e.to_string())?;
+    if config.autostart && !current {
+        autoload.enable().map_err(|e| e.to_string())?;
+    } else if !config.autostart && current {
+        autoload.disable().map_err(|e| e.to_string())?;
+    }
 
     Ok(())
 }
