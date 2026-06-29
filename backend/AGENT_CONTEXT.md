@@ -166,7 +166,7 @@
 ## 协作状态
 - **当前版本**: V14
 - **前端 ACK**: 已确认 V12 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V12)
-- **我的 ACK**: 已确认前端 V6 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V6)
+- **我的 ACK**: 已确认前端 V7 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V7)
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
 

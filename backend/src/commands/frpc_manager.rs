@@ -296,9 +296,48 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
             }
             emit_status(&app, &server_id, "connecting", "running", child.id(), None).await;
 
-            // Phase 2: wait for exit or kill
+            // Phase 2: wait for exit or kill, while reading output
+            let mut stop_message: Option<String> = None;
             loop {
+                let read_stdout = async {
+                    match &mut stdout_reader {
+                        Some(r) => r.read_line(&mut stdout_line).await,
+                        None => std::future::pending().await,
+                    }
+                };
+                let read_stderr = async {
+                    match &mut stderr_reader {
+                        Some(r) => r.read_line(&mut stderr_line).await,
+                        None => std::future::pending().await,
+                    }
+                };
                 tokio::select! {
+                    result = read_stdout => {
+                        match result {
+                            Ok(0) => { stdout_reader = None; }
+                            Ok(_) => {
+                                let trimmed = stdout_line.trim();
+                                if !trimmed.is_empty() {
+                                    stop_message = Some(trimmed.to_string());
+                                }
+                                stdout_line.clear();
+                            }
+                            Err(_) => { stdout_reader = None; }
+                        }
+                    }
+                    result = read_stderr => {
+                        match result {
+                            Ok(0) => { stderr_reader = None; }
+                            Ok(_) => {
+                                let trimmed = stderr_line.trim();
+                                if !trimmed.is_empty() && stop_message.is_none() {
+                                    stop_message = Some(trimmed.to_string());
+                                }
+                                stderr_line.clear();
+                            }
+                            Err(_) => { stderr_reader = None; }
+                        }
+                    }
                     _ = child.wait() => {
                         break;
                     }
@@ -312,9 +351,21 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                 }
             }
 
+            let err_msg = if let Some(msg) = stop_message.as_deref()
+                .and_then(|s| summarize_frpc_error(s.trim()))
+                .or_else(|| stop_message.map(|s| {
+                    let s = s.trim().to_string();
+                    if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
+                }))
+            {
+                Some(msg)
+            } else {
+                Some("Process exited unexpectedly".to_string())
+            };
+
             let mut procs = state.processes.lock().await;
             if procs.remove(&server_id).is_some() {
-                emit_status(&app, &server_id, "running", "stopped", None, None).await;
+                emit_status(&app, &server_id, "running", "stopped", None, err_msg).await;
             }
         } else {
             // Process exited or was killed before login

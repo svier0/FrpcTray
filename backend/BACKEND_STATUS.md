@@ -1,6 +1,6 @@
 # 后端联调看板
 BACKEND_VERSION: V14
-ACK_FRONTEND_VERSION: V6
+ACK_FRONTEND_VERSION: V7
 
 ## 📢 最新联调通知（V14）
 - ⚠️ **`show_frpc_console` 不需要对接，是后端调试用的，跳过。**
