@@ -201,3 +201,7 @@
   - Phase 1 新增 `log_check` 每秒轮询日志文件检测 `login to server success`，无论 stdout 有无输出都能正确识别登录
   - Phase 2 进程自行退出时，用 `ExitStatus`（退出码）判断：非零码表示 crash/异常，`"Process exited with code {n}"` 报告用户
   - 保留 stdout/stderr 读取（启动失败时 frpc 会输出到 stderr）
+- **修复 V4（超时+过滤）**:
+  - 连接超时 10s→30s（frpc 连接可能超过 10s）
+  - `summarize_frpc_error` 末尾过滤 `[I]`/`[W]` 级别日志行 → 不把 info 行当错误推前端
+  - connecting→stopped 原始行回退也过滤 info/warning 行

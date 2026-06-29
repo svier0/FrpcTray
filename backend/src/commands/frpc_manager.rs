@@ -75,8 +75,24 @@ fn strip_timestamp(s: &str) -> &str {
     s
 }
 
+fn strip_log_prefix(s: &str) -> &str {
+    let bytes = s.as_bytes();
+    let mut pos = 0;
+    while pos < bytes.len() && bytes[pos] == b'[' {
+        if let Some(end) = s[pos..].find(']') {
+            pos += end + 1;
+            while pos < bytes.len() && bytes[pos] == b' ' {
+                pos += 1;
+            }
+        } else {
+            break;
+        }
+    }
+    s[pos..].trim()
+}
+
 fn summarize_frpc_error(raw: &str) -> Option<String> {
-    let line = strip_timestamp(raw);
+    let line = strip_log_prefix(strip_timestamp(raw));
     let lower = line.to_lowercase();
 
     // --- Simple fixed mappings ---
@@ -400,7 +416,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                     if stripped.to_lowercase().starts_with("[i]") || stripped.to_lowercase().starts_with("[w]") {
                         return None;
                     }
-                    let l = l.trim().to_string();
+                    let l = strip_log_prefix(strip_timestamp(l.trim())).to_string();
                     if l.len() > 120 { Some(format!("{}...", &l[..117])) } else { Some(l) }
                 })
                 .or_else(|| {
@@ -408,7 +424,7 @@ async fn spawn_monitor(app: AppHandle, server_id: String, mut child: tokio::proc
                         .as_deref()
                         .and_then(summarize_frpc_error)
                         .or_else(|| read_log_tail(&server_id).map(|s| {
-                            let s = strip_timestamp(&s).trim().to_string();
+                            let s = strip_log_prefix(strip_timestamp(&s)).trim().to_string();
                             if s.len() > 120 { format!("{}...", &s[..117]) } else { s }
                         }))
                 });
