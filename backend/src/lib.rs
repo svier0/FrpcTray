@@ -96,7 +96,7 @@ pub fn run() {
                     let app_clone = app_handle.clone();
                     let state = app_handle.state::<FrpcManager>();
                     if let Err(e) = start_all_frpc(state, app_clone).await {
-                        eprintln!("[frpc-tray] auto_run error: {}", e);
+                        eprintln!("[FrpcTray] auto_run error: {}", e);
                     }
                 });
             }

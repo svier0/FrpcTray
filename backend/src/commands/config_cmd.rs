@@ -17,7 +17,7 @@ fn launch_agent_path() -> PathBuf {
         .unwrap_or_else(|_| "/Users/Default".to_string());
     PathBuf::from(home)
         .join("Library/LaunchAgents")
-        .join("com.j7yx.svier0.frpc-tray.plist")
+        .join("com.j7yx.svier0.FrpcTray.plist")
 }
 
 #[cfg(target_os = "linux")]
@@ -26,7 +26,7 @@ fn autostart_desktop_path() -> PathBuf {
         .unwrap_or_else(|_| "/home/default".to_string());
     PathBuf::from(home)
         .join(".config/autostart")
-        .join("frpc-tray.desktop")
+        .join("FrpcTray.desktop")
 }
 
 pub fn set_autostart(enabled: bool) -> Result<(), String> {
@@ -67,7 +67,7 @@ pub fn set_autostart(enabled: bool) -> Result<(), String> {
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.j7yx.svier0.frpc-tray</string>
+    <string>com.j7yx.svier0.FrpcTray</string>
     <key>ProgramArguments</key>
     <array>
         <string>{}</string>

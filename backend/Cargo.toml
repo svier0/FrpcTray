@@ -1,5 +1,5 @@
 [package]
-name = "frpc-tray"
+name = "FrpcTray"
 version = "0.1.0"
 description = "frpc托盘程序"
 authors = ["svier0"]

@@ -12,7 +12,7 @@ pub async fn get_frpc_version() -> Result<FrpcVersionInfo, String> {
             (v, can)
         }
         Err(e) => {
-            eprintln!("[frpc-tray] {}", e);
+            eprintln!("[FrpcTray] {}", e);
             (String::new(), false)
         },
     };
@@ -88,7 +88,7 @@ async fn get_latest_frpc_version() -> Result<String, String> {
 async fn fetch_scoop_version(client: &reqwest::Client, url: &str, timeout_secs: u64) -> Result<String, String> {
     let response = client
         .get(url)
-        .header("User-Agent", "frpc-tray/1.0")
+        .header("User-Agent", "FrpcTray/1.0")
         .timeout(std::time::Duration::from_secs(timeout_secs))
         .send()
         .await
@@ -116,7 +116,7 @@ async fn download_zip(client: &reqwest::Client, url: &str) -> Result<Vec<u8>, St
     let timeout = if url.contains("gh-proxy.com") || url.contains("ghfast.top") { 60 } else { 2 };
     let response = client
         .get(url)
-        .header("User-Agent", "frpc-tray/1.0")
+        .header("User-Agent", "FrpcTray/1.0")
         .timeout(std::time::Duration::from_secs(timeout))
         .send()
         .await

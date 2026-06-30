@@ -5,7 +5,7 @@
 ---
 
 ## 项目概述
-- **项目名称**: frpc-tray
+- **项目名称**: FrpcTray
 - **技术栈**: Tauri 2.0 + Rust
 - **目录结构**: 前端在 `/frontend`, 后端在 `/backend`
 - **项目目标**: frpc 桌面端配置管理工具，用户将可执行文件放入 frpc 同级目录使用
@@ -26,8 +26,8 @@
   - 所有错误消息路径均过滤 info/warning 级别日志行
 - ✅ **开机自启**（手动实现，非 `tauri-plugin-autostart`）
   - Windows: PowerShell `WScript.Shell` 创建 `.lnk` 到 `shell:startup`
-  - macOS: LaunchAgent plist 写入 `~/Library/LaunchAgents/com.j7yx.svier0.frpc-tray.plist`
-  - Linux: `.config/autostart/frpc-tray.desktop`
+  - macOS: LaunchAgent plist 写入 `~/Library/LaunchAgents/com.j7yx.svier0.FrpcTray.plist`
+  - Linux: `.config/autostart/FrpcTray.desktop`
   - `save_config` 调用 `set_autostart()`，启动时从配置同步
 - ✅ **轻量模式**（WebView2 进程释放）
   - `light` handler: `w.destroy()` 替代 `w.hide()`
@@ -144,7 +144,7 @@
 
 ### 2026-06-26 (TOML 存储方案)
 - **决策**: 使用 `toml_edit` 替代 `toml` crate，tray 元数据存为注释
-- **原因**: frpc-tray 不应污染 frpc 原生配置。当前 `title`/`enable`/`sort` 作为 TOML key 注入会污染配置，`toml` crate 读写丢失注释
+- **原因**: FrpcTray 不应污染 frpc 原生配置。当前 `title`/`enable`/`sort` 作为 TOML key 注入会污染配置，`toml` crate 读写丢失注释
 - **方案**: 
   - 换 `toml_edit`（`DocumentMut` 保留注释和格式）
   - `title`/`enable`/`sort` 存为文件顶部 `# @title` / `# @enable` / `# @sort`

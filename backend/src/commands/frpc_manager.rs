@@ -545,7 +545,7 @@ pub async fn start_frpc(
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
 
-    eprintln!("[frpc-tray] spawned, stdout.is_some={}, stderr.is_some={}", child.stdout.is_some(), child.stderr.is_some());
+    eprintln!("[FrpcTray] spawned, stdout.is_some={}, stderr.is_some={}", child.stdout.is_some(), child.stderr.is_some());
 
     let pid = child.id();
     let (kill_tx, kill_rx) = watch::channel(false);
