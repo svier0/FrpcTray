@@ -1,4 +1,4 @@
-name: Build Tauri
+name: Build and Release
 on:
   workflow_dispatch:
 
@@ -13,10 +13,13 @@ jobs:
         include:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
-          #- platform: ubuntu-latest
-          #  target: x86_64-unknown-linux-gnu
+            bundles: nsis
+          - platform: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            bundles: ''
           - platform: macos-latest
             target: aarch64-apple-darwin
+            bundles: dmg
 
     runs-on: ${{ matrix.platform }}
 
@@ -51,14 +54,31 @@ jobs:
         run: cargo install tauri-cli --version "^2"
 
       - name: Build Tauri
-        run: cargo tauri build --target ${{ matrix.target }}
+        run: |
+          if [ -n "${{ matrix.bundles }}" ]; then
+            cargo tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
+          else
+            cargo tauri build --target ${{ matrix.target }}
+          fi
+        shell: bash
         working-directory: backend
 
-      - name: Upload artifacts
+      - name: Upload artifacts (Windows & macOS)
+        if: runner.os != 'Linux'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-${{ matrix.target }}
-          path: backend/target/${{ matrix.target }}/release/bundle/**/*
+          path: |
+            backend/target/${{ matrix.target }}/release/bundle/**/*
+          if-no-files-found: error
+
+      - name: Upload artifacts (Linux binary only)
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-${{ matrix.target }}
+          path: |
+            backend/target/${{ matrix.target }}/release/FrpcTray
           if-no-files-found: error
 
   release:
@@ -81,4 +101,4 @@ jobs:
           name: ${{ steps.version.outputs.version }}
           draft: true
           files: bundle-*/*
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
