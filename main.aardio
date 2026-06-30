@@ -1,0 +1,153 @@
+import fonts.painttest;
+import win.ui;
+/*DSG{{*/
+mainForm = win.form(text="frpclient";right=698;bottom=448;bgcolor=2105376;border="none";clipch=1)
+mainForm.add(
+edit={cls="edit";text="日志";left=2;top=28;right=697;bottom=447;bgcolor=2105376;color=16777215;multiline=1;readonly=1;z=1}
+)
+/*}}*/
+
+//读取开机自启
+import win.reg;
+var reg = win.reg("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run");
+mainForm.autostart = reg.queryValue("FrpClient")!==null;
+reg.close();
+
+//读取配置文件
+import fsys.path;
+import web.script.yaml;
+var settingPath = "/settings.yml";
+if(!io.exist(settingPath)){
+	if(mainForm.msgboxTest("首次运行，确定生成配置文件吗")){
+		string.save(settingPath,'autorun: false\nbindir: \''+fsys.path.full("/","~")+'\'\nconfigdir: \''+fsys.path.full("/","~")+'\'\ncurrent: \n');
+		//TODO: 下载frpc
+		mainForm.msgbox("已在当前目录生成默认配置，请按需修改后重新启动")
+	}
+	mainForm.close();
+	return;
+}
+import fsys;
+var tomls = fsys.list( "/",,"*.toml");
+mainForm.settings = web.script.yaml.load(string.load(settingPath));
+
+import sys;
+
+/*无边框窗口添加边框、阴影、标题上栏{{*/
+import win.ui.simpleWindow2;
+win.ui.simpleWindow2.style.background.hover = 0xcc555555;
+win.ui.simpleWindow2.style.color.hover = 0xffffffff;
+win.ui.simpleWindow2(mainForm);
+mainForm.titlebar.bottom = mainForm.titlebarClose.height;
+mainForm.titlebar.font=LOGFONT(h=-14;weight=700);
+mainForm.titlebar.color = 0xffffff;
+mainForm.titlebar.text = ' FRPClient';
+/*}}*/
+
+//下面创建托盘图标
+import win.util.tray;
+mainForm.tray = win.util.tray(mainForm)  
+
+mainForm.onMinimize = function(lParam){
+	mainForm.show(false); //隐藏窗口
+	return true;//阻击默认消息传递,取消最小化过程
+}
+mainForm.onTrayMessage = {
+	[0x205/*_WM_RBUTTONUP*/  ] = function(wParam){
+	    win.setForeground(mainForm.hwnd)
+		import win.ui.menu;
+		mainForm.popmenu = win.ui.popmenu(mainForm);//创建弹出菜单
+		for(i=1;#tomls;1){
+			if(mainForm.process && mainForm.settings.current==tomls[i]){
+				var idx = mainForm.popmenu.add('&'+tomls[i],function(id){
+						mainForm.stop();
+				});
+				mainForm.popmenu.check(idx,true,0);
+			}else {
+				mainForm.popmenu.add('&'+tomls[i],function(id){
+					mainForm.start(tomls[i]);
+				});
+			}
+		}
+		mainForm.popmenu.add();//分隔线
+		mainForm.popmenu.check(mainForm.popmenu.add('&自动运行',function(id){
+			mainForm.settings.autorun = !mainForm.settings.autorun;
+			string.save(settingPath,web.script.yaml.dump(mainForm.settings));
+		}),mainForm.settings.autorun,0);
+		mainForm.popmenu.check(mainForm.popmenu.add('&开机自启',function(id){
+			mainForm.autostart = !mainForm.autostart;
+			if(mainForm.autostart){
+				var reg = win.reg("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run")
+				reg.setSzValue("FrpClient", io._exepath );
+				reg.close()
+			}else{
+				var reg = win.reg("HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run")
+				reg.delValue("FrpClient")
+				reg.close()
+			}
+		}),mainForm.autostart,0);
+		mainForm.popmenu.add();//分隔线
+		mainForm.popmenu.add('&日志窗口',function(id){
+			mainForm.show(true)
+		});
+		mainForm.popmenu.add('&退出',function(id){ mainForm.close() })
+	    mainForm.popmenu.popup();//弹出
+	    mainForm.popmenu.close();
+	};
+	[0x202/*_WM_LBUTTONUP*/] = function(wParam){
+			mainForm.show(true)
+	};
+	[0x203/*_WM_LBUTTONDBLCLK*/] = function(wParam){
+	};
+	[0x404/*_PARAM_DESTROY*/] = function(wParam){
+	};
+	[0x405/*_PARAM_CLICKED*/] = function(wParam){
+	};
+}
+//
+mainForm.stop = function(){
+    mainForm.edit.print("^C");
+	if( mainForm.process ){
+		mainForm.process.ctrlEvent(0);
+    	mainForm.process.process.terminate();
+        mainForm.process.close();
+    }
+    mainForm.process=null;
+    mainForm.tray.tip = "FRPClient";
+    mainForm.tray.icon = "/res/favicon.gray.ico";
+}
+mainForm.start = function(toml){
+	mainForm.stop()
+	mainForm.edit.text = "";//cls
+	
+	//更新配置文件
+	mainForm.settings.current = toml;
+	string.save(settingPath,web.script.yaml.dump(mainForm.settings));
+    
+    mainForm.edit.setFocus()
+    
+    var conf = mainForm.settings.configdir?mainForm.settings.configdir+toml:tomls[toml];
+    var exe = mainForm.settings.bindir?mainForm.settings.bindir+"frpc.exe":"./frpc.exe";
+    var cmdline = '"'+exe+'"'+" -c "+'"'+conf+'"';
+	import process.popen;
+    mainForm.process = process.popen("cmd.exe"," /c "+'"'+cmdline+'"') // 创建进程
+    
+    if(!mainForm.process){
+        mainForm.edit.print('错误的命令行或参数');
+        return;
+    }
+    
+    //将命令行输出自动转发到文本框
+    mainForm.process.logResponse(mainForm.edit);
+    mainForm.tray.tip = 'FRPClient\n'+toml;
+    mainForm.tray.icon = "/res/favicon.green.ico";
+}
+
+mainForm.beforeDestroy = function(){
+    mainForm.stop()
+}
+mainForm.stop();
+if(mainForm.settings.autorun && mainForm.settings.current){
+	mainForm.start(mainForm.settings.current);
+}
+//mainForm.show();
+return win.loopMessage();

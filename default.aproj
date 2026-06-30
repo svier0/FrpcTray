@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<project ver="10" name="frpclient" libEmbed="true" icon="res\favicon.ico" ui="win" output="frpclient.exe" CompanyName="单位名称" FileDescription="frpclient" LegalCopyright="Copyright (C) 作者 2024" ProductName="frpclient" InternalName="frpclient" FileVersion="0.0.0.12" ProductVersion="0.0.0.12" publishDir="/dist/" dstrip="false">
+	<file name="main.aardio" path="main.aardio" comment="main.aardio"/>
+	<folder name="资源文件" path="res" embed="true" local="false" ignored="false">
+		<file name="favicon.gray.ico" path="res\favicon.gray.ico" comment="res\favicon.gray.ico"/>
+		<file name="favicon.gray.png" path="res\favicon.gray.png" comment="res\favicon.gray.png"/>
+		<file name="favicon.green.ico" path="res\favicon.green.ico" comment="res\favicon.green.ico"/>
+		<file name="favicon.green.png" path="res\favicon.green.png" comment="res\favicon.green.png"/>
+		<file name="favicon.ico" path="res\favicon.ico" comment="res\favicon.ico"/>
+		<file name="favicon.png" path="res\favicon.png" comment="res\favicon.png"/>
+	</folder>
+	<folder name="窗体文件" path="dlg" comment="目录" embed="true"/>
+</project>
