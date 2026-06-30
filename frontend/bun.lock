@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "frpc-tray",
+      "name": "FrpcTray",
       "dependencies": {
         "@tailwindcss/vite": "^4.3.1",
         "@tauri-apps/api": "^2",

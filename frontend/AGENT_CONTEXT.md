@@ -5,7 +5,7 @@
 ---
 
 ## 项目概述
-- **项目名称**: frpc-tray
+- **项目名称**: FrpcTray
 - **前端技术栈** Vue 3, TypeScript, Tailwind CSS v4, Radix Vue, vue-i18n
 - **后端技术栈** Rust, Tauri 2
 - **包管理器** bun (not npm)

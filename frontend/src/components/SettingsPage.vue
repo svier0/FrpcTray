@@ -665,7 +665,7 @@ watch(language, (newLang) => {
             </div>
             <div class="flex items-center gap-2">
               <a
-                href="https://github.com/svier0/frpc-tray"
+                href="https://github.com/svier0/FrpcTray"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/50"

@@ -2,7 +2,7 @@
 
 ## 项目结构
 ```
-frpc-tray/
+FrpcTray/
 ├── frontend/         # 前端代码 (Vue + TypeScript)
 ├── backend/          # 后端代码 (Tauri Rust)
 └── ...
