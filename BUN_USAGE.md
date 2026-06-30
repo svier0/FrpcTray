@@ -10,7 +10,7 @@ FrpcTray/
 
 ## 使用 Bun 的命令
 
-### 在项目根目录安装依赖
+### 在 frontend 目录安装依赖
 ```bash
 bun install
 ```
