@@ -1,4 +1,4 @@
-name: Build and Release
+name: Build And Release
 on:
   workflow_dispatch:
 
@@ -38,6 +38,12 @@ jobs:
             libwebkit2gtk-4.1-dev libappindicator3-dev \
             librsvg2-dev patchelf libssl-dev libgtk-3-dev
 
+      - name: Install & build frontend
+        run: |
+          bun install
+          bun run build
+        working-directory: frontend
+
       - name: Build Tauri
         uses: tauri-apps/tauri-action@v0
         env:
@@ -49,6 +55,3 @@ jobs:
           releaseDraft: true
           args: --target ${{ matrix.target }}
           projectPath: backend
-          frontendDirectory: ../frontend
-          installCommand: bun install
-          buildCommand: bun run build
