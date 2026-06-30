@@ -47,6 +47,9 @@ jobs:
           bun run build
         working-directory: frontend
 
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --version "^2"
+
       - name: Build Tauri
         run: cargo tauri build --target ${{ matrix.target }}
         working-directory: backend
