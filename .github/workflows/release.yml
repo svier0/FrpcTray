@@ -13,7 +13,6 @@ jobs:
         include:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
-            bundles: nsis
             label: windows
           - platform: ubuntu-latest
             target: x86_64-unknown-linux-gnu
@@ -58,25 +57,57 @@ jobs:
 
       - name: Build Tauri
         run: |
-          if [ -n "${{ matrix.bundles }}" ]; then
-            cargo tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }}
-          else
-            cargo tauri build --target ${{ matrix.target }}
-          fi
+          bundles_arg="${{ matrix.bundles }}"
+          cargo tauri build --target ${{ matrix.target }} ${bundles_arg:+--bundles "$bundles_arg"}
         shell: bash
         working-directory: backend
 
-      - name: Upload artifacts
+      - name: Create 7z SFX (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = (Get-Content backend/tauri.conf.json | ConvertFrom-Json).version
+          $arch = "${{ matrix.target }}" -replace "x86_64.*","x64" -replace "aarch64.*","arm64"
+          $fileName = "FrpcTray_${version}_${arch}_setup"
+          $releaseDir = "backend/target/${{ matrix.target }}/release"
+          $appName = "FrpcTray"
+
+          cd $releaseDir
+          7z a -t7z -m0=lzma2 -mx=9 archive.7z "$appName.exe" "*.dll"
+
+          @"
+;!@Install@!UTF-8!
+Title="FrpcTray $version"
+RunProgram="$appName.exe"
+;!@InstallEnd@!
+          "@ | Out-File -Encoding utf8NoBOM config.txt
+
+          $7zSfxPath = "C:\Program Files\7-Zip\7z.sfx"
+          if (-not (Test-Path $7zSfxPath)) {
+            Write-Error "7-Zip SFX not found at $7zSfxPath"
+            exit 1
+          }
+          & cmd /c "copy /b `"$7zSfxPath`" + config.txt + archive.7z `"$fileName.exe`" >nul"
+          Remove-Item config.txt, archive.7z
+
+      - name: Upload artifacts (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-windows
+          path: backend/target/${{ matrix.target }}/release/*_setup.exe
+          if-no-files-found: error
+
+      - name: Upload artifacts (Linux/macOS)
+        if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: bundle-${{ matrix.label }}
           path: |
-            backend/target/${{ matrix.target }}/release/bundle/**/*.exe
             backend/target/${{ matrix.target }}/release/bundle/**/*.deb
             backend/target/${{ matrix.target }}/release/bundle/**/*.dmg
             backend/target/${{ matrix.target }}/release/bundle/**/*.rpm
             backend/target/${{ matrix.target }}/release/bundle/**/*.AppImage
-            backend/target/${{ matrix.target }}/release/bundle/**/*.msi
             backend/target/${{ matrix.target }}/release/bundle/**/*.sig
           if-no-files-found: error
 
