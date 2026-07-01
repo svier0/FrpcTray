@@ -110,7 +110,19 @@
       "appDescription": "frpc プロセスプロキシ管理ツール",
       "description": "バージョン情報と更新状態を確認します。",
       "changelog": "更新履歴",
-      "checkUpdate": "更新を確認"
+      "checkUpdate": "更新を確認",
+      "checking": "確認中...",
+      "appUpdate": "アプリ更新",
+      "currentVersion": "現在のバージョン",
+      "latestVersion": "最新バージョン",
+      "installMethod": "インストール方法",
+      "installer": "インストーラー",
+      "newVersionAvailable": "新しいバージョンがあります",
+      "downloadUpdate": "更新をダウンロード",
+      "downloading": "ダウンロード中...",
+      "installing": "インストール中...",
+      "installSuccess": "インストール完了、再起動で適用されます",
+      "downloadFailed": "ダウンロード失敗"
     },
     "advanced": {
       "backup": {

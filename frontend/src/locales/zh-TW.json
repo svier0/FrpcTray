@@ -110,7 +110,19 @@
       "appDescription": "frpc 進程代理管理工具",
       "description": "查看版本資訊與更新狀態。",
       "changelog": "更新日誌",
-      "checkUpdate": "檢查更新"
+      "checkUpdate": "檢查更新",
+      "checking": "檢查中...",
+      "appUpdate": "應用更新",
+      "currentVersion": "當前版本",
+      "latestVersion": "最新版本",
+      "installMethod": "安裝方式",
+      "installer": "安裝包",
+      "newVersionAvailable": "有新版本",
+      "downloadUpdate": "下載更新",
+      "downloading": "下載中...",
+      "installing": "安裝中...",
+      "installSuccess": "安裝完成，重啟後生效",
+      "downloadFailed": "下載失敗"
     },
     "advanced": {
       "backup": {

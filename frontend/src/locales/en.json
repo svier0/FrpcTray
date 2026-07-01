@@ -110,7 +110,19 @@
       "appDescription": "frpc process proxy management tool",
       "description": "View version information and update status.",
       "changelog": "Changelog",
-      "checkUpdate": "Check for Updates"
+      "checkUpdate": "Check for Updates",
+      "checking": "Checking...",
+      "appUpdate": "App Update",
+      "currentVersion": "Current Version",
+      "latestVersion": "Latest Version",
+      "installMethod": "Install Method",
+      "installer": "Installer",
+      "newVersionAvailable": "New version available",
+      "downloadUpdate": "Download Update",
+      "downloading": "Downloading...",
+      "installing": "Installing...",
+      "installSuccess": "Installation complete, restart to apply",
+      "downloadFailed": "Download failed"
     },
     "advanced": {
       "backup": {

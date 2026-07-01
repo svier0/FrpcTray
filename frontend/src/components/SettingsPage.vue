@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { SwitchRoot, SwitchThumb } from "radix-vue";
+import { listen } from "@tauri-apps/api/event";
 import ServerList from "./ServerList.vue";
 import type { ServerItem } from "./ServerItem.vue";
 import ConfirmDialog from "./ConfirmDialog.vue";
-import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc, exportBackup, restoreBackup } from "../utils/ipc";
-import type { FrpcVersionInfo } from "../utils/ipc";
+import { listServers, createServer, updateServer, deleteServer, reorderServers, getFrpcVersion, upgradeFrpc, exportBackup, restoreBackup, checkAppUpdate, downloadAppUpdate } from "../utils/ipc";
+import type { FrpcVersionInfo, AppUpdateInfo } from "../utils/ipc";
 import { appConfig, updateConfig } from "../utils/config";
 
 type SettingsTab = "general" | "server" | "kernel" | "advanced" | "about";
@@ -39,6 +40,13 @@ const silentLaunch = ref(appConfig.value.silentLaunch);
 const autoRun = ref(appConfig.value.autoRun);
 
 const useGithubProxy = ref(appConfig.value.useGithubProxy);
+
+const appUpdateInfo = ref<AppUpdateInfo | null>(null);
+const isCheckingUpdate = ref(false);
+const isDownloadingUpdate = ref(false);
+const updateProgress = ref("");
+const updateProgressValue = ref(0);
+const updatePhase = ref<"idle" | "downloading" | "installing" | "done">("idle");
 
 const languages = [
   { value: "zh-CN", label: "简体中文" },
@@ -157,9 +165,28 @@ async function handleAddServer() {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadServers();
   loadVersionInfo();
+  unlistenProgress = await listen<{ phase: string; progress: number; message: string }>("update-download-progress", (event) => {
+    const { phase, progress, message } = event.payload;
+    updateProgressValue.value = progress;
+    updateProgress.value = message;
+    if (phase === "downloading") {
+      updatePhase.value = "downloading";
+    } else if (phase === "installing") {
+      updatePhase.value = "installing";
+      updateProgress.value = t("settings.about.installing");
+    } else if (phase === "done") {
+      updatePhase.value = "done";
+      updateProgress.value = t("settings.about.installSuccess");
+      isDownloadingUpdate.value = false;
+    }
+  });
+});
+
+onUnmounted(() => {
+  unlistenProgress?.();
 });
 
 async function loadVersionInfo() {
@@ -226,6 +253,36 @@ async function toggleSilentLaunch() {
 async function toggleAutoRun() {
   autoRun.value = !autoRun.value;
   updateConfig({ autoRun: autoRun.value });
+}
+
+let unlistenProgress: (() => void) | null = null;
+
+async function handleCheckAppUpdate() {
+  if (isCheckingUpdate.value) return;
+  try {
+    isCheckingUpdate.value = true;
+    appUpdateInfo.value = await checkAppUpdate();
+  } catch (e) {
+    console.error("Failed to check app update:", e);
+  } finally {
+    isCheckingUpdate.value = false;
+  }
+}
+
+async function handleDownloadAppUpdate() {
+  if (!appUpdateInfo.value || isDownloadingUpdate.value) return;
+  try {
+    isDownloadingUpdate.value = true;
+    updatePhase.value = "downloading";
+    updateProgress.value = t("settings.about.downloading");
+    updateProgressValue.value = 0;
+    await downloadAppUpdate(appUpdateInfo.value.latest_version);
+  } catch (e) {
+    console.error("Failed to download app update:", e);
+    updateProgress.value = t("settings.about.downloadFailed");
+    updatePhase.value = "idle";
+    isDownloadingUpdate.value = false;
+  }
 }
 
 
@@ -661,7 +718,7 @@ watch(language, (newLang) => {
             <img src="/logo.svg" alt="frp logo" class="h-10 w-10" />
             <div class="flex-1">
               <h3 class="text-base font-semibold">{{ t('settings.about.appName') }}</h3>
-              <p class="text-xs text-muted-foreground">v0.1.0</p>
+              <p class="text-xs text-muted-foreground">v{{ appUpdateInfo?.current_version || '0.1.0' }}</p>
             </div>
             <div class="flex items-center gap-2">
               <a
@@ -690,14 +747,87 @@ watch(language, (newLang) => {
               </button>
               <button
                 class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                :disabled="isCheckingUpdate"
+                @click="handleCheckAppUpdate"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <svg v-if="!isCheckingUpdate" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
                   <path d="M3 3v5h5"/>
                   <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
                   <path d="M16 16h5v5"/>
                 </svg>
-                {{ t('settings.about.checkUpdate') }}
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                {{ isCheckingUpdate ? t('settings.about.checking') : t('settings.about.checkUpdate') }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="appUpdateInfo" class="rounded-xl border border-border bg-card p-5">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-medium">{{ t('settings.about.appUpdate') }}</h3>
+              <span
+                v-if="appUpdateInfo.can_upgrade"
+                class="inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2.5 py-0.5 text-xs font-medium text-yellow-500"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" x2="12" y1="8" y2="12"/>
+                  <line x1="12" x2="12.01" y1="16" y2="16"/>
+                </svg>
+                {{ t('settings.about.newVersionAvailable') }}
+              </span>
+              <span v-else class="inline-flex items-center text-emerald-500">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="16 8 10 16 7 13"/>
+                </svg>
+              </span>
+            </div>
+
+            <div class="space-y-2 text-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-muted-foreground">{{ t('settings.about.currentVersion') }}</span>
+                <span class="font-medium">{{ appUpdateInfo.current_version }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span class="text-muted-foreground">{{ t('settings.about.latestVersion') }}</span>
+                <span class="font-medium">{{ appUpdateInfo.latest_version || '-' }}</span>
+              </div>
+              <div v-if="appUpdateInfo.install_method" class="flex items-center justify-between">
+                <span class="text-muted-foreground">{{ t('settings.about.installMethod') }}</span>
+                <span class="font-medium">{{ appUpdateInfo.install_method === 'scoop' ? 'Scoop' : t('settings.about.installer') }}</span>
+              </div>
+            </div>
+
+            <div v-if="updatePhase !== 'idle'" class="space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-muted-foreground">{{ updateProgress }}</span>
+                <span v-if="updatePhase === 'downloading'" class="text-muted-foreground">{{ Math.round(updateProgressValue * 100) }}%</span>
+              </div>
+              <div v-if="updatePhase === 'downloading'" class="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div class="h-full rounded-full bg-primary transition-all duration-300" :style="{ width: `${updateProgressValue * 100}%` }" />
+              </div>
+            </div>
+
+            <div v-if="appUpdateInfo.can_upgrade" class="flex justify-end">
+              <button
+                :disabled="isDownloadingUpdate"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                @click="handleDownloadAppUpdate"
+              >
+                <svg v-if="!isDownloadingUpdate" xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" x2="12" y1="15" y2="3"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                {{ isDownloadingUpdate ? (updatePhase === 'installing' ? t('settings.about.installing') : t('settings.about.downloading')) : t('settings.about.downloadUpdate') }}
               </button>
             </div>
           </div>

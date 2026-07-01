@@ -169,3 +169,19 @@ export function translateError(error: string | null): string {
 export async function openLogFile(serverId: string): Promise<void> {
   return invoke("open_log_file", { serverId });
 }
+
+export interface AppUpdateInfo {
+  current_version: string;
+  latest_version: string;
+  can_upgrade: boolean;
+  download_url: string;
+  install_method: string;
+}
+
+export async function checkAppUpdate(): Promise<AppUpdateInfo> {
+  return invoke("check_app_update");
+}
+
+export async function downloadAppUpdate(version: string): Promise<void> {
+  return invoke("download_app_update", { version });
+}
