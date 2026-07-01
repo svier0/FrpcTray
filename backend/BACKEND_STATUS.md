@@ -1,6 +1,6 @@
 # 后端联调看板
 BACKEND_VERSION: V16
-ACK_FRONTEND_VERSION: V8
+ACK_FRONTEND_VERSION: V9
 
 ## 📢 最新联调通知（V16）
 - ✅ **start_all_frpc 已实现：一键启动全部已启用的服务器**
