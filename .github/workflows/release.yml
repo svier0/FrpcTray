@@ -77,7 +77,6 @@ jobs:
             backend/target/${{ matrix.target }}/release/bundle/**/*.rpm
             backend/target/${{ matrix.target }}/release/bundle/**/*.AppImage
             backend/target/${{ matrix.target }}/release/bundle/**/*.msi
-            backend/target/${{ matrix.target }}/release/bundle/**/*.tar.gz
             backend/target/${{ matrix.target }}/release/bundle/**/*.sig
           if-no-files-found: error
 
