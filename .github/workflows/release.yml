@@ -14,12 +14,15 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             bundles: nsis
+            label: windows
           - platform: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            bundles: ''
+            bundles: deb
+            label: linux
           - platform: macos-latest
             target: aarch64-apple-darwin
             bundles: dmg
+            label: macos
 
     runs-on: ${{ matrix.platform }}
 
@@ -63,22 +66,11 @@ jobs:
         shell: bash
         working-directory: backend
 
-      - name: Upload artifacts (Windows & macOS)
-        if: runner.os != 'Linux'
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: bundle-${{ matrix.target }}
-          path: |
-            backend/target/${{ matrix.target }}/release/bundle/**/*
-          if-no-files-found: error
-
-      - name: Upload artifacts (Linux binary only)
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: bundle-${{ matrix.target }}
-          path: |
-            backend/target/${{ matrix.target }}/release/FrpcTray
+          name: bundle-${{ matrix.label }}
+          path: backend/target/${{ matrix.target }}/release/bundle/**/*
           if-no-files-found: error
 
   release:
@@ -94,11 +86,27 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
 
+      - name: Rename assets with platform prefix
+        shell: bash
+        run: |
+          mkdir -p assets
+          for dir in bundle-*/; do
+            label="${dir#bundle-}"
+            label="${label%/}"
+            find "$dir" -type f -exec sh -c '
+              src="$1"
+              label="$3"
+              b=$(basename "$src")
+              n=${b%.*}
+              x=${b#$n}
+              cp "$src" "assets/${n}_${label}${x}"
+            ' sh {} "$dir" "$label" \;
+          done
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.version }}
           name: ${{ steps.version.outputs.version }}
           draft: true
-          files: bundle-*/*
-          fail_on_unmatched_files: false
+          files: assets/*
