@@ -3,10 +3,10 @@ BACKEND_VERSION: V17
 ACK_FRONTEND_VERSION: V9
 
 ## 📢 最新联调通知（V17）
-- ✅ **check_app_update 命令已实现：检查 FrpcTray 自身版本更新**
-  - 前端已有接口 `check_app_update()`（无参数）可直接调用
-  - 返回：`{ current_version, latest_version, can_upgrade, download_url }`
-  - 当前版本从 `tauri.conf.json` 读取（当前为 2.0.0）
-  - 最新版本从 GitHub Releases API 获取
-  - 下载链接按平台自动生成（Windows: exe / macOS: dmg / Linux: deb）
+- ✅ **check_app_update + download_app_update：更新检查+下载安装完整流程**
+  - `check_app_update()` → 返回更新信息（含 download_url）
+  - `download_app_update(version)` → 下载安装包，推送进度事件，启动静默安装
+  - 进度事件 `update-download-progress`：`{ phase, progress, message }`
+  - phase: `downloading` → `installing` → `done`
+  - Windows 使用 `/S` 静默安装，安装后自动退出旧版本
   - 接口详情见 `/backend/api_spec.json`

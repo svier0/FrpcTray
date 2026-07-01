@@ -266,6 +266,18 @@
       }
     },
     {
+      "name": "download_app_update",
+      "description": "下载并静默安装 FrpcTray 新版本。从 GitHub 下载对应平台的安装包（Windows: NSIS exe, macOS: DMG, Linux: DEB），下载过程中通过 'update-download-progress' 事件推送进度，下载完成后自动启动安装程序并退出当前应用",
+      "parameters": [
+        { "name": "version", "type": "String", "description": "要下载的版本号，如 '2.0.1'（不含 v 前缀）" }
+      ],
+      "returns": {
+        "type": "Result<(), String>",
+        "success": "空（下载完成并启动安装程序后退出）",
+        "error": "错误信息字符串（下载失败/启动安装程序失败）"
+      }
+    },
+    {
       "name": "open_log_file",
       "description": "用系统默认程序打开指定服务器的日志文件（记事本等文本编辑器）",
       "parameters": [
@@ -415,6 +427,17 @@
           "Control channel closed",
           "Permission denied",
           "Connection closed unexpectedly"
+        ]
+      }
+    },
+    {
+      "name": "update-download-progress",
+      "payload": {
+        "description": "下载更新进度事件，由 download_app_update 命令在下载过程中推送",
+        "fields": [
+          { "name": "phase", "type": "String", "description": "阶段：'downloading' / 'installing' / 'done'" },
+          { "name": "progress", "type": "f64", "description": "进度 0.0~1.0" },
+          { "name": "message", "type": "String", "description": "描述文字，如 '5.2 MB / 25.8 MB'" }
         ]
       }
     }

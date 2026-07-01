@@ -1,3 +1,9 @@
+use std::io::Write;
+use std::path::PathBuf;
+
+use futures_util::StreamExt;
+use tauri::Emitter;
+
 use crate::config::*;
 use crate::util::compare_versions;
 
@@ -11,15 +17,22 @@ fn get_app_version() -> String {
         .to_string()
 }
 
-fn build_download_url(version: &str) -> String {
-    let filename = if cfg!(target_os = "windows") {
+fn build_filename(version: &str) -> String {
+    if cfg!(target_os = "windows") {
         format!("FrpcTray_{}_x64-setup_windows.exe", version)
     } else if cfg!(target_os = "macos") {
         format!("FrpcTray_{}_aarch64_macos.dmg", version)
     } else {
         format!("FrpcTray_{}_amd64_linux.deb", version)
-    };
-    format!("https://github.com/svier0/FrpcTray/releases/download/v{}/{}", version, filename)
+    }
+}
+
+fn build_download_url(version: &str) -> String {
+    format!(
+        "https://github.com/svier0/FrpcTray/releases/download/v{}/{}",
+        version,
+        build_filename(version)
+    )
 }
 
 struct ReleaseInfo {
@@ -107,4 +120,140 @@ pub async fn check_app_update() -> Result<AppUpdateInfo, String> {
         can_upgrade,
         download_url,
     })
+}
+
+#[derive(Clone, serde::Serialize)]
+struct DownloadEvent {
+    phase: String,
+    progress: f64,
+    message: String,
+}
+
+fn emit(app: &tauri::AppHandle, phase: &str, progress: f64, message: &str) {
+    let _ = app.emit("update-download-progress", DownloadEvent {
+        phase: phase.to_string(),
+        progress,
+        message: message.to_string(),
+    });
+}
+
+fn build_download_urls(version: &str, use_proxy: bool) -> Vec<String> {
+    let direct = build_download_url(version);
+    if use_proxy {
+        vec![
+            format!("https://gh-proxy.com/{}", direct),
+            format!("https://ghfast.top/{}", direct),
+            direct,
+        ]
+    } else {
+        vec![direct]
+    }
+}
+
+#[tauri::command]
+pub async fn download_app_update(app: tauri::AppHandle, version: String) -> Result<(), String> {
+    let cfg = read_app_config();
+    let client = get_http_client();
+
+    let urls = build_download_urls(&version, cfg.use_github_proxy);
+    let filename = build_filename(&version);
+    let temp_dir = std::env::temp_dir().join("FrpcTray");
+    std::fs::create_dir_all(&temp_dir)
+        .map_err(|e| format!("创建临时目录失败: {}", e))?;
+    let dest_path = temp_dir.join(&filename);
+    let tmp_path = temp_dir.join(format!("{}.tmp", filename));
+
+    emit(&app, "downloading", 0.0, "开始下载...");
+
+    let mut errors = Vec::new();
+    let mut success = false;
+    for url in &urls {
+        let response = client
+            .get(url)
+            .header("User-Agent", "FrpcTray/1.0")
+            .timeout(std::time::Duration::from_secs(300))
+            .send()
+            .await;
+
+        match response {
+            Ok(resp) => {
+                if !resp.status().is_success() {
+                    errors.push(format!("{} - HTTP {}", url, resp.status()));
+                    continue;
+                }
+
+                let total = resp.content_length().unwrap_or(0);
+                let mut downloaded: u64 = 0;
+                let mut stream = resp.bytes_stream();
+                let mut file = std::fs::File::create(&tmp_path)
+                    .map_err(|e| format!("创建临时文件失败: {}", e))?;
+
+                let mut last_pct: u32 = 0;
+                while let Some(chunk) = stream.next().await {
+                    let chunk = chunk.map_err(|e| format!("下载失败: {}", e))?;
+                    file.write_all(&chunk)
+                        .map_err(|e| format!("写入临时文件失败: {}", e))?;
+                    downloaded += chunk.len() as u64;
+
+                    if total > 0 {
+                        let pct = (downloaded as f64 / total as f64 * 100.0) as u32;
+                        if pct >= last_pct + 5 || pct == 100 {
+                            last_pct = pct;
+                            emit(&app, "downloading", pct as f64 / 100.0,
+                                &format!("{:.1} MB / {:.1} MB",
+                                    downloaded as f64 / 1_048_576.0,
+                                    total as f64 / 1_048_576.0));
+                        }
+                    }
+                }
+
+                drop(file);
+                std::fs::rename(&tmp_path, &dest_path)
+                    .map_err(|e| format!("移动文件失败: {}", e))?;
+
+                success = true;
+                break;
+            }
+            Err(e) => {
+                errors.push(format!("{} - {}", url, e));
+            }
+        }
+    }
+
+    if !success {
+        let _ = std::fs::remove_file(&tmp_path);
+        return Err(format!("下载失败: {}", errors.join("; ")));
+    }
+
+    emit(&app, "installing", 1.0, "正在启动安装程序...");
+
+    launch_installer(&dest_path)?;
+
+    emit(&app, "done", 1.0, "安装程序已启动，FrpcTray 即将退出...");
+
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    app.exit(0);
+    Ok(())
+}
+
+fn launch_installer(path: &PathBuf) -> Result<(), String> {
+    let path_str = path.to_string_lossy().to_string();
+    if cfg!(target_os = "windows") {
+        std::process::Command::new(&path_str)
+            .arg("/S")
+            .spawn()
+            .map_err(|e| format!("启动安装程序失败: {}", e))?;
+    } else if cfg!(target_os = "macos") {
+        std::process::Command::new("open")
+            .arg(&path_str)
+            .spawn()
+            .map_err(|e| format!("打开 DMG 失败: {}", e))?;
+    } else {
+        std::process::Command::new("xdg-open")
+            .arg(&path_str)
+            .spawn()
+            .map_err(|e| format!("打开安装包失败: {}", e))?;
+    }
+    Ok(())
 }

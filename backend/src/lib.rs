@@ -197,6 +197,7 @@ pub fn run() {
             get_all_frpc_status,
             open_log_file,
             check_app_update,
+            download_app_update,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

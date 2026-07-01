@@ -213,12 +213,15 @@
 - **日志格式修复** (V16 hotfix): `strip_timestamp` 支持 `-` 格式；`log_tail_contains` 扫描全部行而非仅末行
 - **failed_errors**: 连接失败时存错误到 `FrpcManager.failed_errors`，`get_all_frpc_status` 返回时带上
 - **PID 兜底杀进程**: `stop_frpc` 中除 `kill_tx.send(true)` 外，还按 PID 调用 `taskkill /F`（Win）或 `kill -9`（Unix），防止 monitor 的 `child.kill()` 静默失败导致僵尸进程
-- ✅ **check_app_update 命令** (2026-07-01)
+- ✅ **check_app_update + download_app_update 命令** (2026-07-01)
   - `AppUpdateInfo` 结构体：current_version / latest_version / can_upgrade / download_url
   - 当前版本从 `tauri.conf.json` 解析（`include_str!` 编译时内嵌）
   - 最新版本从 `api.github.com/repos/svier0/FrpcTray/releases/latest` 获取
   - 失败时根据 `use_github_proxy` 配置尝试 `gh-proxy.com`/`ghfast.top` 代理
   - 下载链接按平台生成：Windows → exe, macOS → dmg, Linux → deb
+  - `download_app_update(version)` 下载安装包，通过 `update-download-progress` 事件推送进度
+  - 下载完成后启动安装程序（Windows: `/S` 静默安装，macOS: open, Linux: xdg-open）
+  - 启动安装后 `app.exit(0)` 退出当前应用
   - api_spec.json V12 已更新
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`
