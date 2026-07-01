@@ -168,6 +168,7 @@ async function handleAddServer() {
 onMounted(async () => {
   loadServers();
   loadVersionInfo();
+  handleCheckAppUpdate();
   unlistenProgress = await listen<{ phase: string; progress: number; message: string }>("update-download-progress", (event) => {
     const { phase, progress, message } = event.payload;
     updateProgressValue.value = progress;
@@ -733,7 +734,10 @@ watch(language, (newLang) => {
                 </svg>
                 GitHub
               </a>
-              <button
+              <a
+                :href="`https://github.com/svier0/FrpcTray/releases/tag/v${appUpdateInfo?.current_version || '0.1.0'}`"
+                target="_blank"
+                rel="noopener noreferrer"
                 class="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted/50"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -744,7 +748,7 @@ watch(language, (newLang) => {
                   <line x1="10" x2="8" y1="9" y2="9"/>
                 </svg>
                 {{ t('settings.about.changelog') }}
-              </button>
+              </a>
               <button
                 class="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
                 :disabled="isCheckingUpdate"
