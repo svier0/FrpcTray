@@ -542,6 +542,12 @@ pub async fn start_frpc(
        .stdout(std::process::Stdio::piped())
        .stderr(std::process::Stdio::piped());
 
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.as_std_mut().creation_flags(0x08000000); // CREATE_NO_WINDOW
+    }
+
     let child = cmd.spawn()
         .map_err(|e| format!("启动 frpc 失败: {}", e))?;
 
@@ -589,8 +595,10 @@ pub async fn stop_frpc(
         // Force-kill by PID as fallback (child.kill in monitor task may fail silently)
         #[cfg(target_os = "windows")]
         {
+            use std::os::windows::process::CommandExt;
             let _ = std::process::Command::new("taskkill")
                 .args(["/F", "/PID", &pid.to_string()])
+                .creation_flags(0x08000000)
                 .output();
         }
         #[cfg(not(target_os = "windows"))]
@@ -696,8 +704,10 @@ pub async fn open_log_file(server_id: String) -> Result<(), String> {
 
     #[cfg(target_os = "windows")]
     {
+        use std::os::windows::process::CommandExt;
         std::process::Command::new("cmd")
             .args(["/c", "start", "", &path.to_string_lossy()])
+            .creation_flags(0x08000000)
             .spawn()
             .map_err(|e| format!("打开文件失败: {}", e))?;
     }

@@ -262,9 +262,14 @@ pub async fn download_app_update(app: tauri::AppHandle, version: String) -> Resu
 async fn scoop_update(app: &tauri::AppHandle) -> Result<(), String> {
     emit(app, "installing", 0.0, "正在通过 Scoop 更新...");
 
-    let output = tokio::process::Command::new("scoop")
-        .args(["update", "frpctray"])
-        .output()
+    let mut cmd = tokio::process::Command::new("scoop");
+    cmd.args(["update", "frpctray"]);
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.as_std_mut().creation_flags(0x08000000);
+    }
+    let output = cmd.output()
         .await
         .map_err(|e| format!("执行 scoop update 失败: {}", e))?;
 

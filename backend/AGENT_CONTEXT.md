@@ -45,7 +45,6 @@
   - `ProcessEntry` 新增 `status` 字段（`"connecting"` / `"running"`）
   - `spawn_monitor` 逐行读取 stdout，检测到 `login to server success` 后才发 `running`
   - 失败（进程退出或被杀）发 `connecting` → `stopped` + 错误信息
-  - `show_frpc_console` 模式跳过检测，直接 `running`
   - `get_all_frpc_status` 返回实际 status
 - ✅ `api_spec.json` 已更新 `FrpcRunningStatus.status` 含 `connecting`
 - ✅ `open_log_file` 命令新增（`frpc_manager.rs:461`）
@@ -53,7 +52,6 @@
   - Windows 用 `cmd /c start` 打开，macOS/Linux 用 `open`/`xdg-open`
   - 日志文件不存在返回错误
   - 已注册到 `lib.rs` invoke_handler 和 `api_spec.json`
-- ✅ V14 覆盖看板：`show_frpc_console` 警告前端跳过 + connecting + open_log_file
 - ✅ **静默启动（silent_launch）**（2026-06-29）
   - `AppConfig.silent_launch = true` 时，启动后不创建窗口，直接进轻量模式（只留托盘图标）
   - 实现：`tauri.conf.json` 移除 `windows` 定义，`setup()` 中 `silent_launch` 为 true 时跳过 `WebviewWindowBuilder` 创建
@@ -126,6 +124,17 @@
 
 ## 关键决策记录
 
+### 2026-07-01 (黑框修复：所有子进程 CREATE_NO_WINDOW)
+- **问题**: Windows 上启动/停止 frpc、查版本、开机自启等操作都会弹出黑色控制台窗口
+- **根因**: `std::process::Command` 和 `tokio::process::Command` 启动控制台程序时默认创建新窗口
+- **修复**: 对 6 处 spawn 加 `creation_flags(0x08000000)`（`CREATE_NO_WINDOW`）
+  - `start_frpc`（frpc_manager.rs，tokio）→ 主启动
+  - `stop_frpc`（frpc_manager.rs，std）→ taskkill
+  - `open_log_file`（frpc_manager.rs，std）→ cmd /c start
+  - `get_frpc_version`（frpc.rs，std）→ frpc -v
+  - `set_autostart`（config_cmd.rs，std）→ powershell
+  - `scoop_update`（update.rs，tokio）→ scoop update
+- **未改**: `launch_installer` 安装器启动保留窗口（用户需见安装界面）
 ### 2026-06-27 (版本协议教训)
 - **问题**: 新增功能后更新看板但未 bump BACKEND_VERSION（V3 没升到 V4），导致前端看不到通知
 - **根因**: 协议写在 `AI_COLLABORATION_GUIDE.md` 但无硬约束，我可以绕过去
@@ -190,7 +199,6 @@
 - monitor 阶段1：EOF（进程退出）或 kill 信号 → `connecting` → `stopped` + 错误摘要
 - monitor 阶段2：login 成功后等待 `child.wait()` 或 `kill_rx.changed()`，退出时发 `running` → `stopped`
 - `stop_frpc` 发 `kill_tx.send(true)` + 移除 map 条目即返回
-- 调试用 `show_frpc_console` 配置 stdout/stderr 不管道，跳过 stdout 检测直接 `running`
 
 ### toml_edit 注意事项
 - **Key.decor vs Value.decor**: `Key.leaf_decor().prefix()` = key 之前的注释（用这个放 `# @` 元数据），`Value.decor().prefix()` = `=` 和值之间的空白（不是放注释的地方）
@@ -206,9 +214,9 @@
 ---
 
 ## 协作状态
-- **当前版本**: V17
-- **前端 ACK**: 已确认 V16 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V16)
-- **我的 ACK**: 已确认前端 V9 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V9)
+- **当前版本**: V18
+- **前端 ACK**: 已确认 V17 (FRONTEND_STATUS.md ACK_BACKEND_VERSION: V17)
+- **我的 ACK**: 已确认前端 V10 (BACKEND_STATUS.md ACK_FRONTEND_VERSION: V10)
 - **auto_run**: setup() 中检测 config.auto_run 启动全部已启用服务器
 - **日志格式修复** (V16 hotfix): `strip_timestamp` 支持 `-` 格式；`log_tail_contains` 扫描全部行而非仅末行
 - **failed_errors**: 连接失败时存错误到 `FrpcManager.failed_errors`，`get_all_frpc_status` 返回时带上
@@ -247,7 +255,6 @@
 - **问题**: 用户询问如何让 agent 每次对话自动签收看板，我回复"要我帮你写入 AGENTS.md 吗"，违反了根目录禁止编辑的规则
 - **教训**: 根目录文件（`AGENTS.md`、`AI_COLLABORATION_GUIDE.md` 等）只有用户能编辑，agent 绝不能提出"帮你写入"的建议，即使意图是好的
 - **正确做法**: 只告诉用户该加什么内容，让他自己编辑
-- **教训 (V13→V14)**: `show_frpc_console` 是后端调试字段，但写进了看板通知前端对接。前端已读 V13，增量更新无效（已读不重读），必须 bump 到 V14 覆盖写新通知
 - **正确做法**: 后端调试字段不要写进看板；前端已读过的通知必须 bump 版本号才能重新通知
 
 ### 2026-06-29 (fix: running→stopped 真正根因 - monitor 杀进程)

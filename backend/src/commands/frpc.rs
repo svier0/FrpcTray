@@ -33,9 +33,14 @@ fn get_current_frpc_version() -> String {
         return "0".to_string();
     }
 
-    let output = Command::new(&frpc_path)
-        .arg("-v")
-        .output();
+    let mut cmd = Command::new(&frpc_path);
+    cmd.arg("-v");
+    #[cfg(windows)]
+    {
+        use std::os::windows::process::CommandExt;
+        cmd.creation_flags(0x08000000);
+    }
+    let output = cmd.output();
 
     match output {
         Ok(o) if o.status.success() => {

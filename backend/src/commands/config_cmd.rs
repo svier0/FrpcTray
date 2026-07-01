@@ -41,9 +41,14 @@ pub fn set_autostart(enabled: bool) -> Result<(), String> {
                 path.display(),
                 exe.display()
             );
-            let out = std::process::Command::new("powershell")
-                .args(["-NoProfile", "-Command", &ps])
-                .output()
+            let mut cmd = std::process::Command::new("powershell");
+            cmd.args(["-NoProfile", "-Command", &ps]);
+            #[cfg(windows)]
+            {
+                use std::os::windows::process::CommandExt;
+                cmd.creation_flags(0x08000000);
+            }
+            let out = cmd.output()
                 .map_err(|e| format!("创建快捷方式失败: {}", e))?;
             if !out.status.success() {
                 return Err(format!("创建快捷方式失败: {}", String::from_utf8_lossy(&out.stderr)));
