@@ -62,6 +62,14 @@
   - listen update-download-progress 事件实时显示下载/安装进度
   - 4语言 i18n 翻译已添加
 
+- **决策**: 更新日志按钮改为 `<a>` 链接，指向 GitHub releases
+- **原因**: 按钮没有跳转功能，需要链接到对应版本的 release 页面
+- **实现**: href 动态拼接 `https://github.com/svier0/FrpcTray/releases/tag/v${current_version}`
+
+- **决策**: onMounted 时自动调用 handleCheckAppUpdate
+- **原因**: 版本号不再硬编码，从后端获取真实版本号
+- **实现**: 页面加载时自动检查更新，获取 current_version 用于显示和链接
+
 ### 2026-06-29
 - **决策**: 关于页面使用 frp 官方 SVG logo
 - **原因**: 统一品牌标识，从 gofrp.org 提取官方图标
@@ -132,6 +140,12 @@
 ### 静态资源
 - frp 官方 SVG logo：public/logo.svg，用于关于页面
 
+### 应用更新
+- 接口：check_app_update → AppUpdateInfo (current_version, latest_version, can_upgrade, download_url, install_method)
+- 接口：download_app_update(version) → 下载安装包，触发 update-download-progress 事件
+- 事件 update-download-progress：{ phase: "downloading"|"installing"|"done", progress: 0~1, message: string }
+- About 标签页自动加载版本信息，更新日志链接指向 GitHub releases/tag/v${version}
+
 ---
 
 ## 协作状态
@@ -147,3 +161,4 @@
 3. 检查 connecting 状态显示
 4. 检查日志按钮打开日志文件
 5. 设置界面-高级-其他设置
+6. 检查应用更新功能（版本号显示、更新日志链接、下载进度）
