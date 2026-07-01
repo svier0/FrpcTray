@@ -21,7 +21,7 @@
 
 ---
 
-## 当前开发状态 (截至 2026-06-29)
+## 当前开发状态 (截至 2026-07-01)
 
 ### 已完成
 - ✅ 主界面：标题栏、总开关（默认关闭）、设置按钮、服务器tab
@@ -44,6 +44,7 @@
 - ✅ frp 官方 SVG logo（public/logo.svg）
 - ✅ 关于页面图标更新为 frp 官方 logo
 - ✅ TypeScript 类型修复（AppHeader ServerStatus 添加 connecting）
+- ✅ 应用更新功能：check_app_update + download_app_update 对接
 
 ### 待办事项
 - [ ] 设置界面-高级-其他设置
@@ -51,6 +52,15 @@
 ---
 
 ## 关键决策记录
+
+### 2026-07-01
+- **决策**: 应用更新功能在 About 标签页实现
+- **原因**: 后端新增 check_app_update/download_app_update 接口
+- **实现**: 
+  - ipc.ts: 新增 AppUpdateInfo 类型、checkAppUpdate/downloadAppUpdate 函数
+  - SettingsPage.vue: About 标签页添加应用更新卡片
+  - listen update-download-progress 事件实时显示下载/安装进度
+  - 4语言 i18n 翻译已添加
 
 ### 2026-06-29
 - **决策**: 关于页面使用 frp 官方 SVG logo
@@ -125,8 +135,8 @@
 ---
 
 ## 协作状态
-- **前端版本**: V9
-- **后端确认**: ACK_BACKEND_VERSION: V16
+- **前端版本**: V10
+- **后端确认**: ACK_BACKEND_VERSION: V17
 - **阻塞点**: 无
 
 ---
