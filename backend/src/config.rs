@@ -136,6 +136,7 @@ pub struct AppUpdateInfo {
     pub latest_version: String,
     pub can_upgrade: bool,
     pub download_url: String,
+    pub install_method: String,
 }
 
 pub fn read_app_config() -> AppConfig {

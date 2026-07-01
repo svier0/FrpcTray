@@ -7,6 +7,23 @@ use tauri::Emitter;
 use crate::config::*;
 use crate::util::compare_versions;
 
+fn detect_install_method() -> String {
+    if cfg!(target_os = "windows") {
+        if let Ok(exe) = std::env::current_exe() {
+            let path = exe.to_string_lossy().to_lowercase();
+            if path.contains("\\scoop\\apps\\") {
+                return "scoop".to_string();
+            }
+        }
+        if std::env::var("SCOOP").is_ok() {
+            return "scoop".to_string();
+        }
+        "installer".to_string()
+    } else {
+        "installer".to_string()
+    }
+}
+
 fn get_app_version() -> String {
     let json_str = include_str!("../../tauri.conf.json");
     let v: serde_json::Value = serde_json::from_str(json_str)
@@ -119,6 +136,7 @@ pub async fn check_app_update() -> Result<AppUpdateInfo, String> {
         latest_version,
         can_upgrade,
         download_url,
+        install_method: detect_install_method(),
     })
 }
 
@@ -152,6 +170,10 @@ fn build_download_urls(version: &str, use_proxy: bool) -> Vec<String> {
 
 #[tauri::command]
 pub async fn download_app_update(app: tauri::AppHandle, version: String) -> Result<(), String> {
+    if detect_install_method() == "scoop" {
+        return scoop_update(&app).await;
+    }
+
     let cfg = read_app_config();
     let client = get_http_client();
 
@@ -230,6 +252,29 @@ pub async fn download_app_update(app: tauri::AppHandle, version: String) -> Resu
     launch_installer(&dest_path)?;
 
     emit(&app, "done", 1.0, "安装程序已启动，FrpcTray 即将退出...");
+
+    tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+
+    app.exit(0);
+    Ok(())
+}
+
+async fn scoop_update(app: &tauri::AppHandle) -> Result<(), String> {
+    emit(app, "installing", 0.0, "正在通过 Scoop 更新...");
+
+    let output = tokio::process::Command::new("scoop")
+        .args(["update", "frpctray"])
+        .output()
+        .await
+        .map_err(|e| format!("执行 scoop update 失败: {}", e))?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        return Err(format!("scoop update 失败: {} {}", stdout, stderr));
+    }
+
+    emit(app, "done", 1.0, "Scoop 更新完成，FrpcTray 即将退出...");
 
     tokio::time::sleep(std::time::Duration::from_millis(500)).await;
 

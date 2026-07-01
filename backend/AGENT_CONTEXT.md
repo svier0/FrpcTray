@@ -222,6 +222,8 @@
   - `download_app_update(version)` 下载安装包，通过 `update-download-progress` 事件推送进度
   - 下载完成后启动安装程序（Windows: `/S` 静默安装，macOS: open, Linux: xdg-open）
   - 启动安装后 `app.exit(0)` 退出当前应用
+  - `install_method` 字段检测安装方式：Scoop 检测 exe 路径是否含 `\scoop\apps\` 或 `SCOOP` 环境变量
+  - Scoop 安装时走 `scoop update frpctray` 而非下载安装包，避免破坏 Scoop 目录结构
   - api_spec.json V12 已更新
 - **错误消息策略**: `summarize_frpc_error()` 模式匹配 20+ 已知 frpc 错误 → 简洁英文摘要；未知错误保底原始行（截断 120 字符）；无输出时 `error_message` 为 `null`
 - **connecting 状态**: 启动后先发 `connecting`，检测 `login to server success` 再发 `running`

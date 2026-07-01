@@ -380,7 +380,8 @@
         { "name": "current_version", "type": "String", "description": "当前版本（从 tauri.conf.json 读取）" },
         { "name": "latest_version", "type": "String", "description": "GitHub 最新 release 版本，如 '2.0.1'，获取失败则为空字符串" },
         { "name": "can_upgrade", "type": "bool", "description": "是否有可升级的新版本" },
-        { "name": "download_url", "type": "String", "description": "对应平台的下载链接，latest_version 为空时也为空。Windows: FrpcTray_{version}_x64-setup_windows.exe, macOS: FrpcTray_{version}_aarch64_macos.dmg, Linux: FrpcTray_{version}_amd64_linux.deb" }
+        { "name": "download_url", "type": "String", "description": "对应平台的下载链接，latest_version 为空时也为空。Windows: FrpcTray_{version}_x64-setup_windows.exe, macOS: FrpcTray_{version}_aarch64_macos.dmg, Linux: FrpcTray_{version}_amd64_linux.deb" },
+        { "name": "install_method", "type": "String", "description": "安装方式：'scoop'（Windows Scoop 安装）或 'installer'（独立安装包）" }
       ]
     },
     "FrpcRunningStatus": {
