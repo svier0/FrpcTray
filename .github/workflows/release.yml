@@ -75,12 +75,11 @@ jobs:
           cd $releaseDir
           7z a -t7z -m0=lzma2 -mx=9 archive.7z "$appName.exe" "*.dll"
 
-          @"
-;!@Install@!UTF-8!
-Title="FrpcTray $version"
-RunProgram="$appName.exe"
-;!@InstallEnd@!
-          "@ | Out-File -Encoding utf8NoBOM config.txt
+          $config = ';!@Install@!UTF-8!' + "`r`n" +
+            "Title=`"FrpcTray $version`"" + "`r`n" +
+            "RunProgram=`"$appName.exe`"" + "`r`n" +
+            ';!@InstallEnd@!'
+          $config | Out-File -Encoding utf8NoBOM config.txt
 
           $7zSfxPath = "C:\Program Files\7-Zip\7z.sfx"
           if (-not (Test-Path $7zSfxPath)) {
