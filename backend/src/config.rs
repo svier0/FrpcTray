@@ -130,6 +130,14 @@ impl Default for AppConfig {
     }
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppUpdateInfo {
+    pub current_version: String,
+    pub latest_version: String,
+    pub can_upgrade: bool,
+    pub download_url: String,
+}
+
 pub fn read_app_config() -> AppConfig {
     let dir = get_config_dir();
     let path = dir.join("config.toml");

@@ -21,6 +21,7 @@ use commands::frpc::*;
 use commands::backup::*;
 use commands::config_cmd::*;
 use commands::frpc_manager::*;
+use commands::update::*;
 
 static QUIT_FLAG: AtomicBool = AtomicBool::new(false);
 static LIGHT_MODE: AtomicBool = AtomicBool::new(false);
@@ -195,6 +196,7 @@ pub fn run() {
             stop_all_frpc,
             get_all_frpc_status,
             open_log_file,
+            check_app_update,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application")

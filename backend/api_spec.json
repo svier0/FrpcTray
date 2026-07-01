@@ -1,6 +1,6 @@
 {
-  "version": "V11",
-  "lastUpdated": "2026-06-29",
+  "version": "V12",
+  "lastUpdated": "2026-07-01",
   "commands": [
     {
       "name": "list_servers",
@@ -256,6 +256,16 @@
       }
     },
     {
+      "name": "check_app_update",
+      "description": "检查 FrpcTray 自身是否有新版本。从 GitHub Releases 获取最新版本号，与当前版本比较，返回更新信息（含平台对应下载链接）",
+      "parameters": [],
+      "returns": {
+        "type": "Result<AppUpdateInfo, String>",
+        "success": "更新信息对象",
+        "error": "错误信息字符串"
+      }
+    },
+    {
       "name": "open_log_file",
       "description": "用系统默认程序打开指定服务器的日志文件（记事本等文本编辑器）",
       "parameters": [
@@ -350,6 +360,15 @@
         { "name": "auto_run", "type": "bool", "description": "自动运行代理，默认 false" },
         { "name": "show_frpc_console", "type": "bool", "description": "显示 frpc 命令行窗口（调试用），默认 false" },
         { "name": "use_github_proxy", "type": "bool", "description": "优先使用代理/镜像访问 GitHub（GitHub 不可用时开启），默认 false" }
+      ]
+    },
+    "AppUpdateInfo": {
+      "description": "FrpcTray 应用更新信息",
+      "fields": [
+        { "name": "current_version", "type": "String", "description": "当前版本（从 tauri.conf.json 读取）" },
+        { "name": "latest_version", "type": "String", "description": "GitHub 最新 release 版本，如 '2.0.1'，获取失败则为空字符串" },
+        { "name": "can_upgrade", "type": "bool", "description": "是否有可升级的新版本" },
+        { "name": "download_url", "type": "String", "description": "对应平台的下载链接，latest_version 为空时也为空。Windows: FrpcTray_{version}_x64-setup_windows.exe, macOS: FrpcTray_{version}_aarch64_macos.dmg, Linux: FrpcTray_{version}_amd64_linux.deb" }
       ]
     },
     "FrpcRunningStatus": {

@@ -1,6 +1,6 @@
 [package]
 name = "FrpcTray"
-version = "v2.0.0"
+version = "2.0.0"
 description = "frpc托盘程序"
 authors = ["svier0"]
 edition = "2021"
